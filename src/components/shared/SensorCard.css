@@ -1,0 +1,133 @@
+/* ═══════════════════════════════════════════════════════════════
+   SensorCard — Live Telemetry Display
+   ═══════════════════════════════════════════════════════════════ */
+
+.sensor-card {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Severity Accent ──────────────────────────────────────────── */
+.sensor-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 12px 12px 0 0;
+  background: var(--glass-border);
+  transition: var(--transition);
+}
+
+.sensor-card--warning::before {
+  background: linear-gradient(90deg, var(--danger), rgba(230, 57, 70, 0.3));
+}
+
+/* ── Shimmer on Update ────────────────────────────────────────── */
+.sensor-card--updated::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--glass-radius);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(79, 175, 227, 0.06) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-out;
+  pointer-events: none;
+}
+
+/* ── Header ───────────────────────────────────────────────────── */
+.sensor-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.sensor-card__icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  border-radius: 8px;
+  background: rgba(79, 175, 227, 0.08);
+}
+
+.sensor-card__icon--red    { background: rgba(230, 57, 70, 0.08); }
+.sensor-card__icon--orange { background: rgba(244, 162, 97, 0.08); }
+.sensor-card__icon--green  { background: rgba(62, 214, 161, 0.08); }
+.sensor-card__icon--purple { background: rgba(155, 89, 182, 0.08); }
+.sensor-card__icon--blue   { background: rgba(79, 175, 227, 0.08); }
+
+/* ── Trend ────────────────────────────────────────────────────── */
+.sensor-card__trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.sensor-card__trend-arrow {
+  font-size: 11px;
+  transition: var(--transition);
+}
+
+.sensor-card__trend--up .sensor-card__trend-arrow {
+  color: var(--danger);
+  animation: float 2s ease-in-out infinite;
+}
+
+.sensor-card__trend--down .sensor-card__trend-arrow {
+  color: var(--success);
+  animation: float 2s ease-in-out infinite reverse;
+}
+
+/* ── Value ────────────────────────────────────────────────────── */
+.sensor-card__value {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  line-height: 1.1;
+  letter-spacing: -1px;
+  transition: var(--transition);
+}
+
+.sensor-card__unit {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 3px;
+  letter-spacing: 0;
+}
+
+.sensor-card__label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ── Warning Bar ──────────────────────────────────────────────── */
+.sensor-card__warning-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--danger), transparent);
+  animation: breathe 3s ease-in-out infinite;
+}

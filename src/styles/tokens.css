@@ -1,0 +1,79 @@
+/* ═══════════════════════════════════════════════════════════════
+   AERIS — Design Tokens
+   Environmental Risk Intelligence System
+   Atmospheric Refinement v2
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Brand Palette ─────────────────────────────────────────── */
+  --primary: #0b3c5d;
+  --primary-hover: #0d4a73;
+  --interactive: #4fafe3;
+  --interactive-hover: #6bc0ef;
+  --success: #3ed6a1;
+  --success-dim: rgba(62, 214, 161, 0.12);
+  --warning: #f4a261;
+  --warning-dim: rgba(244, 162, 97, 0.12);
+  --danger: #e63946;
+  --danger-dim: rgba(230, 57, 70, 0.12);
+
+  /* ── Background ────────────────────────────────────────────── */
+  --bg-dark: #081a24;
+  --bg-surface: #0f2533;
+  --bg-card: rgba(15, 37, 51, 0.55);
+  --bg-light: #f4f9fc;
+  --bg-elevated: #13304a;
+
+  /* ── Text ──────────────────────────────────────────────────── */
+  --text-primary: #e6eef3;
+  --text-secondary: #8fa6b5;
+  --text-muted: #567080;
+  --text-dark: #1f2933;
+
+  /* ── Risk Spectrum ─────────────────────────────────────────── */
+  --risk-safe: #3ed6a1;
+  --risk-moderate: #f4a261;
+  --risk-elevated: #e67e22;
+  --risk-high: #e63946;
+  --risk-severe: #9b59b6;
+
+  /* ── Glass Effect ──────────────────────────────────────────── */
+  --glass-bg: rgba(15, 37, 51, 0.55);
+  --glass-border: rgba(79, 175, 227, 0.12);
+  --glass-blur: blur(14px);
+  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  --glass-radius: 12px;
+
+  /* ── Grid ──────────────────────────────────────────────────── */
+  --max-width: 1400px;
+  --sidebar-width: 240px;
+  --spacing: 20px;
+  --spacing-sm: 12px;
+  --spacing-xs: 8px;
+  --spacing-lg: 32px;
+  --spacing-xl: 48px;
+
+  /* ── Transitions ───────────────────────────────────────────── */
+  --transition: all 0.25s ease;
+  --transition-slow: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Typography ────────────────────────────────────────────── */
+  --font-family:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-base: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.75rem;
+  --font-size-2xl: 2.5rem;
+  --font-size-hero: 3.5rem;
+
+  /* ── Shadows ───────────────────────────────────────────────── */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.25);
+  --shadow-glow: 0 0 20px rgba(79, 175, 227, 0.2);
+  --shadow-danger: 0 0 20px rgba(230, 57, 70, 0.25);
+}

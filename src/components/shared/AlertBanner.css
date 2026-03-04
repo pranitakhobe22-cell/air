@@ -1,0 +1,105 @@
+/* ═══════════════════════════════════════════════════════════════
+   AlertBanner — Glass Intelligence Alert
+   ═══════════════════════════════════════════════════════════════ */
+
+.alert-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(79, 175, 227, 0.12);
+  margin-bottom: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--glass-shadow);
+}
+
+/* Left severity accent (Standard) */
+.alert-banner::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: transparent;
+  transition: background 0.3s ease;
+}
+
+/* ── Atmospheric Reactivity ─────────────────────────── */
+
+/* Clean: Minimal */
+.alert-banner--atmosphere-clean {
+  border-color: rgba(79, 175, 227, 0.08);
+}
+
+/* Moderate: Amber left border */
+.alert-banner--atmosphere-moderate::before {
+  background: #F4A261;
+}
+
+/* Unhealthy: Amber border + subtle glow */
+.alert-banner--atmosphere-unhealthy {
+  border-color: rgba(244, 162, 97, 0.3);
+  box-shadow: 0 0 15px rgba(244, 162, 97, 0.1);
+}
+.alert-banner--atmosphere-unhealthy::before {
+  background: #F4A261;
+}
+
+/* Hazard: Red left border + soft red shadow (NO FLASHING) */
+.alert-banner--atmosphere-hazard {
+  border-color: rgba(230, 57, 70, 0.4);
+  box-shadow: 0 4px 20px rgba(230, 57, 70, 0.15);
+}
+.alert-banner--atmosphere-hazard::before {
+  background: #E63946;
+}
+
+.alert-banner__icon {
+  font-size: var(--font-size-md);
+  flex-shrink: 0;
+}
+
+.alert-banner__content {
+  flex: 1;
+  min-width: 0;
+  padding-left: var(--spacing-xs);
+}
+
+.alert-banner__message {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  display: block;
+  line-height: 1.4;
+}
+
+.alert-banner__time {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.alert-banner__dismiss {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.alert-banner__dismiss:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}

@@ -1,0 +1,152 @@
+/* ═══════════════════════════════════════════════════════════════
+   TopBar — Atmospheric Navigation Header
+   ═══════════════════════════════════════════════════════════════ */
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing);
+  background: rgba(8, 26, 36, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(79, 175, 227, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar__left {
+  display: flex;
+  align-items: center;
+}
+
+.topbar__page-title {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+}
+
+/* ── Timestamp ────────────────────────────────────────────── */
+.topbar__timestamp {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.topbar__timestamp-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.topbar__timestamp-value {
+  font-size: var(--font-size-sm);
+  font-family: var(--font-mono);
+  color: var(--interactive);
+  font-weight: 500;
+}
+
+/* ── Location ─────────────────────────────────────────────── */
+.topbar__location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(15, 37, 51, 0.5);
+  border-radius: 8px;
+  border: 1px solid rgba(79, 175, 227, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+.topbar__location-icon {
+  font-size: 14px;
+}
+
+.topbar__location-select {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+}
+
+.topbar__location-select option {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+/* ── Notifications ────────────────────────────────────────── */
+.topbar__notifications {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  background: rgba(15, 37, 51, 0.4);
+  border: 1px solid rgba(79, 175, 227, 0.08);
+  transition: var(--transition);
+}
+
+.topbar__notifications:hover {
+  background: rgba(15, 37, 51, 0.6);
+  border-color: rgba(79, 175, 227, 0.15);
+}
+
+.topbar__badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse-dot 2.5s ease-in-out infinite;
+}
+
+/* ── Avatar ───────────────────────────────────────────────── */
+.topbar__avatar-img {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  color: white;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.topbar__avatar-img:hover {
+  transform: scale(1.05);
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .topbar__timestamp {
+    display: none;
+  }
+}

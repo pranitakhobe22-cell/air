@@ -1,0 +1,37 @@
+.live-status { display: flex; flex-direction: column; gap: var(--spacing); }
+
+.live-hero__main { padding: var(--spacing-lg); }
+.live-hero__header { display: flex; align-items: center; gap: var(--spacing-xs); margin-bottom: var(--spacing); }
+.live-hero__tag { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; }
+.live-hero__content { display: flex; align-items: center; gap: var(--spacing-xl); }
+.live-hero__info { flex: 1; }
+.live-hero__big-number { font-size: 80px; font-weight: 800; font-family: var(--font-mono); line-height: 1; letter-spacing: -4px; }
+.live-hero__big-label { font-size: var(--font-size-sm); color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
+.live-hero__category { font-size: var(--font-size-lg); color: var(--text-secondary); margin: var(--spacing-xs) 0; }
+.live-hero__text { font-size: var(--font-size-base); color: var(--text-secondary); margin-bottom: var(--spacing); line-height: 1.6; }
+
+.comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing); }
+.comparison-header { display: flex; align-items: center; gap: var(--spacing-xs); margin-bottom: var(--spacing); }
+.comparison-icon { font-size: 24px; }
+.comparison-title { font-size: var(--font-size-md); font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 1px; }
+.comparison-stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm); }
+.comp-stat { display: flex; flex-direction: column; gap: 2px; }
+.comp-label { font-size: 10px; font-weight: 600; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
+.comp-value { font-size: var(--font-size-xl); font-weight: 700; font-family: var(--font-mono); color: var(--text-primary); }
+.comp-value small { font-size: var(--font-size-xs); color: var(--text-secondary); font-weight: 400; }
+
+.health-advisory { display: flex; align-items: flex-start; gap: var(--spacing); }
+.advisory-icon-large { font-size: 48px; }
+.advisory-content h3 { font-size: var(--font-size-lg); font-weight: 700; margin-bottom: var(--spacing-xs); }
+.advisory-content p { color: var(--text-secondary); line-height: 1.6; margin-bottom: var(--spacing); }
+.advisory-actions { display: flex; gap: var(--spacing-xs); flex-wrap: wrap; }
+.action-tag { padding: 6px 14px; border-radius: 8px; font-size: var(--font-size-xs); font-weight: 600; background: rgba(79, 175, 227, 0.08); color: var(--interactive); border: 1px solid rgba(79, 175, 227, 0.15); backdrop-filter: blur(8px); }
+.action-tag.danger { background: rgba(230, 57, 70, 0.08); color: var(--danger); border-color: rgba(230, 57, 70, 0.15); }
+.action-tag.safe { background: rgba(62, 214, 161, 0.08); color: var(--success); border-color: rgba(62, 214, 161, 0.15); }
+
+@media (max-width: 768px) {
+  .live-hero__content { flex-direction: column; text-align: center; }
+  .live-hero__big-number { font-size: 56px; }
+  .comparison-grid { grid-template-columns: 1fr; }
+  .health-advisory { flex-direction: column; align-items: center; text-align: center; }
+}

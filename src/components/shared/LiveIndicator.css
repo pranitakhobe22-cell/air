@@ -1,0 +1,53 @@
+/* ═══════════════════════════════════════════════════════════════
+   LiveIndicator — Environmental Pulse
+   ═══════════════════════════════════════════════════════════════ */
+
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.live-indicator__dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+}
+
+.live-indicator__dot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: var(--transition);
+}
+
+.live-indicator--active .live-indicator__dot::before {
+  background: var(--success);
+  animation: pulse-dot 2.5s ease-in-out infinite;
+}
+
+.live-indicator__ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+}
+
+.live-indicator--active .live-indicator__ring {
+  border-color: var(--success);
+  animation: pulse-ring 2.5s ease-in-out infinite;
+}
+
+.live-indicator__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.live-indicator--active .live-indicator__label {
+  color: var(--success);
+}

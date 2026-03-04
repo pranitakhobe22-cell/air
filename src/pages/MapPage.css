@@ -1,0 +1,23 @@
+.map-page { display: flex; flex-direction: column; gap: var(--spacing); }
+.map-grid { display: grid; grid-template-columns: 340px 1fr; gap: var(--spacing); }
+.panel-title { font-size: var(--font-size-sm); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: var(--spacing-sm); }
+.sectors-list { display: flex; flex-direction: column; gap: var(--spacing-sm); }
+.sector-tile__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm); }
+.sector-tile__name { font-weight: 600; font-size: var(--font-size-sm); }
+.sector-tile__metrics { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-xs); }
+.metric { display: flex; flex-direction: column; }
+.metric-label { font-size: 9px; font-weight: 600; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
+.metric-value { font-size: var(--font-size-lg); font-weight: 700; font-family: var(--font-mono); }
+.metric-value-sm { font-size: var(--font-size-sm); font-family: var(--font-mono); color: var(--text-secondary); }
+
+.map-visual { min-height: 400px; display: flex; align-items: center; justify-content: center; }
+.map-placeholder { width: 100%; text-align: center; }
+.map-grid-visual { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing); padding: var(--spacing-lg); max-width: 400px; margin: 0 auto; }
+.map-node { width: 140px; height: 140px; border-radius: 50%; border: 2px solid; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; margin: 0 auto; position: relative; background: rgba(15, 37, 51, 0.5); backdrop-filter: blur(8px); transition: var(--transition); }
+.map-node:hover { transform: scale(1.05); }
+.map-node__pulse { position: absolute; inset: -6px; border-radius: 50%; opacity: 0.1; animation: pulse-ring 3.5s ease-in-out infinite; }
+.map-node__label { font-size: var(--font-size-xs); color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.map-node__value { font-size: var(--font-size-2xl); font-weight: 800; font-family: var(--font-mono); color: var(--text-primary); }
+.map-legend { display: flex; gap: var(--spacing); justify-content: center; margin-top: var(--spacing); font-size: var(--font-size-xs); color: var(--text-secondary); }
+
+@media (max-width: 768px) { .map-grid { grid-template-columns: 1fr; } }

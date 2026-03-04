@@ -1,0 +1,57 @@
+/* ═══════════════════════════════════════════════════════════════
+   SectionHeader — Atmospheric Section Divider
+   ═══════════════════════════════════════════════════════════════ */
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid rgba(79, 175, 227, 0.06);
+}
+
+.section-header__left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.section-header__icon {
+  font-size: var(--font-size-lg);
+  color: var(--interactive);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(79, 175, 227, 0.06);
+  border-radius: 10px;
+  border: 1px solid rgba(79, 175, 227, 0.08);
+}
+
+.section-header__title {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.section-header__subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+  letter-spacing: 0.3px;
+}
+
+.section-header__action {
+  font-size: var(--font-size-sm);
+  color: var(--interactive);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.section-header__action:hover {
+  color: var(--interactive-hover);
+}
