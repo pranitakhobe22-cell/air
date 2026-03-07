@@ -38,7 +38,7 @@ const Health = () => {
   const isDanger = rri >= activeTab.threshold;
 
   return (
-    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
 
       <div>
         <h1 className="text-2xl font-bold text-white tracking-tight">Health Center</h1>
@@ -55,7 +55,7 @@ const Health = () => {
           {/* Guidance cards */}
           <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
             <h3 className="text-sm font-semibold text-slate-300 mb-5">Current Guidance</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               {[
                 {
                   label: 'Respirator',

@@ -65,18 +65,18 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 // ── Sensor Metric Card ───────────────────────────────────────────
 const MetricCard = ({ label, value, unit, icon: Icon, color, sparkData = [], decimals = 0 }) => (
-  <div className="bg-slate-800/40 rounded-xl border border-slate-700/40 p-4 flex flex-col">
-    <div className="flex items-center justify-between mb-3">
+  <div className="bg-slate-800/40 rounded-xl border border-slate-700/40 p-3 sm:p-4 flex flex-col">
+    <div className="flex items-center justify-between mb-2 sm:mb-3">
       <div className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}18` }}>
-          <Icon size={14} style={{ color }} />
+        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}18` }}>
+          <Icon size={13} style={{ color }} />
         </div>
-        <span className="text-xs font-medium text-slate-400">{label}</span>
+        <span className="text-[11px] sm:text-xs font-medium text-slate-400">{label}</span>
       </div>
     </div>
-    <div className="flex items-baseline gap-1.5 mb-3">
-      <span className="text-2xl font-bold text-white tabular-nums"><AnimatedNumber value={value} decimals={decimals} /></span>
-      <span className="text-[11px] text-slate-500">{unit}</span>
+    <div className="flex items-baseline gap-1.5 mb-2 sm:mb-3">
+      <span className="text-xl sm:text-2xl font-bold text-white tabular-nums"><AnimatedNumber value={value} decimals={decimals} /></span>
+      <span className="text-[10px] sm:text-[11px] text-slate-500">{unit}</span>
     </div>
     {sparkData.length > 1 && (
       <div className="h-8 -mx-1 mt-auto">
@@ -123,21 +123,19 @@ const Dashboard = () => {
 
   if (!data?.sensors || !data?.derived) {
     return (
-      <div className="p-6 lg:p-8 max-w-[1440px] mx-auto space-y-6">
-        <div className="flex justify-between">
-          <div>
-            <div className="h-6 w-52 bg-slate-800/60 rounded-lg animate-pulse" />
-            <div className="h-4 w-36 bg-slate-800/40 rounded mt-2 animate-pulse" />
-          </div>
+      <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto space-y-5 sm:space-y-6">
+        <div>
+          <div className="h-6 w-52 bg-slate-800/60 rounded-lg animate-pulse" />
+          <div className="h-4 w-36 bg-slate-800/40 rounded mt-2 animate-pulse" />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div className="lg:col-span-4 bg-slate-800/40 border border-slate-700/40 rounded-xl h-56 animate-pulse" />
-          <div className="lg:col-span-3 bg-slate-800/40 border border-slate-700/40 rounded-xl h-56 animate-pulse" />
-          <div className="lg:col-span-5 bg-slate-800/40 border border-slate-700/40 rounded-xl h-56 animate-pulse" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+          <div className="lg:col-span-4 bg-slate-800/40 border border-slate-700/40 rounded-xl h-44 sm:h-56 animate-pulse" />
+          <div className="lg:col-span-3 bg-slate-800/40 border border-slate-700/40 rounded-xl h-44 sm:h-56 animate-pulse" />
+          <div className="lg:col-span-5 bg-slate-800/40 border border-slate-700/40 rounded-xl h-44 sm:h-56 animate-pulse" />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-28 animate-pulse" />
+            <div key={i} className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-24 sm:h-28 animate-pulse" />
           ))}
         </div>
       </div>
@@ -165,29 +163,29 @@ const Dashboard = () => {
   const greeting = greetHour < 12 ? 'Good morning' : greetHour < 18 ? 'Good afternoon' : 'Good evening';
 
   return (
-    <div className="p-6 lg:p-8 max-w-[1440px] mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto space-y-5 sm:space-y-6">
 
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-white">{greeting}, {user?.name?.split(' ')[0] || 'there'}</h1>
-          <div className="flex items-center gap-2 mt-1">
+          <h1 className="text-lg sm:text-xl font-semibold text-white">{greeting}, {user?.name?.split(' ')[0] || 'there'}</h1>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
             <MapPin size={13} className="text-slate-500" />
-            <span className="text-sm text-slate-400">{active.nodeName || meta?.location || 'Live Sector'}</span>
-            <span className="text-slate-600 mx-1">|</span>
-            <Clock size={13} className="text-slate-500" />
-            <span className="text-sm text-slate-400">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            <span className="ml-2 inline-flex items-center gap-1.5 text-xs text-emerald-400">
+            <span className="text-xs sm:text-sm text-slate-400">{active.nodeName || meta?.location || 'Live Sector'}</span>
+            <span className="text-slate-600 mx-1 hidden sm:inline">|</span>
+            <Clock size={13} className="text-slate-500 hidden sm:block" />
+            <span className="text-xs sm:text-sm text-slate-400 hidden sm:block">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            <span className="ml-1 sm:ml-2 inline-flex items-center gap-1.5 text-xs text-emerald-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Live
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/pollutants')} className="px-4 py-2 text-xs font-medium text-slate-300 bg-slate-800/60 border border-slate-700/50 rounded-lg hover:bg-slate-700/60 transition-colors">
-            View Pollutants
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button onClick={() => navigate('/pollutants')} className="px-3 sm:px-4 py-2 text-xs font-medium text-slate-300 bg-slate-800/60 border border-slate-700/50 rounded-lg hover:bg-slate-700/60 transition-colors">
+            Pollutants
           </button>
-          <button onClick={() => navigate('/live')} className="px-4 py-2 text-xs font-medium text-sky-400 bg-sky-500/10 border border-sky-500/20 rounded-lg hover:bg-sky-500/15 transition-colors">
+          <button onClick={() => navigate('/live')} className="px-3 sm:px-4 py-2 text-xs font-medium text-sky-400 bg-sky-500/10 border border-sky-500/20 rounded-lg hover:bg-sky-500/15 transition-colors">
             Live Monitor
           </button>
         </div>
@@ -215,10 +213,10 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
         {/* AQI Card */}
-        <div className="lg:col-span-4 bg-slate-800/40 rounded-xl border border-slate-700/40 p-6 flex flex-col">
-          <span className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-4">Air Quality Index</span>
+        <div className="lg:col-span-4 bg-slate-800/40 rounded-xl border border-slate-700/40 p-5 sm:p-6 flex flex-col">
+          <span className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3 sm:mb-4">Air Quality Index</span>
           <div className="flex items-end gap-3 mb-2">
-            <span className="text-7xl font-bold tabular-nums leading-none" style={{ color: band.color }}>
+            <span className="text-5xl sm:text-7xl font-bold tabular-nums leading-none" style={{ color: band.color }}>
               <AnimatedNumber value={aqi} />
             </span>
             <span className="text-lg font-medium text-slate-400 mb-2">/ 500</span>
@@ -247,7 +245,7 @@ const Dashboard = () => {
         </div>
 
         {/* RRI + Environment */}
-        <div className="lg:col-span-3 flex flex-col gap-5">
+        <div className="lg:col-span-3 flex flex-col gap-4 sm:gap-5">
           {/* RRI */}
           <div className="bg-slate-800/40 rounded-xl border border-slate-700/40 p-5 flex-1 flex flex-col items-center justify-center relative">
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Risk Index</span>
@@ -319,7 +317,7 @@ const Dashboard = () => {
             Details <ArrowUpRight size={12} />
           </button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3">
           <MetricCard label="PM2.5" value={sensors.pm25} unit="µg/m³" icon={Wind} color="#ef4444" sparkData={historyData.map(h => ({ v: h.pm25 }))} />
           <MetricCard label="PM10" value={sensors.pm10} unit="µg/m³" icon={Wind} color="#f97316" sparkData={historyData.map(h => ({ v: h.pm10 || h.pm25 * 1.2 }))} />
           <MetricCard label="CO" value={sensors.co} unit="ppm" icon={Activity} color="#eab308" decimals={1} sparkData={historyData.map(h => ({ v: h.co }))} />
@@ -332,15 +330,15 @@ const Dashboard = () => {
       {/* ── Trend Chart + Stations ──────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Chart */}
-        <div className="lg:col-span-8 bg-slate-800/40 rounded-xl border border-slate-700/40 p-6">
-          <div className="flex items-center justify-between mb-5">
+        <div className="lg:col-span-8 bg-slate-800/40 rounded-xl border border-slate-700/40 p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4 sm:mb-5">
             <h2 className="text-sm font-medium text-slate-400">AQI & RRI Trend</h2>
             <div className="flex items-center gap-4 text-xs text-slate-500">
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-0.5 rounded bg-sky-400 inline-block" /> AQI</span>
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-0.5 rounded bg-rose-400 inline-block" /> RRI</span>
             </div>
           </div>
-          <div className="h-64">
+          <div className="h-48 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trendData}>
                 <defs>

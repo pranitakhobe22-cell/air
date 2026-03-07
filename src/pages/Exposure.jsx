@@ -48,7 +48,7 @@ const Exposure = () => {
   else if (stressLoad > 100) advisory = 'Moderate exposure. Prolonged outdoor activity not recommended.';
 
   return (
-    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
 
       <div>
         <h1 className="text-2xl font-bold text-white tracking-tight">Exposure Calculator</h1>
@@ -125,7 +125,7 @@ const Exposure = () => {
               <Clock size={16} className="text-slate-400" />
               <h3 className="text-sm font-semibold text-slate-300">Exposure Duration</h3>
             </div>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[1, 4, 8, 24].map((h) => (
                 <button
                   key={h}

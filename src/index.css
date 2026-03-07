@@ -4,5 +4,12 @@
   html, body {
     @apply bg-[#0B0F1A] text-slate-100 antialiased;
     background-color: #0B0F1A;
+    overflow-x: hidden;
+  }
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  input, select, textarea {
+    font-size: 16px;
   }
 }

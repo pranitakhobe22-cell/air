@@ -80,7 +80,7 @@ const LiveStatus = () => {
 
   if (!data?.sensors) {
     return (
-      <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
         <div>
           <div className="h-7 w-40 bg-slate-800/60 rounded-lg animate-pulse" />
           <div className="h-4 w-64 bg-slate-800/40 rounded mt-2 animate-pulse" />
@@ -115,7 +115,7 @@ const LiveStatus = () => {
     { id: 'hum', label: 'Humidity', value: activeEnv?.humidity || activeSensors.humidity, unit: '%', icon: Droplets, decimals: 0 },
   ];
 
-  const mapCenter = sectors?.[0]?.lat ? [sectors[0].lat, sectors[0].lng] : [19.076, 72.877];
+  const mapCenter = sectors?.[0]?.lat ? [sectors[0].lat, sectors[0].lng] : [21.1458, 79.0882];
   const riskColor = activeDerived?.risk_color || '#10b981';
 
   const eventColors = {
@@ -124,12 +124,12 @@ const LiveStatus = () => {
   };
 
   return (
-    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
 
       {/* ── Header ──────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Live Status</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Live Status</h1>
           <p className="text-sm text-slate-500 mt-0.5">
             Real-time sensor readings &middot; {active.nodeName || meta?.location || 'Local Station'}
           </p>
@@ -156,7 +156,7 @@ const LiveStatus = () => {
         <div className="lg:col-span-8 space-y-5">
 
           {/* Sensor grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {sensorTiles.map((tile) => {
               const color = sensorStatus(tile.id, tile.value);
               return (

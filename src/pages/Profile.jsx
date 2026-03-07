@@ -137,7 +137,7 @@ const Profile = () => {
   const live = calcModifier(form, baseAqi);
 
   return (
-    <div className="p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5 sm:space-y-6">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -182,7 +182,7 @@ const Profile = () => {
             <h3 className="text-sm font-semibold text-slate-300">Health Profile</h3>
 
             {/* Age + Gender */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-slate-500 mb-1.5 block">Age</label>
                 {editing ? (
@@ -312,7 +312,7 @@ const Profile = () => {
           <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
             <h3 className="text-sm font-semibold text-slate-300 mb-5">Account Settings</h3>
             <form onSubmit={handleAccountSave} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-slate-500 mb-1.5 block">Name</label>
                   <input type="text" value={accountForm.name} onChange={(e) => setAccountForm({ ...accountForm, name: e.target.value })}
@@ -326,7 +326,7 @@ const Profile = () => {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-slate-500 mb-1.5 block">Current Password *</label>
                   <input type="password" placeholder="Required" value={accountForm.currentPassword}

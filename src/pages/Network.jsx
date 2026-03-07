@@ -35,7 +35,7 @@ const Network = () => {
 
   if (!data?.derived) {
     return (
-      <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
         <div>
           <div className="h-7 w-48 bg-slate-800/60 rounded-lg animate-pulse" />
           <div className="h-4 w-72 bg-slate-800/40 rounded mt-2 animate-pulse" />
@@ -61,7 +61,7 @@ const Network = () => {
   const espIds = new Set(Object.keys(perNode));
 
   return (
-    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
 
       {/* Header */}
       <div>
@@ -137,8 +137,8 @@ const Network = () => {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
+            <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+              <table className="w-full text-left min-w-[640px]">
                 <thead>
                   <tr className="border-b border-slate-700/40 text-xs text-slate-500">
                     <th className="pb-3 pl-2 font-medium">Node ID</th>

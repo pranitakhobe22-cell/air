@@ -54,7 +54,7 @@ const Forecast = () => {
 
   if (!data?.derived) {
     return (
-      <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
         <div>
           <div className="h-7 w-32 bg-slate-800/60 rounded-lg animate-pulse" />
           <div className="h-4 w-72 bg-slate-800/40 rounded mt-2 animate-pulse" />
@@ -84,7 +84,7 @@ const Forecast = () => {
   const dangPct = Math.round(allAqi.filter(a => a > 150).length / total * 100);
 
   return (
-    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white tracking-tight">Forecast</h1>
         <p className="text-sm text-slate-500 mt-0.5">
@@ -102,7 +102,7 @@ const Forecast = () => {
                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-0.5 rounded bg-sky-400 inline-block" /> Forecast</span>
               </div>
             </div>
-            <div className="h-[360px]">
+            <div className="h-[240px] sm:h-[360px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
@@ -127,7 +127,7 @@ const Forecast = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
             {[
               { label: 'Current AQI', value: currentAqi, color: currentAqi > 100 ? 'text-red-400' : 'text-emerald-400' },
               { label: 'Peak Forecast', value: peakAqi, color: peakAqi > 100 ? 'text-red-400' : 'text-amber-400' },

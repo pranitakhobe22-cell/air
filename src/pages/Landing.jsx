@@ -42,7 +42,7 @@ const Landing = () => {
     <div className="min-h-screen bg-[#0B0F1A] text-slate-100 font-sans overflow-x-hidden">
 
       {/* ── Navbar ─────────────────────────────────────── */}
-      <nav className="flex items-center justify-between px-6 md:px-10 py-5 max-w-7xl mx-auto">
+      <nav className="flex items-center justify-between px-4 sm:px-6 md:px-10 py-4 sm:py-5 max-w-7xl mx-auto">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 bg-gradient-to-br from-sky-400 to-blue-600 rounded-lg flex items-center justify-center">
             <Shield className="text-white w-5 h-5" />
@@ -60,21 +60,21 @@ const Landing = () => {
       </nav>
 
       {/* ── Hero ───────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-6 md:px-10 pt-16 pb-24">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 pt-10 sm:pt-16 pb-16 sm:pb-24">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-sky-500/10 border border-sky-500/20 rounded-full mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-sky-500/10 border border-sky-500/20 rounded-full mb-4 sm:mb-6">
               <span className="w-1.5 h-1.5 bg-sky-400 rounded-full animate-pulse" />
               <span className="text-xs font-semibold text-sky-400">Live monitoring active</span>
             </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight mb-4 sm:mb-6">
               Air quality,{' '}
               <span className="text-sky-400">personalized</span>
               <br />to your health.
             </h1>
 
-            <p className="text-lg text-slate-400 max-w-lg leading-relaxed mb-8">
+            <p className="text-base sm:text-lg text-slate-400 max-w-lg leading-relaxed mb-6 sm:mb-8">
               AERIS combines real-time sensor data with your health profile to deliver a personal respiratory risk score — not just a generic AQI number.
             </p>
 
@@ -150,9 +150,9 @@ const Landing = () => {
       </section>
 
       {/* ── Features ───────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-6 md:px-10 py-20 border-t border-slate-800">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-12 sm:py-20 border-t border-slate-800">
         <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">What makes AERIS different</h2>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight mb-3">What makes AERIS different</h2>
           <p className="text-slate-400 max-w-xl mx-auto">Real hardware, real-time data, and personalized risk analysis — not just another weather widget.</p>
         </div>
 
@@ -184,9 +184,9 @@ const Landing = () => {
       </section>
 
       {/* ── How It Works ───────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-6 md:px-10 py-20 border-t border-slate-800">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-12 sm:py-20 border-t border-slate-800">
         <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">How it works</h2>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight mb-3">How it works</h2>
           <p className="text-slate-400">From sensor to screen in under 10 seconds.</p>
         </div>
 
@@ -217,10 +217,10 @@ const Landing = () => {
       </section>
 
       {/* ── Personalization Demo ───────────────────────── */}
-      <section className="max-w-7xl mx-auto px-6 md:px-10 py-20 border-t border-slate-800">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-12 sm:py-20 border-t border-slate-800">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Not all lungs are equal</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Not all lungs are equal</h2>
             <p className="text-lg text-slate-400 leading-relaxed mb-6">
               A standard AQI of 50 means different things for a healthy adult vs. someone with asthma. AERIS applies a personal risk multiplier based on your health profile.
             </p>
@@ -288,9 +288,9 @@ const Landing = () => {
       </section>
 
       {/* ── CTA ────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-6 md:px-10 py-20 border-t border-slate-800">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-12 sm:py-20 border-t border-slate-800">
         <div className="text-center max-w-2xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Start protecting your lungs today</h2>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Start protecting your lungs today</h2>
           <p className="text-slate-400 mb-8">Create a free account to set up your health profile and get personalized air quality insights.</p>
           <div className="flex justify-center gap-3">
             <button
@@ -304,7 +304,7 @@ const Landing = () => {
       </section>
 
       {/* ── Footer ─────────────────────────────────────── */}
-      <footer className="border-t border-slate-800 py-10 px-6 md:px-10">
+      <footer className="border-t border-slate-800 py-8 sm:py-10 px-4 sm:px-6 md:px-10">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 bg-gradient-to-br from-sky-400 to-blue-600 rounded-md flex items-center justify-center">

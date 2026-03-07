@@ -60,8 +60,8 @@ const MapPage = () => {
 
   const markers = sectors.map((s, i) => ({
     ...s,
-    lat: s.lat || 19.076 + (i * 0.006 - 0.006),
-    lng: s.lng || 72.877 + (i * 0.008 - 0.008),
+    lat: s.lat || 21.1458 + (i * 0.006 - 0.006),
+    lng: s.lng || 79.0882 + (i * 0.008 - 0.008),
     rri: s.rri || Math.floor(s.aqi * 0.8),
     isHardware: espIds.has(s.id),
     nodeData: perNode?.[s.id] || null,
@@ -71,14 +71,14 @@ const MapPage = () => {
   );
 
   const positions = markers.map((m) => [m.lat, m.lng]);
-  const center = positions.length > 0 ? positions[0] : [40.7128, -74.006];
+  const center = positions.length > 0 ? positions[0] : [21.1458, 79.0882];
 
   const sparkData = Array.isArray(history) && history.length > 0
     ? history.slice(-24).map((h) => ({ val: h.aqi }))
     : Array.from({ length: 24 }, (_, i) => ({ val: 40 + ((i * 7) % 60) }));
 
   return (
-    <div className="h-screen w-full bg-[#0B0F1A] text-slate-100 flex overflow-hidden relative">
+    <div className="h-[calc(100vh-3.5rem)] lg:h-screen w-full bg-[#0B0F1A] text-slate-100 flex overflow-hidden relative">
 
       {/* Map */}
       <div className="absolute inset-0 z-0">
@@ -147,7 +147,7 @@ const MapPage = () => {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -320, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute top-4 left-4 bottom-4 w-72 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 rounded-xl flex flex-col z-50 overflow-hidden"
+            className="fixed lg:absolute bottom-0 lg:top-4 left-0 lg:left-4 lg:bottom-4 w-full lg:w-72 max-h-[60vh] lg:max-h-none bg-slate-900/95 lg:bg-slate-900/90 backdrop-blur-md border-t lg:border border-slate-700/50 lg:rounded-xl flex flex-col z-50 overflow-hidden rounded-t-2xl"
           >
             <div className="p-4 border-b border-slate-700/40">
               <button onClick={() => setSelectedNode(null)} className="absolute top-3 right-3 p-1.5 text-slate-400 hover:text-white bg-slate-800 rounded-md transition-colors">
@@ -221,24 +221,24 @@ const MapPage = () => {
       </AnimatePresence>
 
       {/* Top controls */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3">
-        <div className="relative">
+      <div className="absolute top-3 left-3 right-3 lg:left-1/2 lg:right-auto lg:-translate-x-1/2 lg:top-4 z-50 flex items-center gap-2 lg:gap-3">
+        <div className="relative flex-1 lg:flex-none">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
             placeholder="Search sectors..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-64 h-10 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 rounded-lg pl-9 pr-4 text-sm text-white focus:outline-none focus:border-sky-500/50 placeholder:text-slate-600"
+            className="w-full lg:w-64 h-10 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 rounded-lg pl-9 pr-4 text-sm text-white focus:outline-none focus:border-sky-500/50 placeholder:text-slate-600"
           />
         </div>
 
-        <div className="flex bg-slate-900/90 backdrop-blur-md border border-slate-700/50 rounded-lg p-0.5">
+        <div className="flex bg-slate-900/90 backdrop-blur-md border border-slate-700/50 rounded-lg p-0.5 shrink-0">
           {['aqi', 'rri'].map((m) => (
             <button
               key={m}
               onClick={() => setFilterMode(m)}
-              className={`px-4 py-1.5 rounded-md text-xs font-medium uppercase transition-colors ${
+              className={`px-3 lg:px-4 py-1.5 rounded-md text-xs font-medium uppercase transition-colors ${
                 filterMode === m ? 'bg-sky-500/15 text-sky-400' : 'text-slate-500 hover:text-slate-300'
               }`}
             >
@@ -248,8 +248,8 @@ const MapPage = () => {
         </div>
       </div>
 
-      {/* Right alerts panel */}
-      <div className={`absolute top-16 right-4 bottom-4 w-72 flex flex-col z-40 transition-transform duration-300 ${showAlerts ? '' : 'translate-x-[120%]'}`}>
+      {/* Right alerts panel - hidden on mobile */}
+      <div className={`hidden lg:flex absolute top-16 right-4 bottom-4 w-72 flex-col z-40 transition-transform duration-300 ${showAlerts ? '' : 'translate-x-[120%]'}`}>
         <button
           onClick={() => setShowAlerts(!showAlerts)}
           className="absolute -left-10 top-0 p-2 bg-slate-900/90 border border-slate-700/50 rounded-lg text-slate-400 hover:text-white transition-colors"
@@ -277,7 +277,7 @@ const MapPage = () => {
       </div>
 
       {/* Legend */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 rounded-lg px-4 py-2.5 flex items-center gap-5">
+      <div className={`absolute ${selectedNode ? 'hidden lg:flex' : 'flex'} bottom-4 left-1/2 -translate-x-1/2 z-40 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 rounded-lg px-3 lg:px-4 py-2 lg:py-2.5 items-center gap-3 lg:gap-5`}>
         {[
           { label: 'Safe', color: '#22c55e' },
           { label: 'Moderate', color: '#f59e0b' },

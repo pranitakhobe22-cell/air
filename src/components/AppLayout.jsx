@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Radio, Wind, Network, MapPin, Shield, Heart,
-  TrendingUp, User, Radiation, LogOut, WifiOff
+  TrendingUp, User, Radiation, LogOut, WifiOff, Menu, X
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
 import useAuthStore from '@/store/useAuthStore';
@@ -23,18 +23,22 @@ const navItems = [
 
 const AppLayout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const data = useAerisStore((s) => s.data);
   const user = useAuthStore((s) => s.user);
   const selectedNode = useNodeStore((s) => s.selectedNode);
   const setSelectedNode = useNodeStore((s) => s.setSelectedNode);
   const detectLocation = useNodeStore((s) => s.detectLocation);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const perNode = data?.perNode || {};
   const espNodeIds = Object.keys(perNode);
 
-  // Detect user location on first mount for auto-nearest
   useEffect(() => { detectLocation(); }, [detectLocation]);
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
 
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
@@ -55,20 +59,55 @@ const AppLayout = () => {
   const riskColor = data?.derived?.risk_color || '#10b981';
 
   return (
-    <div className="min-h-screen bg-[#0B0F1A] text-slate-100 font-sans flex">
+    <div className="min-h-screen bg-[#0B0F1A] text-slate-100 font-sans">
 
-      {/* ── Sidebar ──────────────────────────────────── */}
-      <aside className="w-64 fixed top-0 left-0 h-screen bg-[#0f1420] border-r border-slate-800 flex flex-col z-50">
+      {/* Mobile Top Bar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-[#0f1420]/95 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-4 z-[60]">
+        <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 text-slate-400 hover:text-white transition-colors">
+          <Menu size={22} />
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-gradient-to-br from-sky-400 to-blue-600 rounded-lg flex items-center justify-center">
+            <Shield className="w-3.5 h-3.5 text-white" />
+          </div>
+          <span className="text-sm font-bold text-white">AERIS</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+          <span className="text-sm font-bold tabular-nums" style={{ color: riskColor }}>{rri}</span>
+        </div>
+      </div>
+
+      {/* Overlay */}
+      {sidebarOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[70]"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`
+        fixed top-0 left-0 h-screen w-64 bg-[#0f1420] border-r border-slate-800 flex flex-col z-[80]
+        transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0
+      `}>
 
         {/* Brand */}
-        <div className="px-5 py-5 flex items-center gap-2.5 border-b border-slate-800">
-          <div
-            className="w-8 h-8 bg-gradient-to-br from-sky-400 to-blue-600 rounded-lg flex items-center justify-center cursor-pointer shrink-0"
-            onClick={() => navigate('/')}
-          >
-            <Shield className="w-4 h-4 text-white" />
+        <div className="px-5 py-5 flex items-center justify-between border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-8 h-8 bg-gradient-to-br from-sky-400 to-blue-600 rounded-lg flex items-center justify-center cursor-pointer shrink-0"
+              onClick={() => navigate('/')}
+            >
+              <Shield className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-base font-bold tracking-tight text-white">AERIS</span>
           </div>
-          <span className="text-base font-bold tracking-tight text-white">AERIS</span>
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1 text-slate-500 hover:text-white transition-colors">
+            <X size={18} />
+          </button>
         </div>
 
         {/* Navigation */}
@@ -111,7 +150,6 @@ const AppLayout = () => {
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-800 space-y-3">
-          {/* Status */}
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-1.5">
               <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
@@ -123,7 +161,6 @@ const AppLayout = () => {
             </div>
           </div>
 
-          {/* User card */}
           {user && (
             <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-800/40 border border-slate-700/40">
               <NavLink to="/profile" className="flex items-center gap-2.5 min-w-0">
@@ -147,8 +184,8 @@ const AppLayout = () => {
         </div>
       </aside>
 
-      {/* ── Main Content ─────────────────────────────── */}
-      <main className="ml-64 flex-1 min-h-screen">
+      {/* Main Content */}
+      <main className="lg:ml-64 min-h-screen pt-14 lg:pt-0">
         {!isOnline && (
           <div className="bg-rose-500/10 border-b border-rose-500/20 px-4 py-2 flex items-center justify-center gap-2">
             <WifiOff size={14} className="text-rose-400" />
