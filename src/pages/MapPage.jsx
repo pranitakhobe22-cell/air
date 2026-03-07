@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import useAerisStore from '@/store/aerisStore';
+import useNodeStore from '@/store/useNodeStore';
 import 'leaflet/dist/leaflet.css';
 import './MapPage.css';
 
@@ -41,10 +42,16 @@ const FlyToNode = ({ center }) => {
 
 const MapPage = () => {
   const data = useAerisStore((s) => s.data);
+  const userLocation = useNodeStore((s) => s.userLocation);
   const [selectedNode, setSelectedNode] = useState(null);
   const [filterMode, setFilterMode] = useState('rri');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAlerts, setShowAlerts] = useState(true);
+
+  // Default center: browser geolocation > first sector > fallback
+  const defaultCenter = userLocation
+    ? [userLocation.lat, userLocation.lng]
+    : [20.5937, 78.9629]; // India center as last resort
 
   if (!data?.derived) {
     return (
@@ -60,8 +67,8 @@ const MapPage = () => {
 
   const markers = sectors.map((s, i) => ({
     ...s,
-    lat: s.lat || 21.1458 + (i * 0.006 - 0.006),
-    lng: s.lng || 79.0882 + (i * 0.008 - 0.008),
+    lat: s.lat || defaultCenter[0] + (i * 0.006 - 0.006),
+    lng: s.lng || defaultCenter[1] + (i * 0.008 - 0.008),
     rri: s.rri || Math.floor(s.aqi * 0.8),
     isHardware: espIds.has(s.id),
     nodeData: perNode?.[s.id] || null,
@@ -71,11 +78,11 @@ const MapPage = () => {
   );
 
   const positions = markers.map((m) => [m.lat, m.lng]);
-  const center = positions.length > 0 ? positions[0] : [21.1458, 79.0882];
+  const center = positions.length > 0 ? positions[0] : defaultCenter;
 
   const sparkData = Array.isArray(history) && history.length > 0
     ? history.slice(-24).map((h) => ({ val: h.aqi }))
-    : Array.from({ length: 24 }, (_, i) => ({ val: 40 + ((i * 7) % 60) }));
+    : [];
 
   return (
     <div className="h-[calc(100vh-3.5rem)] lg:h-screen w-full bg-[#0B0F1A] text-slate-100 flex overflow-hidden relative">

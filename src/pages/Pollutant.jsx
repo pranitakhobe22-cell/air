@@ -10,13 +10,13 @@ import useActiveNode from '@/hooks/useActiveNode';
 
 const POLLUTANTS = {
   pm25: {
-    label: 'PM2.5', unit: 'ug/m3', safe: 12, moderate: 35, danger: 55,
+    label: 'PM2.5', unit: 'µg/m³', safe: 12, moderate: 35, danger: 55,
     color: '#38bdf8',
     desc: 'Fine particulate matter that penetrates deep into lung tissue.',
     impact: 'Cardiovascular stress and respiratory irritation.',
   },
   pm10: {
-    label: 'PM10', unit: 'ug/m3', safe: 54, moderate: 154, danger: 254,
+    label: 'PM10', unit: 'µg/m³', safe: 54, moderate: 154, danger: 254,
     color: '#818cf8',
     desc: 'Coarse particles from construction and road dust.',
     impact: 'Upper respiratory inflammation; aggravates asthma.',
@@ -40,9 +40,9 @@ const POLLUTANTS = {
     impact: 'Reduces oxygen delivery to organs and tissues.',
   },
   voc: {
-    label: 'VOCs', unit: 'ppb', safe: 250, moderate: 500, danger: 1000,
+    label: 'VOC Index', unit: 'index', safe: 100, moderate: 250, danger: 400,
     color: '#a78bfa',
-    desc: 'Volatile organic compounds from solids and liquids.',
+    desc: 'Volatile organic compound index from metal-oxide sensor (1-500 scale).',
     impact: 'Eye/nose irritation; prolonged exposure may be carcinogenic.',
   },
 };
@@ -181,7 +181,7 @@ const Pollutants = () => {
             <h3 className="text-sm font-semibold text-slate-300 mb-4">Environment</h3>
 
             {[
-              { label: 'Temperature', value: `${Number(environment?.temperature || 0).toFixed(1)} C`, icon: Thermometer, color: 'text-rose-400' },
+              { label: 'Temperature', value: `${Number(environment?.temperature || 0).toFixed(1)} °C`, icon: Thermometer, color: 'text-rose-400' },
               { label: 'Humidity', value: `${Number(environment?.humidity || 0).toFixed(1)}%`, icon: Droplets, color: 'text-blue-400' },
               { label: 'Pressure', value: `${Math.floor(environment?.pressure || 0)} hPa`, icon: Gauge, color: 'text-indigo-400' },
               { label: 'Oxygen', value: `${Number(environment?.oxygen || 0).toFixed(1)}%`, icon: Wind, color: 'text-emerald-400' },

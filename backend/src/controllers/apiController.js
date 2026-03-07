@@ -23,7 +23,7 @@ const fetchCosmosReadings = async (limit = 50) => {
         PM25:            r.pm25,
         PM10:            r.pm25 * 1.2,
         CO:              r.co,
-        NOX:             r.nox || 0,
+        NOX:             r.no2 || r.nox || 0,
         O3:              r.o3,
         VOC_INDEX:       r.vocIndex,
         TEMPERATURE:     r.temperature,
@@ -38,6 +38,12 @@ const fetchCosmosReadings = async (limit = 50) => {
         RISK_COLOR:      null,
         DOMINANT:        null,
         NODE_ID:         r.sensorId,
+        RAIN:            r.rain || false,
+        PM25_RAIN_DELTA: r.pm25RainDelta || 0,
+        LAT:             r.lat || null,
+        LNG:             r.lng || null,
+        CITY:            r.city || null,
+        REGION:          r.region || null,
     }));
 };
 
@@ -66,7 +72,7 @@ const getDominant = (r) => {
     const subs = [
         { name: 'PM2.5', value: (r.PM25 || 0) / 35 },
         { name: 'CO', value: (r.CO || 0) / 9.4 },
-        { name: 'O3', value: (r.O3 || 0) / 0.07 },
+        { name: 'O3', value: (r.O3 || 0) / 70 },
         { name: 'VOC', value: (r.VOC_INDEX || 0) / 300 },
     ];
     return subs.sort((a, b) => b.value - a.value)[0].name;
@@ -101,10 +107,8 @@ const generateForecast = (readings) => {
     const now = Date.now();
     const recent = readings.slice(0, 20).reverse(); // oldest-first for EMA
     if (recent.length === 0) {
-        return Array.from({ length: 6 }).map((_, i) => ({
-            timestamp: new Date(now + (i + 1) * 3600000).toISOString(),
-            aqi: 40, rri: 20, pm25: 12, confidence: 60,
-        }));
+        // No data — return empty forecast instead of fake values
+        return [];
     }
 
     // EMA (alpha = 0.3)
@@ -203,18 +207,20 @@ const getLatestData = async (req, res) => {
         for (const espId of ESP_IDS) {
             const espReadings = sorted.filter(r => r.NODE_ID === espId);
             if (espReadings.length > 0) {
-                espNodeMap[espId] = {
-                    latest: espReadings[0],
-                    geo: getEspLocation(espId),
-                };
+                const latest = espReadings[0];
+                // Geo: in-memory cache first, then Cosmos DB fields as fallback
+                const memGeo = getEspLocation(espId);
+                const geo = memGeo || (latest.LAT ? { lat: latest.LAT, lng: latest.LNG, city: latest.CITY, region: latest.REGION } : null);
+                espNodeMap[espId] = { latest, geo };
             }
         }
         const activeEspIds = Object.keys(espNodeMap);
-        const primaryGeo = getEspLocation(); // first available
+        // Primary geo: in-memory first, then from first ESP node's Cosmos data
+        const primaryGeo = getEspLocation() || (activeEspIds.length > 0 ? espNodeMap[activeEspIds[0]].geo : null);
 
-        // Base coordinates: use first ESP32 geo, fallback to DB locations
-        const baseLat = primaryGeo?.lat || locations[0]?.LAT || 19.076;
-        const baseLng = primaryGeo?.lng || locations[0]?.LNG || 72.877;
+        // Base coordinates: use ESP32 geo, fallback to DB locations
+        const baseLat = primaryGeo?.lat || locations[0]?.LAT || null;
+        const baseLng = primaryGeo?.lng || locations[0]?.LNG || null;
 
         // Build sectors from ESP32 hardware nodes first, then fill from DB locations
         const sectors = [];
@@ -230,8 +236,8 @@ const getLatestData = async (req, res) => {
                 { dlat: -0.006, dlng: -0.010 },
             ];
             const offset = offsets[i] || { dlat: i * 0.005, dlng: i * 0.005 };
-            const lat = geo?.lat || (baseLat + offset.dlat);
-            const lng = geo?.lng || (baseLng + offset.dlng);
+            const lat = geo?.lat || (baseLat != null ? baseLat + offset.dlat : null);
+            const lng = geo?.lng || (baseLng != null ? baseLng + offset.dlng : null);
             const locationName = geo ? `${geo.city}, ${geo.region}` : `Hardware Sensor ${i + 1}`;
 
             sectors.push({
@@ -254,34 +260,36 @@ const getLatestData = async (req, res) => {
             });
         });
 
-        // Add simulated DB nodes if no ESP32 data covers them
-        nodes.forEach((n, i) => {
-            if (activeEspIds.includes(n.ID)) return; // skip if already added as ESP32
-            const loc = locations.find(l => l.ID === n.LOCATION_ID);
-            const simReading = sorted.find(r => r.NODE_ID === n.ID);
-            const offset = { dlat: (activeEspIds.length + i) * 0.005, dlng: (activeEspIds.length + i) * 0.005 };
-            const lat = baseLat + offset.dlat;
-            const lng = baseLng + offset.dlng;
+        // Only add simulated DB nodes when NO real ESP32 hardware is detected
+        // When real hardware is active, skip fake nodes entirely
+        if (activeEspIds.length === 0) {
+            nodes.forEach((n, i) => {
+                const loc = locations.find(l => l.ID === n.LOCATION_ID);
+                const simReading = sorted.find(r => r.NODE_ID === n.ID);
+                const offset = { dlat: i * 0.005, dlng: i * 0.005 };
+                const lat = loc?.LAT || (baseLat != null ? baseLat + offset.dlat : null);
+                const lng = loc?.LNG || (baseLng != null ? baseLng + offset.dlng : null);
 
-            sectors.push({
-                id:     loc?.ID || n.ID,
-                name:   loc?.NAME || 'Sector',
-                aqi:    simReading ? simReading.AQI || 0 : 0,
-                rri:    simReading ? simReading.RRI || 0 : 0,
-                status: simReading ? (simReading.RISK_LEVEL || aqiToRiskLevel(simReading.AQI || 0)) : 'Safe',
-                lat, lng,
-            });
+                sectors.push({
+                    id:     loc?.ID || n.ID,
+                    name:   loc?.NAME || 'Sector',
+                    aqi:    simReading ? simReading.AQI || 0 : 0,
+                    rri:    simReading ? simReading.RRI || 0 : 0,
+                    status: simReading ? (simReading.RISK_LEVEL || aqiToRiskLevel(simReading.AQI || 0)) : 'Safe',
+                    lat, lng,
+                });
 
-            nodeList.push({
-                id:            n.ID,
-                location_name: loc?.NAME || 'Assigned',
-                type:          'outdoor',
-                status:        n.STATUS === 'online' ? 'active' : n.STATUS,
-                battery:       88 + Math.floor(Math.random() * 10),
-                lastPing:      n.LAST_SYNC,
-                lat, lng,
+                nodeList.push({
+                    id:            n.ID,
+                    location_name: loc?.NAME || 'Assigned',
+                    type:          'outdoor',
+                    status:        n.STATUS === 'online' ? 'active' : n.STATUS,
+                    battery:       88 + Math.floor(Math.random() * 10),
+                    lastPing:      n.LAST_SYNC,
+                    lat, lng,
+                });
             });
-        });
+        }
 
         const espLocationName = primaryGeo
             ? `${primaryGeo.city}, ${primaryGeo.region}, ${primaryGeo.country}`
@@ -300,6 +308,8 @@ const getLatestData = async (req, res) => {
                     pm25: latest?.PM25 || 0,
                     co: latest?.CO || 0,
                     o3: latest?.O3 || 0,
+                    nox: latest?.NOX || 0,
+                    voc_index: latest?.VOC_INDEX || 0,
                     temperature: latest?.TEMPERATURE || 0,
                     humidity: latest?.HUMIDITY || 0,
                     timestamp: latest?.CREATED_AT,
@@ -312,6 +322,8 @@ const getLatestData = async (req, res) => {
                     pm25: r.PM25 || 0,
                     co: r.CO || 0,
                     o3: r.O3 || 0,
+                    nox: r.NOX || 0,
+                    voc_index: r.VOC_INDEX || 0,
                 })).slice(0, 30),
             };
         }
@@ -335,6 +347,8 @@ const getLatestData = async (req, res) => {
                 humidity:    primaryReading?.HUMIDITY    || 0,
                 oxygen:      primaryReading?.OXYGEN      || 20.9,
                 pressure:    primaryReading?.PRESSURE    || 1013,
+                rain:        primaryReading?.RAIN        || false,
+                pm25RainDelta: primaryReading?.PM25_RAIN_DELTA || 0,
             },
             derived: {
                 aqi:              primaryReading?.AQI || 0,
@@ -346,7 +360,7 @@ const getLatestData = async (req, res) => {
                 dominant:         dominant,
             },
             trend: sorted.length >= 3
-                ? (sorted[0]?.AQI > sorted[2]?.AQI ? 'up' : sorted[0]?.AQI < sorted[2]?.AQI ? 'down' : 'stable')
+                ? (sorted[0]?.AQI > sorted[2]?.AQI ? 'rising' : sorted[0]?.AQI < sorted[2]?.AQI ? 'falling' : 'stable')
                 : 'stable',
             history,
             forecast: generateForecast(sorted),

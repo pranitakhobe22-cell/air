@@ -209,6 +209,25 @@ const Dashboard = () => {
         )}
       </AnimatePresence>
 
+      {/* ── Rain Status Banner ─────────────────────────────── */}
+      {environment?.rain && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+          className="bg-sky-900/30 border border-sky-700/40 rounded-xl px-5 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Droplets size={18} className="text-sky-400" />
+            <div>
+              <span className="text-sm font-medium text-sky-300">Rain Detected — Raining is happening</span>
+              {(environment.pm25RainDelta || 0) > 0 && (
+                <span className="block text-xs text-sky-400/80 mt-0.5">
+                  PM2.5 reduced by {Number(environment.pm25RainDelta).toFixed(1)} µg/m³ due to rain washout
+                </span>
+              )}
+            </div>
+          </div>
+          <span className="text-xs text-sky-500">Live</span>
+        </motion.div>
+      )}
+
       {/* ── AQI Hero + RRI + Advisory ───────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
@@ -296,7 +315,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-400">Trend</span>
               <span className="flex items-center gap-1 text-white font-medium">
-                {data.trend === 'up' ? <><TrendingUp size={14} className="text-red-400" /> Rising</> : <><Minus size={14} className="text-slate-400" /> Stable</>}
+                {data.trend === 'rising' ? <><TrendingUp size={14} className="text-red-400" /> Rising</> : data.trend === 'falling' ? <><TrendingDown size={14} className="text-emerald-400" /> Falling</> : <><Minus size={14} className="text-slate-400" /> Stable</>}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">

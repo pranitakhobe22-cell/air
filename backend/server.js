@@ -86,7 +86,7 @@ app.get('/api/v1/ml/export', async (req, res) => {
 
     const container = await getContainer('livelogs');
 
-    let queryText = 'SELECT TOP @limit c.timestamp, c.sensorId, c.pm25, c.co, c.o3, c.vocIndex, c.temperature, c.humidity, c.oxygen, c.pressure, c.aqi, c.aqiCategory, c.rri, c.riskLevel FROM c';
+    let queryText = 'SELECT TOP @limit c.timestamp, c.sensorId, c.pm25, c.co, c.o3, c.no2, c.vocIndex, c.temperature, c.humidity, c.oxygen, c.pressure, c.rain, c.pm25RainDelta, c.aqi, c.aqiCategory, c.rri, c.riskLevel FROM c';
     const parameters = [{ name: '@limit', value: limit }];
 
     const conditions = [];
@@ -114,11 +114,14 @@ app.get('/api/v1/ml/export', async (req, res) => {
       pm25: r.pm25,
       co: r.co,
       o3: r.o3,
+      no2: r.no2 || 0,
       voc_index: r.vocIndex,
       temperature: r.temperature,
       humidity: r.humidity,
       oxygen: r.oxygen ?? null,
       pressure: r.pressure ?? null,
+      rain: r.rain || false,
+      pm25_rain_delta: r.pm25RainDelta || 0,
       aqi: r.aqi,
       aqi_category: r.aqiCategory,
       rri: r.rri,
@@ -167,11 +170,15 @@ const start = async () => {
       console.warn('⚠️  [Cosmos] Not configured — set COSMOS_CONNECTION_STRING');
     }
 
-    // Seed demo location / node data into SQLite
-    await seedData();
-
-    // Start background simulation (generates SQLite readings for demo sectors)
-    simulationService.start();
+    // Seed demo location / node data into SQLite (only needed when no real hardware)
+    if (!isConfigured()) {
+      await seedData();
+      // Start background simulation only when no real hardware (Cosmos DB not configured)
+      simulationService.start();
+      console.log('🛰️  [Simulation] Running in demo mode — no real hardware detected');
+    } else {
+      console.log('🔌 [Hardware] Real ESP32 data via Cosmos DB — simulation disabled');
+    }
 
   } catch (err) {
     console.error('❌ [Startup] Error:', err.message);

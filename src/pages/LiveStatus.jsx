@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
 import useActiveNode from '@/hooks/useActiveNode';
+import useNodeStore from '@/store/useNodeStore';
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -33,13 +34,17 @@ const AnimatedNum = ({ value, decimals = 0 }) => {
   return <>{display.toFixed(decimals)}</>;
 };
 
-/* ── Sensor color helper ──────────────────────────────── */
+/* ── Sensor color helper (EPA thresholds) ────────────── */
 const sensorStatus = (id, val) => {
   const thresholds = {
     pm25: [12, 35, 55, 150],
+    pm10: [54, 154, 254, 354],
     co: [4.4, 9.4, 12.4, 15.4],
     o3: [54, 70, 85, 105],
+    nox: [53, 100, 360, 649],
     voc: [100, 200, 300, 400],
+    temp: [25, 32, 38, 45],
+    hum: [30, 60, 80, 95],
   };
   const t = thresholds[id];
   if (!t) return '#94a3b8';
@@ -54,6 +59,7 @@ const LiveStatus = () => {
   const data = useAerisStore((s) => s.data);
   const loading = useAerisStore((s) => s.loading);
   const active = useActiveNode();
+  const userLocation = useNodeStore((s) => s.userLocation);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [eventLog, setEventLog] = useState([]);
 
@@ -87,7 +93,7 @@ const LiveStatus = () => {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           <div className="lg:col-span-8 grid grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
+            {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-32 animate-pulse" />
             ))}
           </div>
@@ -107,15 +113,18 @@ const LiveStatus = () => {
   const activeEnv = active.environment || data.environment;
 
   const sensorTiles = [
-    { id: 'pm25', label: 'PM2.5', value: activeSensors.pm25, unit: 'ug/m3', icon: Activity, decimals: 1 },
-    { id: 'o3', label: 'Ozone', value: activeSensors.o3, unit: 'ppb', icon: Wind, decimals: 1 },
-    { id: 'co', label: 'CO', value: activeSensors.co, unit: 'ppm', icon: Gauge, decimals: 2 },
-    { id: 'voc', label: 'VOC Index', value: activeSensors.voc_index, unit: 'idx', icon: Activity, decimals: 0 },
-    { id: 'temp', label: 'Temperature', value: activeEnv?.temperature || activeSensors.temperature, unit: 'C', icon: Thermometer, decimals: 1 },
-    { id: 'hum', label: 'Humidity', value: activeEnv?.humidity || activeSensors.humidity, unit: '%', icon: Droplets, decimals: 0 },
+    { id: 'pm25', label: 'PM2.5', value: activeSensors.pm25, unit: 'µg/m³', icon: Activity, decimals: 1, max: 150 },
+    { id: 'pm10', label: 'PM10', value: activeSensors.pm10, unit: 'µg/m³', icon: Activity, decimals: 0, max: 354 },
+    { id: 'o3', label: 'Ozone', value: activeSensors.o3, unit: 'ppb', icon: Wind, decimals: 1, max: 120 },
+    { id: 'co', label: 'CO', value: activeSensors.co, unit: 'ppm', icon: Gauge, decimals: 2, max: 15 },
+    { id: 'nox', label: 'NOx', value: activeSensors.nox, unit: 'ppb', icon: Activity, decimals: 0, max: 360 },
+    { id: 'voc', label: 'VOC Index', value: activeSensors.voc_index, unit: 'index', icon: Activity, decimals: 0, max: 500 },
+    { id: 'temp', label: 'Temperature', value: activeEnv?.temperature || activeSensors.temperature, unit: '°C', icon: Thermometer, decimals: 1, max: 50 },
+    { id: 'hum', label: 'Humidity', value: activeEnv?.humidity || activeSensors.humidity, unit: '%', icon: Droplets, decimals: 0, max: 100 },
   ];
 
-  const mapCenter = sectors?.[0]?.lat ? [sectors[0].lat, sectors[0].lng] : [21.1458, 79.0882];
+  const defaultCenter = userLocation ? [userLocation.lat, userLocation.lng] : [20.5937, 78.9629];
+  const mapCenter = sectors?.[0]?.lat ? [sectors[0].lat, sectors[0].lng] : defaultCenter;
   const riskColor = activeDerived?.risk_color || '#10b981';
 
   const eventColors = {
@@ -149,6 +158,21 @@ const LiveStatus = () => {
         </div>
       </div>
 
+      {/* ── Rain Banner ──────────────────────────────── */}
+      {activeEnv?.rain && (
+        <div className="bg-sky-900/30 border border-sky-700/40 rounded-xl px-5 py-3 flex items-center gap-3">
+          <Droplets size={18} className="text-sky-400 shrink-0" />
+          <div>
+            <span className="text-sm font-medium text-sky-300">Raining is happening</span>
+            {(activeEnv.pm25RainDelta || 0) > 0 && (
+              <span className="block text-xs text-sky-400/80 mt-0.5">
+                PM2.5 reduced by {Number(activeEnv.pm25RainDelta).toFixed(1)} µg/m³
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── Main grid ──────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
@@ -180,7 +204,7 @@ const LiveStatus = () => {
                       className="h-full rounded-full transition-all duration-700"
                       style={{
                         backgroundColor: color,
-                        width: `${Math.min((tile.value / (tile.id === 'pm25' ? 150 : tile.id === 'co' ? 15 : tile.id === 'o3' ? 120 : tile.id === 'voc' ? 500 : tile.id === 'temp' ? 50 : 100)) * 100, 100)}%`
+                        width: `${Math.min((tile.value / tile.max) * 100, 100)}%`
                       }}
                     />
                   </div>

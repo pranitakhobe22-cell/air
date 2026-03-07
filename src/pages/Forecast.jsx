@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, CalendarDays } from 'lucide-react';
+import { Activity, CalendarDays, Cpu } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine
 } from 'recharts';
 import useAerisStore from '@/store/aerisStore';
 import useActiveNode from '@/hooks/useActiveNode';
+import { forecastAqi } from '@/utils/aqiEngine';
 
 const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -28,9 +29,15 @@ const Forecast = () => {
   const activeNode = useActiveNode();
 
   const history = Array.isArray(activeNode.history) ? activeNode.history : (Array.isArray(data?.history) ? data.history : []);
-  const forecast = Array.isArray(data?.forecast) ? data.forecast : [];
-
   const derivedAqi = activeNode.ready ? activeNode.derived?.aqi : data?.derived?.aqi;
+
+  // Use backend forecast if available, otherwise generate client-side EWMA prediction
+  const forecast = useMemo(() => {
+    const backendForecast = Array.isArray(data?.forecast) ? data.forecast : [];
+    if (backendForecast.length > 0) return backendForecast;
+    // Client-side Holt's exponential smoothing forecast
+    return forecastAqi(history, 6);
+  }, [data?.forecast, history]);
 
   const chartData = useMemo(() => {
     if (!derivedAqi && derivedAqi !== 0) return [];
@@ -96,7 +103,12 @@ const Forecast = () => {
         <div className="lg:col-span-8 space-y-5">
           <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
-              <h3 className="text-sm font-semibold text-slate-300">AQI Trajectory</h3>
+              <div className="flex items-center gap-3">
+                <h3 className="text-sm font-semibold text-slate-300">AQI Trajectory</h3>
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-purple-500/10 border border-purple-500/20 rounded text-[10px] font-semibold text-purple-400">
+                  <Cpu size={10} /> EWMA Model
+                </span>
+              </div>
               <div className="flex items-center gap-4 text-xs text-slate-500">
                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-0.5 rounded bg-emerald-400 inline-block" /> Recorded</span>
                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-0.5 rounded bg-sky-400 inline-block" /> Forecast</span>
@@ -192,7 +204,7 @@ const Forecast = () => {
                   </div>
                 );
               })}
-              {forecast.length === 0 && <p className="text-xs text-slate-600 text-center py-4">No forecast data</p>}
+              {forecast.length === 0 && <p className="text-xs text-slate-600 text-center py-4">Collecting data for prediction model...</p>}
             </div>
           </div>
         </div>

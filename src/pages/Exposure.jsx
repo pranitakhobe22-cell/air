@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Activity, Shield, Clock, HeartPulse, Wind,
-  Users, AlertTriangle, Droplets
+  Users, AlertTriangle, Droplets, Cpu
 } from 'lucide-react';
-import useAerisStore from '@/store/aerisStore';
 import useActiveNode from '@/hooks/useActiveNode';
+import { doseResponse } from '@/utils/aqiEngine';
 
 const rriColor = (rri) => {
   if (rri >= 75) return '#ef4444';
@@ -35,26 +35,27 @@ const Exposure = () => {
     );
   }
 
-  const baseRri = active.derived.rri || 50;
-  const pm25 = active.sensors?.pm25 || 35;
-  const personalRri = Math.min(Math.floor(baseRri * activeDemo.multiplier), 100);
-  const color = rriColor(personalRri);
-  const inhaledParticles = duration * 0.48 * pm25;
-  const stressLoad = personalRri * duration;
+  const baseRri = active.derived.rri || 0;
+  const pm25 = active.sensors?.pm25 || 0;
 
-  let advisory = 'Minimal physiological impact expected.';
-  if (stressLoad > 500) advisory = 'Critical exposure. Immediate health effects likely (wheezing, cardiovascular stress).';
-  else if (stressLoad > 250) advisory = 'Significant exposure. Respiratory irritation probable for sensitive groups.';
-  else if (stressLoad > 100) advisory = 'Moderate exposure. Prolonged outdoor activity not recommended.';
+  // Non-linear sigmoid dose-response model (Hill equation)
+  const dose = doseResponse(pm25, duration, activeDemo.multiplier);
+  const personalRri = dose.risk;
+  const color = rriColor(personalRri);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
 
-      <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Exposure Calculator</h1>
-        <p className="text-sm text-slate-500 mt-0.5">
-          {active.isNodeView ? `${active.nodeName} — ` : ''}Personalized exposure risk based on demographics and duration.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Exposure Calculator</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            {active.isNodeView ? `${active.nodeName} — ` : ''}Personalized exposure risk based on demographics and duration.
+          </p>
+        </div>
+        <span className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 border border-purple-500/20 rounded text-[10px] font-semibold text-purple-400 self-start sm:self-auto">
+          <Cpu size={10} /> Sigmoid Dose-Response Model
+        </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
@@ -64,7 +65,7 @@ const Exposure = () => {
 
           {/* RRI Gauge */}
           <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6 flex flex-col items-center">
-            <p className="text-xs text-slate-500 mb-4">Personal RRI</p>
+            <p className="text-xs text-slate-500 mb-4">Exposure Risk Score</p>
             <div className="relative w-40 h-40 mb-4">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 200 200">
                 <circle cx="100" cy="100" r="85" fill="none" stroke="#1e293b" strokeWidth="6" />
@@ -91,7 +92,8 @@ const Exposure = () => {
             <p className="text-xs text-slate-500 px-1 mb-2">Select profile</p>
             {demographics.map((d) => {
               const isActive = activeDemo.id === d.id;
-              const dColor = rriColor(Math.min(baseRri * d.multiplier, 100));
+              const dDose = doseResponse(pm25, duration, d.multiplier);
+              const dColor = rriColor(dDose.risk);
               return (
                 <button
                   key={d.id}
@@ -106,9 +108,9 @@ const Exposure = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-16 h-1 bg-slate-700/50 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full" style={{ backgroundColor: dColor, width: `${Math.min(baseRri * d.multiplier, 100)}%` }} />
+                      <div className="h-full rounded-full" style={{ backgroundColor: dColor, width: `${dDose.risk}%` }} />
                     </div>
-                    <span className="text-xs font-mono tabular-nums" style={{ color: dColor }}>x{d.multiplier.toFixed(1)}</span>
+                    <span className="text-xs font-mono tabular-nums" style={{ color: dColor }}>{dDose.risk}</span>
                   </div>
                 </button>
               );
@@ -153,11 +155,12 @@ const Exposure = () => {
                 <h3 className="text-sm font-semibold text-slate-300">Particulate Intake</h3>
               </div>
               <div className="flex items-baseline gap-2 mb-3">
-                <span className="text-4xl font-bold text-cyan-400 tabular-nums">{inhaledParticles.toFixed(1)}</span>
-                <span className="text-sm text-slate-500">ug</span>
+                <span className="text-4xl font-bold text-cyan-400 tabular-nums">{dose.inhaledMass.toFixed(1)}</span>
+                <span className="text-sm text-slate-500">µg</span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Based on a resting respiratory rate of 8L/min over {duration} hour{duration > 1 ? 's' : ''}.
+                Based on respiratory rate of {dose.breathingRate} m³/hr over {duration} hour{duration > 1 ? 's' : ''}.
+                Total volume: {(dose.breathingRate * duration).toFixed(1)} m³ inhaled.
               </p>
             </div>
 
@@ -167,21 +170,42 @@ const Exposure = () => {
                 <HeartPulse size={16} className="text-rose-400" />
                 <h3 className="text-sm font-semibold text-slate-300">Advisory</h3>
               </div>
-              <p className="text-sm text-slate-300 leading-relaxed mb-4">{advisory}</p>
+              <p className="text-sm text-slate-300 leading-relaxed mb-4">{dose.advisory}</p>
               <div>
                 <div className="flex justify-between mb-1.5">
                   <span className="text-xs text-slate-500">Cumulative Stress</span>
-                  <span className="text-xs font-medium text-slate-400">{stressLoad} units</span>
+                  <span className="text-xs font-medium text-slate-400">{dose.stressScore} units</span>
                 </div>
                 <div className="h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full bg-gradient-to-r from-sky-400 via-amber-400 to-red-500 rounded-full"
                     initial={{ width: 0 }}
-                    animate={{ width: `${Math.min((stressLoad / 1000) * 100, 100)}%` }}
+                    animate={{ width: `${Math.min((dose.stressScore / 1000) * 100, 100)}%` }}
                     transition={{ duration: 0.8 }}
                   />
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Model Info */}
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Activity size={14} className="text-purple-400" />
+              <h3 className="text-sm font-semibold text-slate-300">Model Parameters</h3>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: 'PM2.5 Conc.', value: `${pm25.toFixed(1)} µg/m³` },
+                { label: 'Hill Coefficient', value: '2.2' },
+                { label: 'EC50 Threshold', value: '55 µg/m³' },
+                { label: 'Vuln. Modifier', value: `×${activeDemo.multiplier.toFixed(1)}` },
+              ].map(p => (
+                <div key={p.label} className="p-3 bg-slate-900/50 border border-slate-700/30 rounded-lg">
+                  <p className="text-[10px] text-slate-500 mb-1">{p.label}</p>
+                  <p className="text-sm font-semibold text-white">{p.value}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>

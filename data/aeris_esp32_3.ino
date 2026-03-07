@@ -20,6 +20,8 @@
 //    ADC2 (needs WiFi pause):
 //      26 = CO MEMS (SEN0564)
 //      27 = NO2 MEMS (SEN0574)
+//    Digital input:
+//      23 = Rain detection sensor (LOW = rain)
 //    Digital output:
 //      25 = Dust sensor LED
 //    I2C (SDA=21, SCL=22):
@@ -84,6 +86,9 @@ Adafruit_SHT31  sht31;
 #define CO_MEMS_PIN     26   // ADC2_CH9 — SEN0564 CO
 #define NO2_MEMS_PIN    27   // ADC2_CH7 — SEN0574 NO2
 
+// Rain detection sensor (digital input — LOW when water detected)
+#define RAIN_SENSOR_PIN 23
+
 // =============================================
 //  SENSOR FLAGS
 // =============================================
@@ -91,6 +96,11 @@ bool hasOLED  = false;
 bool hasSGP40 = false;
 bool hasSHT31 = false;
 bool wifiConnected = false;
+
+// Rain detection state
+bool g_raining = false;
+float g_pm25_before_rain = 0;   // PM2.5 snapshot when rain started
+float g_pm25_rain_delta  = 0;   // reduction in PM2.5 during rain
 
 // =============================================
 //  CALIBRATION
@@ -166,6 +176,11 @@ int g_aqi = 0, g_aqi_pm = 0, g_aqi_o3 = 0, g_aqi_co = 0, g_aqi_no2 = 0;
 // Raw ADC2 voltages (updated when WiFi is paused)
 float g_co_mems_v  = 0;
 float g_no2_mems_v = 0;
+
+// Last-known-good values (retain last valid non-zero reading)
+float    g_co_lastgood  = 0;
+float    g_no2_lastgood = 0;
+uint16_t g_voc_lastgood = 0;
 
 // =============================================
 //  SENSOR READS
@@ -423,6 +438,8 @@ void handleData() {
   json += "\"aqi_no2\":" + String(g_aqi_no2) + ",";
   json += "\"co_mems_v\":" + String(g_co_mems_v, 3) + ",";
   json += "\"no2_mems_v\":" + String(g_no2_mems_v, 3) + ",";
+  json += "\"rain\":" + String(g_raining ? "true" : "false") + ",";
+  json += "\"pm25_rain_delta\":" + String(g_pm25_rain_delta, 1) + ",";
   json += "\"label\":\"" + aqiLabel(g_aqi) + "\",";
   json += "\"color\":\"" + aqiColor(g_aqi) + "\"";
   json += "}";
@@ -483,6 +500,7 @@ h1{text-align:center;font-size:22px;margin:8px 0;color:#fff}
   <div class="card"><div class="lbl">Humidity</div><div class="val" id="hum">--</div><div class="unit">%</div></div>
   <div class="card"><div class="lbl">UV Index</div><div class="val" id="uv">--</div><div class="unit">&nbsp;</div></div>
   <div class="card"><div class="lbl">CO (MQ-7)</div><div class="val" id="comq">--</div><div class="unit">ppm ref</div></div>
+  <div class="card wide" id="rainCard" style="display:none;background:#0a2540"><div class="lbl">Rain Status</div><div class="val" id="rainVal" style="color:#38bdf8">--</div><div class="unit" id="rainDelta"></div></div>
 </div>
 
 <script>
@@ -508,6 +526,9 @@ function update(){
     document.getElementById('hum').textContent=d.hum;
     document.getElementById('uv').textContent=d.uv;
     document.getElementById('comq').textContent=d.co_mq;
+    var rc=document.getElementById('rainCard');
+    if(d.rain){rc.style.display='';document.getElementById('rainVal').textContent='RAINING';document.getElementById('rainDelta').textContent='PM2.5 reduced by '+d.pm25_rain_delta+' ug/m3';}
+    else{rc.style.display='none';}
   }).catch(e=>console.log('fetch error'));
 }
 update();
@@ -651,6 +672,59 @@ void drawPage2(float temp, float hum, float uv, int aqi) {
   display.display();
 }
 
+void drawPage3Rain(float pm25, int aqi) {
+  display.clearDisplay();
+  display.setTextColor(SH110X_WHITE);
+
+  if (g_raining) {
+    display.setTextSize(1);
+    display.setCursor(10, 0);
+    display.print("~~ RAIN DETECTED ~~");
+
+    display.setTextSize(2);
+    display.setCursor(10, 14);
+    display.print("RAINING");
+
+    display.setTextSize(1);
+    display.setCursor(0, 34);
+    display.print("PM2.5 now: ");
+    display.print(pm25, 1);
+    display.print(" ug/m3");
+
+    if (g_pm25_rain_delta > 0) {
+      display.setCursor(0, 44);
+      display.print("Reduced: -");
+      display.print(g_pm25_rain_delta, 1);
+      display.print(" ug/m3");
+    }
+  } else {
+    display.setTextSize(1);
+    display.setCursor(20, 0);
+    display.print("RAIN SENSOR");
+
+    display.setTextSize(2);
+    display.setCursor(20, 16);
+    display.print("DRY");
+
+    display.setTextSize(1);
+    display.setCursor(0, 38);
+    display.print("PM2.5: ");
+    display.print(pm25, 1);
+    display.print(" ug/m3");
+  }
+
+  display.drawLine(0, 52, 127, 52, SH110X_WHITE);
+  display.setTextSize(1);
+  display.setCursor(0, 56);
+  display.print("AQI: ");
+  display.print(aqi);
+  display.print(" [");
+  display.print(aqiLabel(aqi));
+  display.print("]");
+
+  display.display();
+}
+
 void drawWarmup(int pct, float temp, float hum) {
   display.clearDisplay();
   display.setTextColor(SH110X_WHITE);
@@ -769,11 +843,14 @@ void pushToBackend() {
   json += "\"pm25\":" + String(g_pm25, 2) + ",";
   json += "\"co\":" + String(g_co, 2) + ",";
   json += "\"o3\":" + String(g_o3 / 1000.0, 6) + ",";
+  json += "\"no2\":" + String(g_no2_ppb, 2) + ",";
   json += "\"voc_index\":" + String(g_voc);
   json += "},";
   json += "\"environment\":{";
   json += "\"temperature\":" + String(g_temp, 2) + ",";
-  json += "\"humidity\":" + String(g_hum, 2);
+  json += "\"humidity\":" + String(g_hum, 2) + ",";
+  json += "\"rain\":" + String(g_raining ? "true" : "false") + ",";
+  json += "\"pm25_rain_delta\":" + String(g_pm25_rain_delta, 2);
   json += "}";
   json += "}";
 
@@ -813,6 +890,9 @@ void setup() {
   Serial.println("   Improved v2 (ADC2 fix)");
   Serial.println("==============================");
   Serial.println();
+
+  // Rain sensor (digital input — module outputs HIGH when water detected)
+  pinMode(RAIN_SENSOR_PIN, INPUT);
 
   // Analog pins (ADC1 — always work)
   pinMode(DUST_LED_PIN, OUTPUT);
@@ -990,6 +1070,9 @@ void setup() {
   Serial.print("| NO2 MEMS: pin ");
   Serial.print(NO2_MEMS_PIN);
   Serial.println(" (ADC2)    |");
+  Serial.print("| Rain:     pin ");
+  Serial.print(RAIN_SENSOR_PIN);
+  Serial.println(" (Digital) |");
   Serial.println("+----------------------------+");
   Serial.println();
 
@@ -1039,17 +1122,25 @@ void loop() {
   float humidity    = 0;
 
   if (hasSGP40) {
+    uint16_t rawVoc = 0;
     if (hasSHT31) {
       // Use temp/humidity compensation for better VOC accuracy
       float t = sht31.readTemperature();
       float h = sht31.readHumidity();
       if (!isnan(t) && !isnan(h)) {
-        vocIndex = sgp.measureVocIndex(t, h);
+        rawVoc = sgp.measureVocIndex(t, h);
       } else {
-        vocIndex = sgp.measureVocIndex();
+        rawVoc = sgp.measureVocIndex();
       }
     } else {
-      vocIndex = sgp.measureVocIndex();
+      rawVoc = sgp.measureVocIndex();
+    }
+    // Keep last valid VOC when SGP40 returns 0 (I2C glitch or warmup)
+    if (rawVoc > 0) {
+      vocIndex = rawVoc;
+      g_voc_lastgood = rawVoc;
+    } else {
+      vocIndex = g_voc_lastgood;
     }
   }
   if (hasSHT31) {
@@ -1063,6 +1154,27 @@ void loop() {
   if (wifiConnected && warmedUp && (now - lastADC2Read >= ADC2_INTERVAL)) {
     lastADC2Read = now;
     readADC2Sensors();
+  }
+
+  // ---- Rain Detection ----
+  bool wasRaining = g_raining;
+  g_raining = (digitalRead(RAIN_SENSOR_PIN) == HIGH);  // HIGH = water detected
+
+  if (g_raining && !wasRaining) {
+    // Rain just started — snapshot current PM2.5
+    g_pm25_before_rain = pm25_ema >= 0 ? pm25_ema : 0;
+    g_pm25_rain_delta = 0;
+    Serial.println("[RAIN] Rain detected! Tracking PM2.5 reduction...");
+  }
+  if (g_raining && g_pm25_before_rain > 0) {
+    float currentPM = pm25_ema >= 0 ? pm25_ema : 0;
+    g_pm25_rain_delta = g_pm25_before_rain - currentPM;
+    if (g_pm25_rain_delta < 0) g_pm25_rain_delta = 0;
+  }
+  if (!g_raining && wasRaining) {
+    Serial.print("[RAIN] Rain stopped. Total PM2.5 reduction: ");
+    Serial.print(g_pm25_rain_delta, 1);
+    Serial.println(" ug/m3");
   }
 
   // ---- Warm-up ----
@@ -1094,10 +1206,11 @@ void loop() {
     MQ135_Ro = mq135Rs_ema / MQ135_CLEAN_AIR_FACTOR;
 
     // Calibrate MEMS baselines — do one fresh ADC2 read
+    // Use 95% of clean-air voltage as baseline → headroom for natural fluctuation
     Serial.println("[CAL] Reading ADC2 for MEMS baseline calibration...");
     readADC2Sensors();
-    CO_MEMS_BASELINE  = g_co_mems_v;
-    NO2_MEMS_BASELINE = g_no2_mems_v;
+    CO_MEMS_BASELINE  = g_co_mems_v * 0.95;
+    NO2_MEMS_BASELINE = g_no2_mems_v * 0.95;
     memsCalibrated = true;
 
     Serial.println("-------- Calibration --------");
@@ -1119,10 +1232,14 @@ void loop() {
   float uvIdx      = uv_ema;
 
   // CO from MEMS sensor (ADC2 — uses cached voltage from last WiFi-pause read)
-  float co_ppm = coPPM_MEMS(g_co_mems_v);
+  float co_raw = coPPM_MEMS(g_co_mems_v);
+  if (co_raw > 0) g_co_lastgood = co_raw;
+  float co_ppm = (co_raw > 0) ? co_raw : g_co_lastgood;
 
   // NO2 from MEMS sensor (ADC2 — uses cached voltage)
-  float no2_ppb = no2PPB_MEMS(g_no2_mems_v);
+  float no2_raw = no2PPB_MEMS(g_no2_mems_v);
+  if (no2_raw > 0) g_no2_lastgood = no2_raw;
+  float no2_ppb = (no2_raw > 0) ? no2_raw : g_no2_lastgood;
 
   int aqi_pm  = aqiFromPM25(pm25);
   int aqi_o3  = aqiFromO3(o3_ppb);
@@ -1163,6 +1280,10 @@ void loop() {
   Serial.print("  Temp:       "); Serial.print(temperature, 1); Serial.println(" C");
   Serial.print("  Humidity:   "); Serial.print(humidity, 1); Serial.println(" %");
   Serial.println();
+  Serial.print("  Rain:       "); Serial.println(g_raining ? "YES - Raining is happening" : "No");
+  if (g_raining && g_pm25_rain_delta > 0) {
+    Serial.print("  PM2.5 drop: -"); Serial.print(g_pm25_rain_delta, 1); Serial.println(" ug/m3 (rain effect)");
+  }
   Serial.print("  MEMS raw:   CO_V="); Serial.print(g_co_mems_v, 3);
   Serial.print("  NO2_V="); Serial.println(g_no2_mems_v, 3);
   Serial.println();
@@ -1187,7 +1308,8 @@ void loop() {
       case 0: drawPage0(pm25, o3_ppb, co_ppm, totalAQI);        break;
       case 1: drawPage1(no2_ppb, co2_ppm, vocIndex, totalAQI);   break;
       case 2: drawPage2(temperature, humidity, uvIdx, totalAQI);  break;
+      case 3: drawPage3Rain(pm25, totalAQI);                      break;
     }
-    oledPage = (oledPage + 1) % 3;
+    oledPage = (oledPage + 1) % 4;
   }
 }
