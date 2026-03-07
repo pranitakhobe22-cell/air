@@ -49,7 +49,7 @@ WebServer server(80);
 // =============================================
 //  AERIS BACKEND CONFIG
 // =============================================
-const char* AERIS_SERVER = "https://aeris-backend-production.up.railway.app";
+const char* AERIS_SERVER = "https://live-aeris.onrender.com";
 const char* AERIS_API_KEY  = "aeris-dev-ingest-key-2026";
 const char* AERIS_NODE_ID  = "ESP32_03";
 
