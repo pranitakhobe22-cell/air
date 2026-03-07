@@ -5,6 +5,7 @@ import {
   Users, AlertTriangle, Droplets
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
+import useActiveNode from '@/hooks/useActiveNode';
 
 const rriColor = (rri) => {
   if (rri >= 75) return '#ef4444';
@@ -22,11 +23,11 @@ const demographics = [
 ];
 
 const Exposure = () => {
-  const data = useAerisStore((s) => s.data);
+  const active = useActiveNode();
   const [duration, setDuration] = useState(1);
   const [activeDemo, setActiveDemo] = useState(demographics[0]);
 
-  if (!data?.derived) {
+  if (!active.ready) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-10 h-10 border-3 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
@@ -34,8 +35,8 @@ const Exposure = () => {
     );
   }
 
-  const baseRri = data.derived.rri || 50;
-  const pm25 = data.sensors?.pm25 || 35;
+  const baseRri = active.derived.rri || 50;
+  const pm25 = active.sensors?.pm25 || 35;
   const personalRri = Math.min(Math.floor(baseRri * activeDemo.multiplier), 100);
   const color = rriColor(personalRri);
   const inhaledParticles = duration * 0.48 * pm25;
@@ -51,7 +52,9 @@ const Exposure = () => {
 
       <div>
         <h1 className="text-2xl font-bold text-white tracking-tight">Exposure Calculator</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Personalized exposure risk based on demographics and duration.</p>
+        <p className="text-sm text-slate-500 mt-0.5">
+          {active.isNodeView ? `${active.nodeName} — ` : ''}Personalized exposure risk based on demographics and duration.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">

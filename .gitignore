@@ -34,4 +34,6 @@ dist-ssr
 *.db
 *.db-shm
 *.db-wal
-data/
+data/*.db
+data/*.db-shm
+data/*.db-wal

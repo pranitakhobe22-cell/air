@@ -5,6 +5,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine
 } from 'recharts';
 import useAerisStore from '@/store/aerisStore';
+import useActiveNode from '@/hooks/useActiveNode';
 
 const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -24,20 +25,23 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 const Forecast = () => {
   const data = useAerisStore((s) => s.data);
+  const activeNode = useActiveNode();
 
-  const history = Array.isArray(data?.history) ? data.history : [];
+  const history = Array.isArray(activeNode.history) ? activeNode.history : (Array.isArray(data?.history) ? data.history : []);
   const forecast = Array.isArray(data?.forecast) ? data.forecast : [];
 
+  const derivedAqi = activeNode.ready ? activeNode.derived?.aqi : data?.derived?.aqi;
+
   const chartData = useMemo(() => {
-    if (!data?.derived) return [];
+    if (!derivedAqi && derivedAqi !== 0) return [];
     const pts = history.slice(-20).map(h => ({
       time: new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       actualAqi: h.aqi || 0,
     }));
     pts.push({
       time: 'Now',
-      actualAqi: data.derived.aqi || 0,
-      forecastAqi: data.derived.aqi || 0,
+      actualAqi: derivedAqi || 0,
+      forecastAqi: derivedAqi || 0,
     });
     forecast.forEach(f => {
       pts.push({
@@ -46,7 +50,7 @@ const Forecast = () => {
       });
     });
     return pts;
-  }, [history, forecast, data?.derived]);
+  }, [history, forecast, derivedAqi]);
 
   if (!data?.derived) {
     return (
@@ -66,13 +70,14 @@ const Forecast = () => {
     );
   }
 
-  const peakAqi = forecast.length > 0 ? Math.max(...forecast.map(f => f.aqi || 0)) : data.derived.aqi;
+  const currentAqi = derivedAqi || 0;
+  const peakAqi = forecast.length > 0 ? Math.max(...forecast.map(f => f.aqi || 0)) : currentAqi;
   const peakTime = forecast.find(f => f.aqi === peakAqi)?.timestamp;
   const peakLabel = peakTime ? new Date(peakTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now';
   const avgConf = forecast.length > 0
     ? Math.round(forecast.reduce((a, f) => a + (f.confidence || 80), 0) / forecast.length) : 80;
 
-  const allAqi = [...history.map(h => h.aqi || 0), data.derived.aqi || 0];
+  const allAqi = [...history.map(h => h.aqi || 0), currentAqi];
   const total = allAqi.length || 1;
   const safePct = Math.round(allAqi.filter(a => a <= 50).length / total * 100);
   const elevPct = Math.round(allAqi.filter(a => a > 50 && a <= 150).length / total * 100);
@@ -82,7 +87,9 @@ const Forecast = () => {
     <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white tracking-tight">Forecast</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Predictive air quality trends based on recent sensor data.</p>
+        <p className="text-sm text-slate-500 mt-0.5">
+          {activeNode.isNodeView ? `${activeNode.nodeName} — ` : ''}Predictive air quality trends based on recent sensor data.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
@@ -122,7 +129,7 @@ const Forecast = () => {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Current AQI', value: data.derived.aqi, color: data.derived.aqi > 100 ? 'text-red-400' : 'text-emerald-400' },
+              { label: 'Current AQI', value: currentAqi, color: currentAqi > 100 ? 'text-red-400' : 'text-emerald-400' },
               { label: 'Peak Forecast', value: peakAqi, color: peakAqi > 100 ? 'text-red-400' : 'text-amber-400' },
               { label: 'Peak Time', value: peakLabel, color: 'text-white' },
               { label: 'Confidence', value: `${avgConf}%`, color: 'text-emerald-400' },

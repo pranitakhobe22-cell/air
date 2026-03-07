@@ -6,6 +6,7 @@ import {
   AreaChart, Area, ResponsiveContainer, XAxis, Tooltip
 } from 'recharts';
 import useAerisStore from '@/store/aerisStore';
+import useActiveNode from '@/hooks/useActiveNode';
 
 const POLLUTANTS = {
   pm25: {
@@ -61,8 +62,9 @@ const ChartTooltip = ({ active, payload }) => {
 
 const Pollutants = () => {
   const data = useAerisStore((s) => s.data);
+  const active = useActiveNode();
 
-  if (!data?.sensors) {
+  if (!active.ready) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-10 h-10 border-3 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
@@ -70,7 +72,7 @@ const Pollutants = () => {
     );
   }
 
-  const { sensors, environment, history, derived } = data;
+  const { sensors, environment, derived, history } = active;
   const historyData = Array.isArray(history) ? history.slice(-20) : [];
 
   const getTrend = (key, val) => {
@@ -87,7 +89,9 @@ const Pollutants = () => {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white tracking-tight">Pollutant Analysis</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Individual pollutant readings, thresholds, and health impacts.</p>
+        <p className="text-sm text-slate-500 mt-0.5">
+          {active.isNodeView ? `${active.nodeName} — ` : ''}Individual pollutant readings, thresholds, and health impacts.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">

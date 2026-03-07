@@ -79,6 +79,27 @@ const useAerisStore = create((set, get) => ({
 
       const updatedHistory = [...(base.history || []), newHistoryPoint].slice(-60); // Keep last 60 readings
 
+      // Update perNode for live ESP32 data (so Dashboard stations, Network, Map update live)
+      const perNode = { ...(base.perNode || {}) };
+      if (payload.nodeId) {
+        const prevNode = perNode[payload.nodeId] || { history: [] };
+        const nodeHistoryPoint = {
+          timestamp: payload.timestamp || new Date().toISOString(),
+          aqi, rri: payload.rri ?? Math.round(aqi * 0.6),
+          pm25: payload.pm25 || 0, co: payload.co || 0, o3: payload.o3 || 0,
+        };
+        perNode[payload.nodeId] = {
+          latest: {
+            aqi, rri: payload.rri ?? Math.round(aqi * 0.6),
+            pm25: payload.pm25 || 0, co: payload.co || 0, o3: payload.o3 || 0,
+            temperature: payload.temp || 0, humidity: payload.hum || 0,
+            timestamp: payload.timestamp || new Date().toISOString(),
+          },
+          location: prevNode.location || `Sensor ${payload.nodeId}`,
+          history: [...(prevNode.history || []), nodeHistoryPoint].slice(-30),
+        };
+      }
+
       return {
         data: {
           ...base,
@@ -114,6 +135,7 @@ const useAerisStore = create((set, get) => ({
             air_quality_text: `AQI ${aqi} — ${payload.label || 'Good'}. CO: ${payload.co?.toFixed(1)} ppm, PM2.5: ${payload.pm25?.toFixed(1)} µg/m³.`,
           },
           history: updatedHistory,
+          perNode,
         },
         loading: false,
       };

@@ -2,13 +2,12 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Copy only backend files (Docker context = project root)
-COPY backend/package.json backend/package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY backend/ .
+COPY . .
 
-EXPOSE 8080
-ENV PORT=8080
+EXPOSE 10000
+ENV PORT=10000
 
 CMD ["node", "server.js"]

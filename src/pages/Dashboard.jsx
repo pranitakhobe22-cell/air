@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import useAerisStore from '@/store/aerisStore';
 import useAuthStore from '@/store/useAuthStore';
+import useActiveNode from '@/hooks/useActiveNode';
 
 // ── Smooth Number Transition ─────────────────────────────────────
 const AnimatedNumber = ({ value, decimals = 0 }) => {
@@ -118,6 +119,7 @@ const Dashboard = () => {
   const { data } = useAerisStore();
   const user = useAuthStore((s) => s.user);
   const [alertDismissed, setAlertDismissed] = useState(false);
+  const active = useActiveNode();
 
   if (!data?.sensors || !data?.derived) {
     return (
@@ -142,12 +144,16 @@ const Dashboard = () => {
     );
   }
 
-  const { sensors, derived, environment, sectors, alerts, nodes, history, meta, perNode } = data;
-  const aqi = derived.aqi || 0;
+  const { sectors, alerts, nodes, meta, perNode } = data;
   const espNodes = perNode ? Object.entries(perNode) : [];
+
+  const sensors = active.sensors || data.sensors;
+  const derived = active.derived || data.derived;
+  const environment = active.environment || data.environment;
+  const aqi = derived.aqi || 0;
   const rri = derived.rri || 0;
   const band = getAqiBand(aqi);
-  const historyData = Array.isArray(history) ? history.slice(-30) : [];
+  const historyData = Array.isArray(active.history) ? active.history.slice(-30) : [];
 
   const trendData = historyData.map((h, i) => ({
     time: h.timestamp ? new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : `${i}`,
@@ -167,7 +173,7 @@ const Dashboard = () => {
           <h1 className="text-xl font-semibold text-white">{greeting}, {user?.name?.split(' ')[0] || 'there'}</h1>
           <div className="flex items-center gap-2 mt-1">
             <MapPin size={13} className="text-slate-500" />
-            <span className="text-sm text-slate-400">{meta?.location || 'Live Sector'}</span>
+            <span className="text-sm text-slate-400">{active.nodeName || meta?.location || 'Live Sector'}</span>
             <span className="text-slate-600 mx-1">|</span>
             <Clock size={13} className="text-slate-500" />
             <span className="text-sm text-slate-400">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>

@@ -5,6 +5,7 @@ import {
   Droplets, Wind, User, CheckCircle2
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
+import useActiveNode from '@/hooks/useActiveNode';
 
 const sensitiveTabs = [
   { id: 'asthma', label: 'Asthma/COPD', icon: Activity, threshold: 40 },
@@ -15,10 +16,10 @@ const sensitiveTabs = [
 ];
 
 const Health = () => {
-  const data = useAerisStore((s) => s.data);
+  const active = useActiveNode();
   const [activeTab, setActiveTab] = useState(sensitiveTabs[0]);
 
-  if (!data?.derived) {
+  if (!active.ready) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-10 h-10 border-3 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
@@ -26,7 +27,7 @@ const Health = () => {
     );
   }
 
-  const { derived, environment, sensors } = data;
+  const { derived, environment, sensors } = active;
   const rri = derived.rri || 50;
   const pm25 = sensors?.pm25 || 35;
   const temp = environment?.temperature || 25;
@@ -41,7 +42,9 @@ const Health = () => {
 
       <div>
         <h1 className="text-2xl font-bold text-white tracking-tight">Health Center</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Health guidance and recommendations based on current conditions.</p>
+        <p className="text-sm text-slate-500 mt-0.5">
+          {active.isNodeView ? `${active.nodeName} — ` : ''}Health guidance and recommendations based on current conditions.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">

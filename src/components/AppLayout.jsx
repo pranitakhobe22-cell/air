@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
 import useAuthStore from '@/store/useAuthStore';
+import useNodeStore from '@/store/useNodeStore';
 import { logout } from '@/services/auth';
 
 const navItems = [
@@ -24,7 +25,16 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const data = useAerisStore((s) => s.data);
   const user = useAuthStore((s) => s.user);
+  const selectedNode = useNodeStore((s) => s.selectedNode);
+  const setSelectedNode = useNodeStore((s) => s.setSelectedNode);
+  const detectLocation = useNodeStore((s) => s.detectLocation);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  const perNode = data?.perNode || {};
+  const espNodeIds = Object.keys(perNode);
+
+  // Detect user location on first mount for auto-nearest
+  useEffect(() => { detectLocation(); }, [detectLocation]);
 
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
@@ -80,6 +90,24 @@ const AppLayout = () => {
             </NavLink>
           ))}
         </nav>
+
+        {/* Node Selector */}
+        {espNodeIds.length > 0 && (
+          <div className="px-3 py-3 border-t border-slate-800">
+            <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider px-1 mb-2">Sensor Node</p>
+            <select
+              value={selectedNode}
+              onChange={(e) => setSelectedNode(e.target.value)}
+              className="w-full h-9 px-3 bg-slate-800/60 border border-slate-700/40 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-sky-500/50 cursor-pointer appearance-none"
+            >
+              <option value="auto">Nearest (Auto)</option>
+              <option value="all">All Stations</option>
+              {espNodeIds.map((id) => (
+                <option key={id} value={id}>{perNode[id]?.location || id}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-800 space-y-3">

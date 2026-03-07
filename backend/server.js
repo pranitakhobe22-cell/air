@@ -41,9 +41,7 @@ const apiRoutes = require('./src/routes/api');
 const app = express();
 app.set('trust proxy', true); // Railway reverse proxy — needed for real client IP
 const server = http.createServer(app);
-const PORT = process.env.RAILWAY_ENVIRONMENT
-  ? process.env.PORT
-  : (process.env.MAIN_PORT || 3000);
+const PORT = process.env.PORT || process.env.MAIN_PORT || 3000;
 
 // ── WebSocket ────────────────────────────────────────────────────
 initWebSocket(server);
@@ -184,7 +182,7 @@ const start = async () => {
     console.log('\n🌬️  AERIS Unified Backend');
     console.log('────────────────────────────────────────────────────────────────');
     console.log(`📡 Port:     ${PORT}`);
-    console.log(`🌐 Public:   ${process.env.RAILWAY_STATIC_URL || 'http://localhost:' + PORT}`);
+    console.log(`🌐 Public:   ${process.env.RENDER_EXTERNAL_URL || process.env.RAILWAY_STATIC_URL || 'http://localhost:' + PORT}`);
     console.log(`🗄️  Cosmos:   ${isConfigured() ? 'CONFIGURED ✅' : 'NOT SET ❌'}`);
     console.log(`🏥 Health:   /health`);
     console.log(`🤖 ML:       /api/v1/ml/export`);

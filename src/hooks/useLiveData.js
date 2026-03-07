@@ -61,6 +61,8 @@ const useLiveData = () => {
             }
 
             updateFromFirebase({
+                nodeId: payload.nodeId || null,
+                timestamp: payload.timestamp || new Date().toISOString(),
                 pm25: payload.sensors.pm25 || 0,
                 o3: payload.sensors.o3 || 0,
                 co: payload.sensors.co || 0,
@@ -79,7 +81,7 @@ const useLiveData = () => {
             });
 
             if (import.meta.env.DEV) {
-                console.log('📡 [ESP32] Live data received:', payload.derived);
+                console.log('[ESP32] Live:', payload.nodeId, 'AQI:', payload.derived?.aqi);
             }
         });
 

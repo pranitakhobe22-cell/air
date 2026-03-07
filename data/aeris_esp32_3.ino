@@ -1,3 +1,31 @@
+// =============================================
+//  AERIS Air Quality System — Node 3
+//  All sensors reading correctly with ADC2/WiFi fix
+// =============================================
+//
+//  KEY FIX: ESP32 ADC2 pins (GPIO 0,2,4,12-15,25-27) cannot be read
+//  while WiFi is active. CO MEMS (pin 26) and NO2 MEMS (pin 27) are
+//  ADC2 channels, so they always read 0 with WiFi on.
+//
+//  Solution: Periodically pause WiFi, read ADC2 pins, then reconnect.
+//  ADC1 pins (GPIO 32-36,39) work fine with WiFi.
+//
+//  PIN MAP:
+//    ADC1 (always works):
+//      34 = Dust sensor analog (PM2.5)
+//      32 = MQ-131 (Ozone)
+//      35 = MQ-7 (CO reference)
+//      36 = MQ-135 (CO2/VOC)
+//      33 = UV sensor
+//    ADC2 (needs WiFi pause):
+//      26 = CO MEMS (SEN0564)
+//      27 = NO2 MEMS (SEN0574)
+//    Digital output:
+//      25 = Dust sensor LED
+//    I2C (SDA=21, SCL=22):
+//      SGP40 (VOC), SHT31 (Temp/Hum), SH1106 OLED
+// =============================================
+
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
@@ -7,9 +35,11 @@
 #include <Adafruit_SHT31.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
+#include "esp_wifi.h"
+#include "esp_adc_cal.h"
 
 // =============================================
-//  WIFI — CHANGE THESE TO YOUR NETWORK
+//  WIFI CONFIG
 // =============================================
 const char* WIFI_SSID = "NOKIA 3310";
 const char* WIFI_PASS = "123456789";
@@ -17,12 +47,11 @@ const char* WIFI_PASS = "123456789";
 WebServer server(80);
 
 // =============================================
-//  AERIS BACKEND CONFIG — CHANGE SERVER_IP
+//  AERIS BACKEND CONFIG
 // =============================================
-// Point this to your Railway deployment URL
-const char* AERIS_SERVER = "https://aeris-backend-production.up.railway.app"; 
+const char* AERIS_SERVER = "https://aeris-backend-production.up.railway.app";
 const char* AERIS_API_KEY  = "aeris-dev-ingest-key-2026";
-const char* AERIS_NODE_ID  = "ESP32_01";
+const char* AERIS_NODE_ID  = "ESP32_03";
 
 unsigned long lastBackendPush = 0;
 const unsigned long BACKEND_INTERVAL = 5000;
@@ -43,14 +72,17 @@ Adafruit_SHT31  sht31;
 // =============================================
 //  PINS
 // =============================================
-#define DUST_LED_PIN    25
-#define DUST_ANALOG_PIN 34
-#define MQ131_PIN       32
-#define MQ7_PIN         35
-#define MQ135_PIN       36
-#define CO_MEMS_PIN     26
-#define NO2_MEMS_PIN    27
-#define UV_PIN          33
+// ADC1 pins (work with WiFi)
+#define DUST_LED_PIN    25   // Digital output
+#define DUST_ANALOG_PIN 34   // ADC1_CH6
+#define MQ131_PIN       32   // ADC1_CH4 — Ozone
+#define MQ7_PIN         35   // ADC1_CH7 — CO (MQ)
+#define MQ135_PIN       36   // ADC1_CH0 — CO2/Air quality
+#define UV_PIN          33   // ADC1_CH5 — UV index
+
+// ADC2 pins (BLOCKED by WiFi — need special handling)
+#define CO_MEMS_PIN     26   // ADC2_CH9 — SEN0564 CO
+#define NO2_MEMS_PIN    27   // ADC2_CH7 — SEN0574 NO2
 
 // =============================================
 //  SENSOR FLAGS
@@ -77,8 +109,8 @@ const float MQ135_RL_KOHM          = 10.0;
 const float MQ135_VCC              = 5.0;
 const float MQ135_CLEAN_AIR_FACTOR = 3.6;
 
-const float SEN0564_RANGE          = 1000.0;
-const float SEN0574_RANGE          = 10.0;
+const float SEN0564_RANGE          = 1000.0;  // CO full scale ppm
+const float SEN0574_RANGE          = 10.0;     // NO2 full scale ppm
 const float UV_SCALE               = 10.0;
 
 float MQ131_Ro = 0;
@@ -87,9 +119,10 @@ float MQ135_Ro = 0;
 
 float CO_MEMS_BASELINE  = 0;
 float NO2_MEMS_BASELINE = 0;
+bool  memsCalibrated    = false;
 
 // =============================================
-//  SMOOTHING
+//  SMOOTHING (EMA)
 // =============================================
 const float EMA_ALPHA = 0.2;
 
@@ -98,6 +131,8 @@ float mq131Rs_ema = -1;
 float mq7Rs_ema   = -1;
 float mq135Rs_ema = -1;
 float uv_ema      = -1;
+float co_mems_ema = -1;
+float no2_mems_ema = -1;
 
 float applyEMA(float val, float prev) {
   if (prev < 0) return val;
@@ -115,6 +150,10 @@ int oledPage  = 0;
 unsigned long lastSensorRead = 0;
 const unsigned long SENSOR_INTERVAL = 5000;
 
+// ADC2 read timer — read every 15 seconds (WiFi pause is brief)
+unsigned long lastADC2Read = 0;
+const unsigned long ADC2_INTERVAL = 15000;
+
 // =============================================
 //  LATEST READINGS (shared with web server)
 // =============================================
@@ -124,11 +163,13 @@ float g_temp = 0, g_hum = 0;
 uint16_t g_voc = 0;
 int g_aqi = 0, g_aqi_pm = 0, g_aqi_o3 = 0, g_aqi_co = 0, g_aqi_no2 = 0;
 
+// Raw ADC2 voltages (updated when WiFi is paused)
+float g_co_mems_v  = 0;
+float g_no2_mems_v = 0;
+
 // =============================================
 //  SENSOR READS
 // =============================================
-
-float lastDustVoltage = 0;
 
 float readDustPM25() {
   long total = 0;
@@ -141,7 +182,6 @@ float readDustPM25() {
     delayMicroseconds(9680);
   }
   float voltage = (total / 10.0) * (3.3 / 4095.0);
-  lastDustVoltage = voltage;
   float pm = (voltage - DUST_CLEAN_VOLTAGE) * 200.0;
   if (pm < 0) pm = 0;
   return pm;
@@ -158,19 +198,11 @@ float readMQResistance(int pin, float rl, float vcc) {
   return rl * ((vcc / voltage) - 1.0);
 }
 
-float readCO_MEMS_voltage() {
+// Read ADC2 pin — only call when WiFi is paused!
+float readADC2Voltage(int pin) {
   long total = 0;
   for (int i = 0; i < 30; i++) {
-    total += analogRead(CO_MEMS_PIN);
-    delayMicroseconds(100);
-  }
-  return (total / 30.0) * (3.3 / 4095.0);
-}
-
-float readNO2_MEMS_voltage() {
-  long total = 0;
-  for (int i = 0; i < 30; i++) {
-    total += analogRead(NO2_MEMS_PIN);
+    total += analogRead(pin);
     delayMicroseconds(100);
   }
   return (total / 30.0) * (3.3 / 4095.0);
@@ -186,6 +218,75 @@ float readUVIndex() {
   float idx = voltage * UV_SCALE;
   if (idx < 0.1) idx = 0;
   return idx;
+}
+
+// =============================================
+//  GOOGLE DNS — re-apply after any WiFi reconnect
+// =============================================
+void applyGoogleDNS() {
+  IPAddress dns1(8, 8, 8, 8);
+  IPAddress dns2(8, 8, 4, 4);
+  WiFi.config(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask(), dns1, dns2);
+  Serial.println("[WIFI] DNS re-applied (8.8.8.8)");
+}
+
+// =============================================
+//  ADC2 READING WITH WIFI PAUSE
+// =============================================
+// Briefly stops WiFi, reads CO MEMS & NO2 MEMS,
+// then restarts WiFi. Takes ~2-4 seconds total.
+// =============================================
+
+void readADC2Sensors() {
+  Serial.println("[ADC2] Pausing WiFi to read CO/NO2 MEMS sensors...");
+
+  // Stop WiFi radio (keeps credentials, fast restart)
+  esp_wifi_stop();
+  delay(50);
+
+  // Now ADC2 pins are readable
+  float co_v  = readADC2Voltage(CO_MEMS_PIN);
+  float no2_v = readADC2Voltage(NO2_MEMS_PIN);
+
+  // Restart WiFi radio
+  esp_wifi_start();
+  delay(100);
+
+  // Wait for reconnection (usually < 2 seconds)
+  int tries = 0;
+  while (WiFi.status() != WL_CONNECTED && tries < 20) {
+    delay(200);
+    tries++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    applyGoogleDNS();  // Re-apply DNS after reconnect
+    Serial.print("[ADC2] WiFi restored. CO_V=");
+    Serial.print(co_v, 3);
+    Serial.print("  NO2_V=");
+    Serial.println(no2_v, 3);
+  } else {
+    Serial.println("[ADC2] WiFi reconnect failed — will retry next cycle");
+    // Try full reconnect
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
+    int retries = 0;
+    while (WiFi.status() != WL_CONNECTED && retries < 20) {
+      delay(250);
+      retries++;
+    }
+    if (WiFi.status() == WL_CONNECTED) {
+      applyGoogleDNS();  // Re-apply DNS after reconnect
+      Serial.println("[ADC2] WiFi reconnected on retry");
+    }
+  }
+
+  // Apply EMA smoothing
+  co_mems_ema  = applyEMA(co_v, co_mems_ema);
+  no2_mems_ema = applyEMA(no2_v, no2_mems_ema);
+
+  // Store for use in calculations
+  g_co_mems_v  = (co_mems_ema >= 0) ? co_mems_ema : co_v;
+  g_no2_mems_v = (no2_mems_ema >= 0) ? no2_mems_ema : no2_v;
 }
 
 // =============================================
@@ -207,8 +308,26 @@ float mq135CO2(float r) {
   return constrain(1000.0 * pow(r, -0.715), 0, 5000);
 }
 
+// Convert CO MEMS voltage to ppm (SEN0564)
+float coPPM_MEMS(float voltage) {
+  if (!memsCalibrated) return 0;
+  if (voltage <= CO_MEMS_BASELINE) return 0;
+  if (CO_MEMS_BASELINE >= 3.2) return 0;
+  float ppm = (voltage - CO_MEMS_BASELINE) / (3.3 - CO_MEMS_BASELINE) * SEN0564_RANGE;
+  return constrain(ppm, 0, 100);  // Backend Zod caps at 100
+}
+
+// Convert NO2 MEMS voltage to ppb (SEN0574)
+float no2PPB_MEMS(float voltage) {
+  if (!memsCalibrated) return 0;
+  if (voltage <= NO2_MEMS_BASELINE) return 0;
+  if (NO2_MEMS_BASELINE >= 3.2) return 0;
+  float ppm = (voltage - NO2_MEMS_BASELINE) / (3.3 - NO2_MEMS_BASELINE) * SEN0574_RANGE;
+  return constrain(ppm, 0, 10) * 1000.0;  // ppm -> ppb
+}
+
 // =============================================
-//  AQI
+//  AQI CALCULATIONS
 // =============================================
 
 int aqiFromPM25(float pm) {
@@ -302,6 +421,8 @@ void handleData() {
   json += "\"aqi_o3\":" + String(g_aqi_o3) + ",";
   json += "\"aqi_co\":" + String(g_aqi_co) + ",";
   json += "\"aqi_no2\":" + String(g_aqi_no2) + ",";
+  json += "\"co_mems_v\":" + String(g_co_mems_v, 3) + ",";
+  json += "\"no2_mems_v\":" + String(g_no2_mems_v, 3) + ",";
   json += "\"label\":\"" + aqiLabel(g_aqi) + "\",";
   json += "\"color\":\"" + aqiColor(g_aqi) + "\"";
   json += "}";
@@ -336,7 +457,6 @@ h1{text-align:center;font-size:22px;margin:8px 0;color:#fff}
 .card .unit{font-size:11px;color:#aaa}
 .card.wide{grid-column:span 2}
 .g{color:#00e400}.y{color:#ffff00}.o{color:#ff7e00}.r{color:#ff0000}.p{color:#8f3f97}.m{color:#7e0023}
-.bar{display:flex;justify-content:space-between;font-size:10px;color:#666;margin-top:6px}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;background:#0f0;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 </style>
@@ -344,7 +464,7 @@ h1{text-align:center;font-size:22px;margin:8px 0;color:#fff}
 <body>
 
 <h1>AERIS</h1>
-<p class="sub"><span class="dot"></span> Live Air Quality Monitor</p>
+<p class="sub"><span class="dot"></span> Live Air Quality Monitor - Node 3</p>
 
 <div class="aqi-box" id="aqiBox">
   <div class="aqi-num" id="aqiNum">--</div>
@@ -353,56 +473,16 @@ h1{text-align:center;font-size:22px;margin:8px 0;color:#fff}
 </div>
 
 <div class="grid">
-  <div class="card">
-    <div class="lbl">PM2.5</div>
-    <div class="val" id="pm25">--</div>
-    <div class="unit">ug/m3</div>
-  </div>
-  <div class="card">
-    <div class="lbl">Ozone</div>
-    <div class="val" id="o3">--</div>
-    <div class="unit">ppb</div>
-  </div>
-  <div class="card">
-    <div class="lbl">CO</div>
-    <div class="val" id="co">--</div>
-    <div class="unit">ppm</div>
-  </div>
-  <div class="card">
-    <div class="lbl">NO2</div>
-    <div class="val" id="no2">--</div>
-    <div class="unit">ppb</div>
-  </div>
-  <div class="card">
-    <div class="lbl">CO2 eq</div>
-    <div class="val" id="co2">--</div>
-    <div class="unit">ppm</div>
-  </div>
-  <div class="card">
-    <div class="lbl">VOC Index</div>
-    <div class="val" id="voc">--</div>
-    <div class="unit">&nbsp;</div>
-  </div>
-  <div class="card">
-    <div class="lbl">Temperature</div>
-    <div class="val" id="temp">--</div>
-    <div class="unit">&deg;C</div>
-  </div>
-  <div class="card">
-    <div class="lbl">Humidity</div>
-    <div class="val" id="hum">--</div>
-    <div class="unit">%</div>
-  </div>
-  <div class="card">
-    <div class="lbl">UV Index</div>
-    <div class="val" id="uv">--</div>
-    <div class="unit">&nbsp;</div>
-  </div>
-  <div class="card">
-    <div class="lbl">CO (MQ-7)</div>
-    <div class="val" id="comq">--</div>
-    <div class="unit">ppm ref</div>
-  </div>
+  <div class="card"><div class="lbl">PM2.5</div><div class="val" id="pm25">--</div><div class="unit">ug/m3</div></div>
+  <div class="card"><div class="lbl">Ozone</div><div class="val" id="o3">--</div><div class="unit">ppb</div></div>
+  <div class="card"><div class="lbl">CO</div><div class="val" id="co">--</div><div class="unit">ppm</div></div>
+  <div class="card"><div class="lbl">NO2</div><div class="val" id="no2">--</div><div class="unit">ppb</div></div>
+  <div class="card"><div class="lbl">CO2 eq</div><div class="val" id="co2">--</div><div class="unit">ppm</div></div>
+  <div class="card"><div class="lbl">VOC Index</div><div class="val" id="voc">--</div><div class="unit">&nbsp;</div></div>
+  <div class="card"><div class="lbl">Temperature</div><div class="val" id="temp">--</div><div class="unit">&deg;C</div></div>
+  <div class="card"><div class="lbl">Humidity</div><div class="val" id="hum">--</div><div class="unit">%</div></div>
+  <div class="card"><div class="lbl">UV Index</div><div class="val" id="uv">--</div><div class="unit">&nbsp;</div></div>
+  <div class="card"><div class="lbl">CO (MQ-7)</div><div class="val" id="comq">--</div><div class="unit">ppm ref</div></div>
 </div>
 
 <script>
@@ -497,7 +577,7 @@ void drawPage1(float no2, float co2, int voc, int aqi) {
   display.print("NO2");
   display.setTextSize(2);
   display.setCursor(32, 0);
-  display.print(no2 * 1000, 0);
+  display.print(no2, 0);
   display.setTextSize(1);
   display.setCursor(104, 5);
   display.print("ppb");
@@ -642,7 +722,7 @@ void resetI2CBus() {
 }
 
 // =============================================
-//  PUSH TO AERIS BACKEND (replaces Firebase)
+//  PUSH TO AERIS BACKEND
 // =============================================
 void pushToBackend() {
   if (!wifiConnected) {
@@ -659,16 +739,16 @@ void pushToBackend() {
       Serial.println("[BACKEND] Reconnect failed — skipping push");
       return;
     }
+    applyGoogleDNS();
     Serial.println("[BACKEND] WiFi reconnected!");
   }
 
   WiFiClientSecure client;
-  client.setInsecure();  // Skip TLS cert verification (Railway uses valid certs)
-  client.setHandshakeTimeout(10);  // 10 second TLS handshake timeout
+  client.setInsecure();
+  client.setHandshakeTimeout(10);
 
   HTTPClient http;
 
-  // Build the URL
   String url = String(AERIS_SERVER) + "/api/v1/ingest";
 
   Serial.print("[BACKEND] Pushing to: ");
@@ -681,7 +761,8 @@ void pushToBackend() {
   http.addHeader("X-API-KEY", AERIS_API_KEY);
   http.setTimeout(10000);
 
-  // Build JSON payload — o3 converted from ppb to ppm (backend expects 0-1)
+  // Build JSON payload — all sensor data
+  // Backend expects: o3 in ppm (0-1), co in ppm (0-100)
   String json = "{";
   json += "\"node_id\":\"" + String(AERIS_NODE_ID) + "\",";
   json += "\"sensors\":{";
@@ -729,19 +810,34 @@ void setup() {
   Serial.println();
   Serial.println("==============================");
   Serial.println("   AERIS Air Quality System");
+  Serial.println("   Improved v2 (ADC2 fix)");
   Serial.println("==============================");
   Serial.println();
 
-  // Analog pins
+  // Analog pins (ADC1 — always work)
   pinMode(DUST_LED_PIN, OUTPUT);
   digitalWrite(DUST_LED_PIN, HIGH);
   analogSetPinAttenuation(DUST_ANALOG_PIN, ADC_11db);
   analogSetPinAttenuation(MQ131_PIN, ADC_11db);
   analogSetPinAttenuation(MQ7_PIN, ADC_11db);
   analogSetPinAttenuation(MQ135_PIN, ADC_11db);
+  analogSetPinAttenuation(UV_PIN, ADC_11db);
+
+  // ADC2 pins — set attenuation before WiFi starts
   analogSetPinAttenuation(CO_MEMS_PIN, ADC_11db);
   analogSetPinAttenuation(NO2_MEMS_PIN, ADC_11db);
-  analogSetPinAttenuation(UV_PIN, ADC_11db);
+
+  // Read ADC2 baseline BEFORE WiFi starts (critical!)
+  Serial.println("[INIT] Reading ADC2 baselines before WiFi...");
+  float co_pre  = readADC2Voltage(CO_MEMS_PIN);
+  float no2_pre = readADC2Voltage(NO2_MEMS_PIN);
+  Serial.print("[INIT] Pre-WiFi CO_V=");
+  Serial.print(co_pre, 3);
+  Serial.print("  NO2_V=");
+  Serial.println(no2_pre, 3);
+  g_co_mems_v  = co_pre;
+  g_no2_mems_v = no2_pre;
+
   Serial.println("[OK] Analog pins ready");
 
   // I2C
@@ -855,7 +951,7 @@ void setup() {
     WiFi.config(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask(), dns1, dns2);
     Serial.println("[WIFI] DNS set to 8.8.8.8 / 8.8.4.4");
 
-    // Start local web server (for direct ESP32 access)
+    // Start local web server
     server.on("/", handleRoot);
     server.on("/data", handleData);
     server.begin();
@@ -888,11 +984,19 @@ void setup() {
     Serial.print(AERIS_SERVER);
     Serial.println(" |");
   }
+  Serial.print("| CO MEMS:  pin ");
+  Serial.print(CO_MEMS_PIN);
+  Serial.println(" (ADC2)    |");
+  Serial.print("| NO2 MEMS: pin ");
+  Serial.print(NO2_MEMS_PIN);
+  Serial.println(" (ADC2)    |");
   Serial.println("+----------------------------+");
   Serial.println();
 
   bootTime = millis();
-  Serial.println("[INFO] Warming up MQ sensors (2 min)...\n");
+  Serial.println("[INFO] Warming up MQ sensors (2 min)...");
+  Serial.println("[INFO] ADC2 sensors (CO/NO2 MEMS) read every 15s via WiFi pause");
+  Serial.println();
 }
 
 // =============================================
@@ -900,7 +1004,7 @@ void setup() {
 // =============================================
 void loop() {
   // Always handle local web requests
-  if (wifiConnected) {
+  if (wifiConnected && WiFi.status() == WL_CONNECTED) {
     server.handleClient();
   }
 
@@ -913,7 +1017,7 @@ void loop() {
 
   unsigned long elapsed = now - bootTime;
 
-  // ---- Read sensors ----
+  // ---- Read ADC1 sensors (always work with WiFi) ----
 
   float pm25_raw = readDustPM25();
   pm25_ema = applyEMA(pm25_raw, pm25_ema);
@@ -927,9 +1031,6 @@ void loop() {
   float mq135_rs = readMQResistance(MQ135_PIN, MQ135_RL_KOHM, MQ135_VCC);
   mq135Rs_ema = applyEMA(mq135_rs, mq135Rs_ema);
 
-  float co_mems_v  = readCO_MEMS_voltage();
-  float no2_mems_v = readNO2_MEMS_voltage();
-
   float uvIdx_raw = readUVIndex();
   uv_ema = applyEMA(uvIdx_raw, uv_ema);
 
@@ -937,12 +1038,31 @@ void loop() {
   float temperature = 0;
   float humidity    = 0;
 
-  if (hasSGP40) vocIndex = sgp.measureVocIndex();
+  if (hasSGP40) {
+    if (hasSHT31) {
+      // Use temp/humidity compensation for better VOC accuracy
+      float t = sht31.readTemperature();
+      float h = sht31.readHumidity();
+      if (!isnan(t) && !isnan(h)) {
+        vocIndex = sgp.measureVocIndex(t, h);
+      } else {
+        vocIndex = sgp.measureVocIndex();
+      }
+    } else {
+      vocIndex = sgp.measureVocIndex();
+    }
+  }
   if (hasSHT31) {
     temperature = sht31.readTemperature();
     humidity    = sht31.readHumidity();
     if (isnan(temperature)) temperature = 0;
     if (isnan(humidity))    humidity = 0;
+  }
+
+  // ---- Read ADC2 sensors (CO/NO2 MEMS) via WiFi pause ----
+  if (wifiConnected && warmedUp && (now - lastADC2Read >= ADC2_INTERVAL)) {
+    lastADC2Read = now;
+    readADC2Sensors();
   }
 
   // ---- Warm-up ----
@@ -956,24 +1076,29 @@ void loop() {
     Serial.print("k  MQ7=");
     Serial.print(mq7Rs_ema, 0);
     Serial.print("k  CO_V=");
-    Serial.print(co_mems_v, 3);
+    Serial.print(g_co_mems_v, 3);
     Serial.print("  NO2_V=");
-    Serial.print(no2_mems_v, 3);
+    Serial.print(g_no2_mems_v, 3);
     Serial.println();
 
     if (hasOLED) drawWarmup(pct, temperature, humidity);
     return;
   }
 
-  // ---- Calibrate once ----
+  // ---- Calibrate once (after warmup) ----
 
   if (!warmedUp) {
     warmedUp = true;
     MQ131_Ro = mq131Rs_ema / MQ131_CLEAN_AIR_FACTOR;
     MQ7_Ro   = mq7Rs_ema   / MQ7_CLEAN_AIR_FACTOR;
     MQ135_Ro = mq135Rs_ema / MQ135_CLEAN_AIR_FACTOR;
-    CO_MEMS_BASELINE  = co_mems_v;
-    NO2_MEMS_BASELINE = no2_mems_v;
+
+    // Calibrate MEMS baselines — do one fresh ADC2 read
+    Serial.println("[CAL] Reading ADC2 for MEMS baseline calibration...");
+    readADC2Sensors();
+    CO_MEMS_BASELINE  = g_co_mems_v;
+    NO2_MEMS_BASELINE = g_no2_mems_v;
+    memsCalibrated = true;
 
     Serial.println("-------- Calibration --------");
     Serial.print("  MQ-131  Ro = "); Serial.print(MQ131_Ro, 1); Serial.println("k");
@@ -981,7 +1106,8 @@ void loop() {
     Serial.print("  MQ-135  Ro = "); Serial.print(MQ135_Ro, 1); Serial.println("k");
     Serial.print("  CO  baseline = "); Serial.print(CO_MEMS_BASELINE, 3); Serial.println("V");
     Serial.print("  NO2 baseline = "); Serial.print(NO2_MEMS_BASELINE, 3); Serial.println("V");
-    Serial.println("-----------------------------\n");
+    Serial.println("-----------------------------");
+    Serial.println();
   }
 
   // ---- Calculate ----
@@ -992,18 +1118,11 @@ void loop() {
   float co2_ppm    = mq135CO2(mq135Rs_ema / MQ135_Ro);
   float uvIdx      = uv_ema;
 
-  float co_ppm = 0;
-  if (co_mems_v > CO_MEMS_BASELINE && CO_MEMS_BASELINE < 3.2) {
-    co_ppm = (co_mems_v - CO_MEMS_BASELINE) / (3.3 - CO_MEMS_BASELINE) * SEN0564_RANGE;
-  }
-  co_ppm = constrain(co_ppm, 0, 100);  // Backend Zod schema caps at 100 ppm
+  // CO from MEMS sensor (ADC2 — uses cached voltage from last WiFi-pause read)
+  float co_ppm = coPPM_MEMS(g_co_mems_v);
 
-  float no2_ppm = 0;
-  if (no2_mems_v > NO2_MEMS_BASELINE && NO2_MEMS_BASELINE < 3.2) {
-    no2_ppm = (no2_mems_v - NO2_MEMS_BASELINE) / (3.3 - NO2_MEMS_BASELINE) * SEN0574_RANGE;
-  }
-  no2_ppm = constrain(no2_ppm, 0, 10);
-  float no2_ppb = no2_ppm * 1000.0;
+  // NO2 from MEMS sensor (ADC2 — uses cached voltage)
+  float no2_ppb = no2PPB_MEMS(g_no2_mems_v);
 
   int aqi_pm  = aqiFromPM25(pm25);
   int aqi_o3  = aqiFromO3(o3_ppb);
@@ -1027,7 +1146,7 @@ void loop() {
 
   // ---- Serial ----
 
-  Serial.println("============= AERIS AIR REPORT =============");
+  Serial.println("============= AERIS AIR REPORT v2 =============");
   Serial.println();
   Serial.print("  PM2.5:      "); Serial.print(pm25, 1);
   Serial.print(" ug/m3     sub-AQI: "); Serial.println(aqi_pm);
@@ -1044,6 +1163,9 @@ void loop() {
   Serial.print("  Temp:       "); Serial.print(temperature, 1); Serial.println(" C");
   Serial.print("  Humidity:   "); Serial.print(humidity, 1); Serial.println(" %");
   Serial.println();
+  Serial.print("  MEMS raw:   CO_V="); Serial.print(g_co_mems_v, 3);
+  Serial.print("  NO2_V="); Serial.println(g_no2_mems_v, 3);
+  Serial.println();
   Serial.print("  >>> TOTAL AQI: "); Serial.print(totalAQI);
   Serial.print("  ["); Serial.print(aqiLabel(totalAQI)); Serial.println("]");
   Serial.print("      (PM="); Serial.print(aqi_pm);
@@ -1055,7 +1177,7 @@ void loop() {
     Serial.print("  [WEB] http://");
     Serial.println(WiFi.localIP());
   }
-  Serial.println("=============================================");
+  Serial.println("=================================================");
   Serial.println();
 
   // ---- OLED ----
@@ -1063,8 +1185,8 @@ void loop() {
   if (hasOLED) {
     switch (oledPage) {
       case 0: drawPage0(pm25, o3_ppb, co_ppm, totalAQI);        break;
-      case 1: drawPage1(no2_ppm, co2_ppm, vocIndex, totalAQI);  break;
-      case 2: drawPage2(temperature, humidity, uvIdx, totalAQI); break;
+      case 1: drawPage1(no2_ppb, co2_ppm, vocIndex, totalAQI);   break;
+      case 2: drawPage2(temperature, humidity, uvIdx, totalAQI);  break;
     }
     oledPage = (oledPage + 1) % 3;
   }

@@ -4,6 +4,7 @@ import {
   Activity, Clock, MapPin, RefreshCw, Wind, Thermometer, Droplets, Heart, Gauge
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
+import useActiveNode from '@/hooks/useActiveNode';
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -52,12 +53,9 @@ const sensorStatus = (id, val) => {
 const LiveStatus = () => {
   const data = useAerisStore((s) => s.data);
   const loading = useAerisStore((s) => s.loading);
+  const active = useActiveNode();
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [eventLog, setEventLog] = useState([]);
-  const [selectedNode, setSelectedNode] = useState('all');
-
-  const perNode = data?.perNode || {};
-  const espNodeIds = Object.keys(perNode);
 
   useEffect(() => {
     if (data?.sensors) setLastUpdate(new Date());
@@ -101,28 +99,12 @@ const LiveStatus = () => {
     );
   }
 
-  const { sensors, environment, derived, sectors, meta } = data;
+  const { sectors, meta } = data;
   const secondsAgo = Math.floor((new Date() - lastUpdate) / 1000);
 
-  // Use per-node data when a specific node is selected
-  const activeNode = selectedNode !== 'all' && perNode[selectedNode] ? perNode[selectedNode] : null;
-  const activeSensors = activeNode ? {
-    pm25: activeNode.latest.pm25,
-    o3: activeNode.latest.o3,
-    co: activeNode.latest.co,
-    voc_index: 0,
-    temperature: activeNode.latest.temperature,
-    humidity: activeNode.latest.humidity,
-  } : sensors;
-  const activeDerived = activeNode ? {
-    ...derived,
-    aqi: activeNode.latest.aqi,
-    rri: activeNode.latest.rri,
-  } : derived;
-  const activeEnv = activeNode ? {
-    temperature: activeNode.latest.temperature,
-    humidity: activeNode.latest.humidity,
-  } : environment;
+  const activeSensors = active.sensors || data.sensors;
+  const activeDerived = active.derived || data.derived;
+  const activeEnv = active.environment || data.environment;
 
   const sensorTiles = [
     { id: 'pm25', label: 'PM2.5', value: activeSensors.pm25, unit: 'ug/m3', icon: Activity, decimals: 1 },
@@ -149,22 +131,10 @@ const LiveStatus = () => {
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Live Status</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Real-time sensor readings &middot; {selectedNode !== 'all' && perNode[selectedNode] ? perNode[selectedNode].location : (meta?.location || 'Local Station')}
+            Real-time sensor readings &middot; {active.nodeName || meta?.location || 'Local Station'}
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {espNodeIds.length > 0 && (
-            <select
-              value={selectedNode}
-              onChange={(e) => setSelectedNode(e.target.value)}
-              className="h-8 px-3 bg-slate-800/60 border border-slate-700/40 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-sky-500/50 cursor-pointer"
-            >
-              <option value="all">All Nodes</option>
-              {espNodeIds.map((id) => (
-                <option key={id} value={id}>{perNode[id]?.location || id}</option>
-              ))}
-            </select>
-          )}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/60 border border-slate-700/40 rounded-lg">
             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
             <Clock size={14} className="text-slate-500" />
