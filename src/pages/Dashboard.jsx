@@ -142,8 +142,9 @@ const Dashboard = () => {
     );
   }
 
-  const { sensors, derived, environment, sectors, alerts, nodes, history, meta } = data;
+  const { sensors, derived, environment, sectors, alerts, nodes, history, meta, perNode } = data;
   const aqi = derived.aqi || 0;
+  const espNodes = perNode ? Object.entries(perNode) : [];
   const rri = derived.rri || 0;
   const band = getAqiBand(aqi);
   const historyData = Array.isArray(history) ? history.slice(-30) : [];
@@ -366,10 +367,28 @@ const Dashboard = () => {
               <span className="text-xs text-emerald-400">{nodes?.filter(n => n.status === 'active' || n.status === 'online')?.length || 0} online</span>
             </div>
             <div>
-              {sectors?.slice(0, 4).map(s => (
-                <StationRow key={s.id} name={s.name} aqi={s.aqi} status={s.status} />
-              ))}
-              {(!sectors || sectors.length === 0) && (
+              {espNodes.length > 0 ? (
+                espNodes.map(([nodeId, nd]) => (
+                  <div key={nodeId} className="flex items-center justify-between py-3 border-b border-slate-700/30 last:border-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <div>
+                        <span className="text-sm text-slate-200">{nd.location || nodeId}</span>
+                        <span className="block text-[10px] text-slate-500 font-mono">{nodeId}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold tabular-nums" style={{ color: getAqiBand(nd.latest?.aqi || 0).color }}>{nd.latest?.aqi || 0}</span>
+                      <span className="text-[10px] text-slate-500 uppercase">{getAqiBand(nd.latest?.aqi || 0).label.split(' ')[0]}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                sectors?.slice(0, 4).map(s => (
+                  <StationRow key={s.id} name={s.name} aqi={s.aqi} status={s.status} />
+                ))
+              )}
+              {espNodes.length === 0 && (!sectors || sectors.length === 0) && (
                 <p className="text-sm text-slate-600 py-4 text-center">No stations reporting</p>
               )}
             </div>

@@ -54,14 +54,17 @@ const MapPage = () => {
     );
   }
 
-  const { alerts, history } = data;
+  const { alerts, history, perNode } = data;
   const sectors = data.sectors || [];
+  const espIds = new Set(Object.keys(perNode || {}));
 
   const markers = sectors.map((s, i) => ({
     ...s,
     lat: s.lat || 19.076 + (i * 0.006 - 0.006),
     lng: s.lng || 72.877 + (i * 0.008 - 0.008),
     rri: s.rri || Math.floor(s.aqi * 0.8),
+    isHardware: espIds.has(s.id),
+    nodeData: perNode?.[s.id] || null,
   })).filter((m) =>
     m.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     m.id?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -99,12 +102,12 @@ const MapPage = () => {
               <CircleMarker
                 key={m.id}
                 center={[m.lat, m.lng]}
-                radius={isSelected ? 18 : 10}
+                radius={isSelected ? 18 : m.isHardware ? 12 : 10}
                 pathOptions={{
                   fillColor: color,
-                  fillOpacity: isSelected ? 0.7 : 0.4,
+                  fillOpacity: isSelected ? 0.7 : m.isHardware ? 0.55 : 0.4,
                   color,
-                  weight: isSelected ? 3 : 1.5,
+                  weight: isSelected ? 3 : m.isHardware ? 2.5 : 1.5,
                 }}
                 eventHandlers={{
                   click: () => setSelectedNode(m),
@@ -113,12 +116,21 @@ const MapPage = () => {
                 }}
               >
                 <Popup className="custom-popup" closeButton={false}>
-                  <div className="bg-slate-900 border border-slate-700 p-2.5 rounded-lg min-w-[120px]">
-                    <p className="text-xs text-slate-400 mb-1">{m.name}</p>
+                  <div className="bg-slate-900 border border-slate-700 p-2.5 rounded-lg min-w-[140px]">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      {m.isHardware && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400 border border-sky-500/20">ESP32</span>}
+                      <p className="text-xs text-slate-400">{m.name}</p>
+                    </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-white font-medium">AQI {m.aqi}</span>
                       <span className="font-medium" style={{ color }}>RRI {m.rri}</span>
                     </div>
+                    {m.nodeData && (
+                      <div className="flex gap-3 mt-1.5 pt-1.5 border-t border-slate-700/50 text-[10px] text-slate-500">
+                        <span>PM2.5: {m.nodeData.latest.pm25}</span>
+                        <span>CO: {m.nodeData.latest.co}</span>
+                      </div>
+                    )}
                   </div>
                 </Popup>
               </CircleMarker>
@@ -149,6 +161,13 @@ const MapPage = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {selectedNode.isHardware && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-500/15 text-sky-400 border border-sky-500/20">ESP32 Hardware</span>
+                  <span className="text-[10px] font-mono text-slate-500">{selectedNode.id}</span>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-slate-800/50 border border-slate-700/40 rounded-lg p-3 text-center">
                   <span className="text-2xl font-bold text-white">{selectedNode.aqi}</span>
@@ -160,15 +179,31 @@ const MapPage = () => {
                 </div>
               </div>
 
+              {selectedNode.nodeData && (
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: 'PM2.5', value: selectedNode.nodeData.latest.pm25, unit: 'µg/m³' },
+                    { label: 'CO', value: selectedNode.nodeData.latest.co, unit: 'ppm' },
+                    { label: 'O3', value: selectedNode.nodeData.latest.o3, unit: 'ppb' },
+                    { label: 'Temp', value: selectedNode.nodeData.latest.temperature, unit: '°C' },
+                  ].map((s) => (
+                    <div key={s.label} className="bg-slate-800/40 border border-slate-700/30 rounded-lg px-2.5 py-2">
+                      <span className="text-[10px] text-slate-500">{s.label}</span>
+                      <p className="text-sm font-semibold text-white tabular-nums">{typeof s.value === 'number' ? s.value.toFixed(1) : s.value} <span className="text-[10px] text-slate-500 font-normal">{s.unit}</span></p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="px-3 py-2 rounded-lg text-xs font-medium" style={{ backgroundColor: `${rriColor(selectedNode.rri)}10`, color: rriColor(selectedNode.rri), border: `1px solid ${rriColor(selectedNode.rri)}25` }}>
                 {rriLabel(selectedNode.rri)} Risk
               </div>
 
               <div>
-                <p className="text-xs text-slate-500 mb-2">24h Trend</p>
+                <p className="text-xs text-slate-500 mb-2">Recent Trend</p>
                 <div className="h-20 bg-slate-800/40 rounded-lg border border-slate-700/30 p-1.5">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={sparkData}>
+                    <AreaChart data={selectedNode.nodeData?.history?.map(h => ({ val: h.aqi })) || sparkData}>
                       <defs>
                         <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor={rriColor(selectedNode.rri)} stopOpacity={0.3} />

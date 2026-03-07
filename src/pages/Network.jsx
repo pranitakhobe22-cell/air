@@ -56,7 +56,9 @@ const Network = () => {
 
   const nodes = data.nodes || [];
   const derived = data.derived;
+  const perNode = data.perNode || {};
   const isHighRisk = derived?.rri > 75;
+  const espIds = new Set(Object.keys(perNode));
 
   return (
     <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
@@ -123,9 +125,16 @@ const Network = () => {
           <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-sm font-semibold text-slate-300">Sensor Nodes</h3>
-              <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md">
-                {nodes.filter((n) => n.status === 'active').length} Active
-              </span>
+              <div className="flex items-center gap-2">
+                {espIds.size > 0 && (
+                  <span className="text-xs font-medium text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded-md">
+                    {espIds.size} Hardware
+                  </span>
+                )}
+                <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md">
+                  {nodes.filter((n) => n.status === 'active').length} Active
+                </span>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -133,36 +142,62 @@ const Network = () => {
                 <thead>
                   <tr className="border-b border-slate-700/40 text-xs text-slate-500">
                     <th className="pb-3 pl-2 font-medium">Node ID</th>
+                    <th className="pb-3 font-medium">Type</th>
                     <th className="pb-3 font-medium">Status</th>
                     <th className="pb-3 font-medium">Location</th>
-                    <th className="pb-3 font-medium">Coordinates</th>
+                    <th className="pb-3 font-medium text-center">AQI</th>
+                    <th className="pb-3 font-medium text-center">RRI</th>
                     <th className="pb-3 pr-2 text-right font-medium">Last Sync</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
-                  {nodes.map((node, i) => (
-                    <tr key={i} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
-                      <td className="py-3 pl-2">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-1.5 h-1.5 rounded-full ${node.status === 'active' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                          <span className="font-mono text-slate-300">{node.id}</span>
-                        </div>
-                      </td>
-                      <td className="py-3">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded ${node.status === 'active' ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10'}`}>
-                          {node.status}
-                        </span>
-                      </td>
-                      <td className="py-3 text-slate-400 truncate max-w-[150px]">{node.location_name || 'Assigned'}</td>
-                      <td className="py-3 font-mono text-xs text-slate-500">{node.lat ? `${Number(node.lat).toFixed(3)}, ${Number(node.lng).toFixed(3)}` : '--'}</td>
-                      <td className="py-3 pr-2 text-right">
-                        <div className="flex items-center justify-end gap-1.5 text-slate-400">
-                          <Clock size={12} />
-                          <span className="text-xs">{node.lastPing ? new Date(node.lastPing).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Just now'}</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {nodes.map((node, i) => {
+                    const isHardware = espIds.has(node.id);
+                    const nd = perNode[node.id];
+                    return (
+                      <tr key={i} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+                        <td className="py-3 pl-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-1.5 h-1.5 rounded-full ${node.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                            <span className="font-mono text-slate-300">{node.id}</span>
+                          </div>
+                        </td>
+                        <td className="py-3">
+                          {isHardware ? (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded text-sky-400 bg-sky-500/10 border border-sky-500/20">ESP32</span>
+                          ) : (
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded text-slate-500 bg-slate-700/30">SIM</span>
+                          )}
+                        </td>
+                        <td className="py-3">
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded ${node.status === 'active' ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10'}`}>
+                            {node.status}
+                          </span>
+                        </td>
+                        <td className="py-3 text-slate-400 truncate max-w-[150px]">{node.location_name || 'Assigned'}</td>
+                        <td className="py-3 text-center">
+                          {nd ? (
+                            <span className="text-sm font-semibold tabular-nums text-white">{nd.latest.aqi}</span>
+                          ) : (
+                            <span className="text-xs text-slate-600">--</span>
+                          )}
+                        </td>
+                        <td className="py-3 text-center">
+                          {nd ? (
+                            <span className="text-sm font-semibold tabular-nums" style={{ color: nd.latest.rri > 60 ? '#ef4444' : nd.latest.rri > 35 ? '#f97316' : '#22c55e' }}>{nd.latest.rri}</span>
+                          ) : (
+                            <span className="text-xs text-slate-600">--</span>
+                          )}
+                        </td>
+                        <td className="py-3 pr-2 text-right">
+                          <div className="flex items-center justify-end gap-1.5 text-slate-400">
+                            <Clock size={12} />
+                            <span className="text-xs">{node.lastPing ? new Date(node.lastPing).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Just now'}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

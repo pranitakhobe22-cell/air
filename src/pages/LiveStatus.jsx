@@ -54,6 +54,10 @@ const LiveStatus = () => {
   const loading = useAerisStore((s) => s.loading);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [eventLog, setEventLog] = useState([]);
+  const [selectedNode, setSelectedNode] = useState('all');
+
+  const perNode = data?.perNode || {};
+  const espNodeIds = Object.keys(perNode);
 
   useEffect(() => {
     if (data?.sensors) setLastUpdate(new Date());
@@ -100,17 +104,37 @@ const LiveStatus = () => {
   const { sensors, environment, derived, sectors, meta } = data;
   const secondsAgo = Math.floor((new Date() - lastUpdate) / 1000);
 
+  // Use per-node data when a specific node is selected
+  const activeNode = selectedNode !== 'all' && perNode[selectedNode] ? perNode[selectedNode] : null;
+  const activeSensors = activeNode ? {
+    pm25: activeNode.latest.pm25,
+    o3: activeNode.latest.o3,
+    co: activeNode.latest.co,
+    voc_index: 0,
+    temperature: activeNode.latest.temperature,
+    humidity: activeNode.latest.humidity,
+  } : sensors;
+  const activeDerived = activeNode ? {
+    ...derived,
+    aqi: activeNode.latest.aqi,
+    rri: activeNode.latest.rri,
+  } : derived;
+  const activeEnv = activeNode ? {
+    temperature: activeNode.latest.temperature,
+    humidity: activeNode.latest.humidity,
+  } : environment;
+
   const sensorTiles = [
-    { id: 'pm25', label: 'PM2.5', value: sensors.pm25, unit: 'ug/m3', icon: Activity, decimals: 1 },
-    { id: 'o3', label: 'Ozone', value: sensors.o3, unit: 'ppb', icon: Wind, decimals: 1 },
-    { id: 'co', label: 'CO', value: sensors.co, unit: 'ppm', icon: Gauge, decimals: 2 },
-    { id: 'voc', label: 'VOC Index', value: sensors.voc_index, unit: 'idx', icon: Activity, decimals: 0 },
-    { id: 'temp', label: 'Temperature', value: environment?.temperature || sensors.temperature, unit: 'C', icon: Thermometer, decimals: 1 },
-    { id: 'hum', label: 'Humidity', value: environment?.humidity || sensors.humidity, unit: '%', icon: Droplets, decimals: 0 },
+    { id: 'pm25', label: 'PM2.5', value: activeSensors.pm25, unit: 'ug/m3', icon: Activity, decimals: 1 },
+    { id: 'o3', label: 'Ozone', value: activeSensors.o3, unit: 'ppb', icon: Wind, decimals: 1 },
+    { id: 'co', label: 'CO', value: activeSensors.co, unit: 'ppm', icon: Gauge, decimals: 2 },
+    { id: 'voc', label: 'VOC Index', value: activeSensors.voc_index, unit: 'idx', icon: Activity, decimals: 0 },
+    { id: 'temp', label: 'Temperature', value: activeEnv?.temperature || activeSensors.temperature, unit: 'C', icon: Thermometer, decimals: 1 },
+    { id: 'hum', label: 'Humidity', value: activeEnv?.humidity || activeSensors.humidity, unit: '%', icon: Droplets, decimals: 0 },
   ];
 
   const mapCenter = sectors?.[0]?.lat ? [sectors[0].lat, sectors[0].lng] : [19.076, 72.877];
-  const riskColor = derived?.risk_color || '#10b981';
+  const riskColor = activeDerived?.risk_color || '#10b981';
 
   const eventColors = {
     alert: 'border-red-500/30 bg-red-500/5 text-red-400',
@@ -125,10 +149,22 @@ const LiveStatus = () => {
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Live Status</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Real-time sensor readings &middot; {meta?.location || 'Local Station'}
+            Real-time sensor readings &middot; {selectedNode !== 'all' && perNode[selectedNode] ? perNode[selectedNode].location : (meta?.location || 'Local Station')}
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {espNodeIds.length > 0 && (
+            <select
+              value={selectedNode}
+              onChange={(e) => setSelectedNode(e.target.value)}
+              className="h-8 px-3 bg-slate-800/60 border border-slate-700/40 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-sky-500/50 cursor-pointer"
+            >
+              <option value="all">All Nodes</option>
+              {espNodeIds.map((id) => (
+                <option key={id} value={id}>{perNode[id]?.location || id}</option>
+              ))}
+            </select>
+          )}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/60 border border-slate-700/40 rounded-lg">
             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
             <Clock size={14} className="text-slate-500" />
@@ -191,21 +227,21 @@ const LiveStatus = () => {
             </div>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <p className="text-sm text-slate-400 leading-relaxed max-w-xl">
-                {derived?.air_quality_text || 'Current air quality conditions are being monitored.'}
-                {' '}Dominant pollutant: <span className="text-slate-300 font-medium">{derived?.dominant || 'PM2.5'}</span>.
+                {activeDerived?.air_quality_text || 'Current air quality conditions are being monitored.'}
+                {' '}Dominant pollutant: <span className="text-slate-300 font-medium">{activeDerived?.dominant || 'PM2.5'}</span>.
               </p>
               <div className="flex items-center gap-3 shrink-0">
                 <div className="text-right">
                   <p className="text-[11px] text-slate-500">Risk Score</p>
                   <p className="text-2xl font-bold tabular-nums" style={{ color: riskColor }}>
-                    <AnimatedNum value={derived?.rri || 0} />
+                    <AnimatedNum value={activeDerived?.rri || 0} />
                   </p>
                 </div>
                 <div className="w-px h-8 bg-slate-700" />
                 <div className="text-right">
                   <p className="text-[11px] text-slate-500">AQI</p>
                   <p className="text-2xl font-bold text-white tabular-nums">
-                    <AnimatedNum value={derived?.aqi || 0} />
+                    <AnimatedNum value={activeDerived?.aqi || 0} />
                   </p>
                 </div>
               </div>
