@@ -13,4 +13,7 @@ router.post('/login', login);
 // GET /api/v1/auth/me (Protected route example)
 router.get('/me', verifyToken, me);
 
+// PUT /api/v1/auth/update
+router.put('/update', verifyToken, require('../controllers/authController').updateAccount);
+
 module.exports = router;

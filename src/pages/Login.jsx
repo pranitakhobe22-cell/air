@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { login } from '@/services/auth';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -15,20 +16,22 @@ const Login = () => {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    
-    // Demo auth — accepts any credentials
-    setTimeout(() => {
-      localStorage.setItem('aeris_token', 'demo_token');
+    try {
+      await login(email, password);
       navigate('/dashboard');
-    }, 800);
+    } catch (err) {
+      setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center p-4">
       {/* Background */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.05),transparent_50%)]" />
-      
-      <motion.div 
+
+      <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="relative w-full max-w-md"
       >
@@ -78,8 +81,8 @@ const Login = () => {
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading}
               className="w-full py-3.5 bg-linear-to-r from-sky-500 to-blue-600 rounded-xl text-sm font-bold uppercase tracking-widest text-white hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center space-x-2"
             >

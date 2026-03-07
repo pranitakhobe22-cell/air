@@ -1,44 +1,68 @@
-const db = require('../config/db');
+const { execute } = require('../config/db');
+
+const ALLOWED_TABLES = new Set([
+    'locations', 'sensor_nodes', 'sensor_readings', 'user_profiles', 'alerts'
+]);
 
 class BaseModel {
     constructor(tableName) {
+        if (!ALLOWED_TABLES.has(tableName)) {
+            throw new Error(`Invalid table name: ${tableName}`);
+        }
         this.tableName = tableName;
-        this.db = db;
     }
 
-    findAll() {
-        return this.db.prepare(`SELECT * FROM ${this.tableName}`).all();
+    async findAll() {
+        const result = await execute(`SELECT * FROM ${this.tableName}`);
+        return result.rows;
     }
 
-    findById(id) {
-        return this.db.prepare(`SELECT * FROM ${this.tableName} WHERE id = ?`).get(id);
+    async findById(id) {
+        const result = await execute(
+            `SELECT * FROM ${this.tableName} WHERE id = :1`,
+            [id]
+        );
+        return result.rows[0] || null;
     }
 
-    create(data) {
+    async create(data) {
         const keys = Object.keys(data);
+        if (keys.length === 0) {
+            throw new Error(`create() called with empty data on table "${this.tableName}"`);
+        }
         const columns = keys.join(', ');
-        const placeholders = keys.map(() => '?').join(', ');
+        const placeholders = keys.map((_, i) => `:${i + 1}`).join(', ');
         const values = Object.values(data);
 
-        const sql = `INSERT INTO ${this.tableName} (${columns}) VALUES (${placeholders})`;
-        const info = this.db.prepare(sql).run(...values);
-        
-        return { id: data.id || info.lastInsertRowid, ...data };
+        await execute(
+            `INSERT INTO ${this.tableName} (${columns}) VALUES (${placeholders})`,
+            values
+        );
+
+        return { ...data };
     }
 
-    update(id, data) {
+    async update(id, data) {
         const keys = Object.keys(data);
-        const setClause = keys.map(key => `${key} = ?`).join(', ');
+        if (keys.length === 0) {
+            throw new Error(`update() called with empty data on table "${this.tableName}"`);
+        }
+        const setClause = keys.map((key, i) => `${key} = :${i + 1}`).join(', ');
         const values = [...Object.values(data), id];
 
-        const sql = `UPDATE ${this.tableName} SET ${setClause} WHERE id = ?`;
-        this.db.prepare(sql).run(...values);
-        
+        await execute(
+            `UPDATE ${this.tableName} SET ${setClause} WHERE id = :${keys.length + 1}`,
+            values
+        );
+
         return this.findById(id);
     }
 
-    delete(id) {
-        return this.db.prepare(`DELETE FROM ${this.tableName} WHERE id = ?`).run(id);
+    async delete(id) {
+        return execute(
+            `DELETE FROM ${this.tableName} WHERE id = :1`,
+            [id]
+        );
     }
 }
 

@@ -1,0 +1,6 @@
+node_modules
+.env
+aeris.db
+aeris.db-journal
+logs
+server_error.log

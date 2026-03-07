@@ -1,302 +1,193 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Clock, Target, AlertTriangle, Wind, Zap, Activity, CalendarDays } from 'lucide-react';
-import { 
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine 
+import { Activity, CalendarDays } from 'lucide-react';
+import {
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine
 } from 'recharts';
 import useAerisStore from '@/store/aerisStore';
-import { getAtmosphereTheme } from '@/utils/atmosphereTheme';
 
-// Dummy historical vs prediction generating logic based on selection
-const generateData = (days) => {
-  const data = [];
-  const now = new Date();
-  
-  // Historical data points
-  for(let i = days; i > 0; i--) {
-    data.push({
-      time: new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toLocaleDateString([], { month: 'short', day: 'numeric' }),
-      actualRri: Math.floor(40 + Math.random() * 40),
-      type: 'history'
-    });
-  }
-  
-  // Current pivot point
-  const currentRri = data[data.length - 1]?.actualRri || 50;
-  
-  // Projected data points
-  data.push({ 
-    time: 'Now', 
-    actualRri: currentRri,
-    predictedRri: currentRri, 
-    type: 'pivot' 
-  });
-  
-  for(let i = 1; i <= days; i++) {
-    // Generate trending curve
-    const trend = Math.sin(i / 2) * 20;
-    data.push({
-      time: new Date(now.getTime() + i * 24 * 60 * 60 * 1000).toLocaleDateString([], { month: 'short', day: 'numeric' }),
-      predictedRri: Math.max(10, Math.floor(currentRri + trend + (Math.random() * 10 - 5))),
-      type: 'forecast'
-    });
-  }
-  return data;
-};
-
-const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    const isForecast = payload[0].dataKey === 'predictedRri';
-    return (
-      <div className="bg-[#050B14]/95 border border-white/10 p-3 rounded-2xl shadow-2xl backdrop-blur-xl">
-        <p className="text-[10px] uppercase font-black tracking-widest text-slate-500 mb-2">{label}</p>
-        <p className="text-xl font-black flex items-center space-x-2" style={{ color: isForecast ? '#38bdf8' : '#34d399' }}>
-           <span>{payload[0].value}</span>
-           <span className="text-[10px] uppercase tracking-widest text-slate-500">RRI</span>
+const ChartTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  const valid = payload.filter((p) => p.value != null && !isNaN(p.value));
+  if (valid.length === 0) return null;
+  return (
+    <div className="bg-slate-900 border border-slate-700 px-3 py-2 rounded-lg">
+      <p className="text-[11px] text-slate-500 mb-1">{label}</p>
+      {valid.map((p, i) => (
+        <p key={i} className="text-sm font-bold" style={{ color: p.color }}>
+          {p.name}: {Math.round(p.value)}
         </p>
-        <p className="text-xs font-bold mt-1 text-slate-400">
-          {isForecast ? 'AI Prediction' : 'Historical Record'}
-        </p>
-      </div>
-    );
-  }
-  return null;
+      ))}
+    </div>
+  );
 };
 
 const Forecast = () => {
-  const { data, fetchLatest } = useAerisStore();
-  const [timeframe, setTimeframe] = useState('7d'); // 24h, 7d, 30d
-  const [chartData, setChartData] = useState([]);
+  const data = useAerisStore((s) => s.data);
 
-  const currentTheme = getAtmosphereTheme(data?.derived?.aqi || 0, data?.derived?.risk_level);
+  const history = Array.isArray(data?.history) ? data.history : [];
+  const forecast = Array.isArray(data?.forecast) ? data.forecast : [];
 
-  useEffect(() => {
-    fetchLatest();
-  }, [fetchLatest]);
+  const chartData = useMemo(() => {
+    if (!data?.derived) return [];
+    const pts = history.slice(-20).map(h => ({
+      time: new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      actualAqi: h.aqi || 0,
+    }));
+    pts.push({
+      time: 'Now',
+      actualAqi: data.derived.aqi || 0,
+      forecastAqi: data.derived.aqi || 0,
+    });
+    forecast.forEach(f => {
+      pts.push({
+        time: new Date(f.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        forecastAqi: f.aqi || 0,
+      });
+    });
+    return pts;
+  }, [history, forecast, data?.derived]);
 
-  useEffect(() => {
-    // Simulate generation based on toggle
-    const days = timeframe === '24h' ? 1 : timeframe === '7d' ? 7 : 30;
-    setChartData(generateData(days));
-  }, [timeframe]);
-
-  if (!data?.forecast) {
+  if (!data?.derived) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
+      <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+        <div>
+          <div className="h-7 w-32 bg-slate-800/60 rounded-lg animate-pulse" />
+          <div className="h-4 w-72 bg-slate-800/40 rounded mt-2 animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="lg:col-span-8 bg-slate-800/40 border border-slate-700/40 rounded-xl h-80 animate-pulse" />
+          <div className="lg:col-span-4 space-y-5">
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-36 animate-pulse" />
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-36 animate-pulse" />
+          </div>
+        </div>
       </div>
     );
   }
 
-  // Derive metrics from chart data
-  const forecastedData = chartData.filter(d => d.predictedRri);
-  const peakRri = Math.max(...forecastedData.map(d => d.predictedRri));
-  const peakItem = forecastedData.find(d => d.predictedRri === peakRri);
-  const avgRri = Math.floor(forecastedData.reduce((acc, curr) => acc + curr.predictedRri, 0) / forecastedData.length);
-  const aiConfidence = timeframe === '24h' ? 94 : timeframe === '7d' ? 82 : 65;
+  const peakAqi = forecast.length > 0 ? Math.max(...forecast.map(f => f.aqi || 0)) : data.derived.aqi;
+  const peakTime = forecast.find(f => f.aqi === peakAqi)?.timestamp;
+  const peakLabel = peakTime ? new Date(peakTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now';
+  const avgConf = forecast.length > 0
+    ? Math.round(forecast.reduce((a, f) => a + (f.confidence || 80), 0) / forecast.length) : 80;
+
+  const allAqi = [...history.map(h => h.aqi || 0), data.derived.aqi || 0];
+  const total = allAqi.length || 1;
+  const safePct = Math.round(allAqi.filter(a => a <= 50).length / total * 100);
+  const elevPct = Math.round(allAqi.filter(a => a > 50 && a <= 150).length / total * 100);
+  const dangPct = Math.round(allAqi.filter(a => a > 150).length / total * 100);
 
   return (
-    <div className="p-8 pb-32 max-w-[1600px] mx-auto space-y-8 text-slate-100 selection:bg-sky-500/30">
-      
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-3 mb-2">
-            <Target size={24} className="text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.5)]" />
-            <h1 className="text-3xl font-black tracking-tight">AI Forecast Intelligence</h1>
-          </div>
-          <p className="text-slate-400 font-medium">Predictive modeling of future environmental threat vectors.</p>
-        </div>
-        <div className="px-4 py-2 bg-sky-500/10 border border-sky-500/20 rounded-full flex items-center space-x-2">
-           <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse shadow-[0_0_8px_#38bdf8]" />
-           <span className="text-[10px] font-black uppercase tracking-widest text-sky-400">Neural Net Linked</span>
-        </div>
+    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Forecast</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Predictive air quality trends based on recent sensor data.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* ── Main Chart Section ───────────────────────────── */}
-        <div className="lg:col-span-8 space-y-8">
-          
-          <div className="bg-[#111827]/60 backdrop-blur-2xl border border-white/5 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
-            <div className="absolute inset-0 bg-linear-to-b from-white/5 to-transparent pointer-events-none" />
-            
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 relative z-10">
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 flex items-center space-x-2">
-                 <Activity size={14} className="text-sky-500" />
-                 <span>Predictive Trajectory</span>
-              </h3>
-              
-              {/* Timing Toggles */}
-              <div className="flex bg-[#0B0F1A] border border-white/10 rounded-xl p-1 mt-4 md:mt-0">
-                {['24h', '7d', '30d'].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setTimeframe(t)}
-                    className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all duration-300 ${
-                      timeframe === t 
-                        ? 'bg-sky-500/20 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]' 
-                        : 'text-slate-500 hover:text-slate-300'
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div className="lg:col-span-8 space-y-5">
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
+              <h3 className="text-sm font-semibold text-slate-300">AQI Trajectory</h3>
+              <div className="flex items-center gap-4 text-xs text-slate-500">
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-0.5 rounded bg-emerald-400 inline-block" /> Recorded</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-0.5 rounded bg-sky-400 inline-block" /> Forecast</span>
               </div>
             </div>
-
-            {/* Recharts Area */}
-            <motion.div 
-               key={`${timeframe}-${currentTheme.mode}`}
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               transition={{ duration: 0.8 }}
-               className="h-[400px] relative z-10 w-full"
-            >
+            <div className="h-[360px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#34d399" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#34d399" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#34d399" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#34d399" stopOpacity={0} />
                     </linearGradient>
-                    <linearGradient id="colorPredicted" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={currentTheme.chartTokens.line} stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor={currentTheme.chartTokens.line} stopOpacity={0}/>
+                    <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  
-                  <CartesianGrid strokeDasharray="3 3" stroke={currentTheme.chartTokens.grid} vertical={false} />
-                  <XAxis dataKey="time" stroke={currentTheme.chartTokens.text} fontSize={10} tickLine={false} axisLine={false} dy={10} />
-                  <YAxis stroke={currentTheme.chartTokens.text} fontSize={10} tickLine={false} axisLine={false} dx={-10} />
-                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 2, strokeDasharray: '4 4' }} />
-                  
-                  <ReferenceLine x="Now" stroke="rgba(255,255,255,0.2)" strokeDasharray="3 3" label={{ position: 'top', value: 'CURRENT TIME', fill: '#64748b', fontSize: 10, fontWeight: 900, tracking: '0.2em' }} />
-
-                  {/* Historical Data */}
-                  <Area 
-                     type="monotone" 
-                     dataKey="actualRri" 
-                     stroke="#34d399" 
-                     strokeWidth={3}
-                     fillOpacity={1} 
-                     fill="url(#colorActual)" 
-                     isAnimationActive={false}
-                  />
-                  {/* Predicted Data */}
-                  <Area 
-                     type="monotone" 
-                     dataKey="predictedRri" 
-                     stroke={currentTheme.chartTokens.line} 
-                     strokeWidth={currentTheme.chartTokens.thickness}
-                     strokeDasharray="8 6"
-                     fillOpacity={1} 
-                     fill="url(#colorPredicted)" 
-                     isAnimationActive={false}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="time" stroke="#475569" fontSize={10} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                  <YAxis stroke="#475569" fontSize={10} tickLine={false} axisLine={false} width={40} domain={[0, 'auto']} allowDecimals={false} tickCount={6} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.3)', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                  <ReferenceLine x="Now" stroke="rgba(255,255,255,0.15)" strokeDasharray="3 3" />
+                  <Area type="linear" dataKey="actualAqi" name="Recorded" stroke="#34d399" strokeWidth={2} fill="url(#colorActual)" isAnimationActive={false} dot={false} activeDot={{ r: 4, fill: '#34d399', stroke: '#0f172a', strokeWidth: 2 }} />
+                  <Area type="linear" dataKey="forecastAqi" name="Forecast" stroke="#38bdf8" strokeWidth={2} strokeDasharray="6 4" fill="url(#colorForecast)" isAnimationActive={false} dot={false} activeDot={{ r: 4, fill: '#38bdf8', stroke: '#0f172a', strokeWidth: 2 }} />
                 </AreaChart>
               </ResponsiveContainer>
-            </motion.div>
-            
-            {/* Chart Legend */}
-            <div className="flex justify-center items-center space-x-8 mt-6">
-               <div className="flex items-center space-x-2">
-                  <div className="w-3 h-1 bg-emerald-400 rounded-full" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Recorded History</span>
-               </div>
-               <div className="flex items-center space-x-2">
-                  <div className="w-3 h-1 border-t-2 border-dashed border-sky-400" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">AI Neural Forecast</span>
-               </div>
             </div>
-
           </div>
 
-          {/* ── Summary Metrics Cards ───────────────────────── */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Predicted Peak RRI', value: peakRri, color: peakRri > 75 ? 'text-red-400' : 'text-amber-400', sub: 'Maximum risk vector' },
-              { label: 'Average Median RRI', value: avgRri, color: 'text-sky-400', sub: 'Baseline projection' },
-              { label: 'Estimated Peak Time', value: peakItem?.time || 'Unknown', color: 'text-white', sub: 'Highest threat window' },
-              { label: 'Forecast Confidence', value: `${aiConfidence}%`, color: 'text-emerald-400', sub: 'Neural net accuracy' },
-            ].map((metric, i) => (
-               <div key={i} className="bg-[#111827]/40 backdrop-blur-xl border border-white/5 hover:bg-white/5 transition-colors duration-300 rounded-2xl p-6 relative overflow-hidden group">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">{metric.label}</h4>
-                  <div className={`text-3xl font-black ${metric.color}`}>{metric.value}</div>
-                  <div className="text-[10px] uppercase font-bold text-slate-600 tracking-widest mt-2">{metric.sub}</div>
-               </div>
+              { label: 'Current AQI', value: data.derived.aqi, color: data.derived.aqi > 100 ? 'text-red-400' : 'text-emerald-400' },
+              { label: 'Peak Forecast', value: peakAqi, color: peakAqi > 100 ? 'text-red-400' : 'text-amber-400' },
+              { label: 'Peak Time', value: peakLabel, color: 'text-white' },
+              { label: 'Confidence', value: `${avgConf}%`, color: 'text-emerald-400' },
+            ].map((m, i) => (
+              <div key={i} className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5">
+                <p className="text-xs text-slate-500 mb-2">{m.label}</p>
+                <p className={`text-2xl font-bold ${m.color}`}>{m.value}</p>
+              </div>
             ))}
           </div>
-
         </div>
 
-        {/* ── Right Column ─────────────────────────────────── */}
-        <div className="lg:col-span-4 space-y-8">
-          
-          {/* Risk Window Timelines */}
-          <div className="bg-[#111827]/60 backdrop-blur-2xl border border-white/5 rounded-3xl p-8 shadow-2xl">
-             <div className="flex items-center space-x-3 mb-8">
-                <CalendarDays size={18} className="text-slate-400" />
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Risk Timeline Analysis</h3>
-             </div>
-             
-             <div className="space-y-6">
-               {[
-                 { label: 'Safe Operations', percent: 45, color: '#10b981' },
-                 { label: 'Elevated Risk Window', percent: 35, color: '#f59e0b' },
-                 { label: 'Danger Territory', percent: 20, color: '#ef4444' },
-               ].map((window, i) => (
-                 <div key={i}>
-                    <div className="flex justify-between items-center mb-2">
-                       <span className="text-xs font-bold uppercase tracking-widest text-slate-300">{window.label}</span>
-                       <span className="text-xs font-mono font-bold" style={{ color: window.color }}>{window.percent}%</span>
-                    </div>
-                    <div className="w-full h-2 bg-black/50 rounded-full overflow-hidden">
-                       <motion.div 
-                         initial={{ width: 0 }}
-                         animate={{ width: `${window.percent}%` }}
-                         transition={{ duration: 1.5, delay: i * 0.2 }}
-                         className="h-full rounded-full"
-                         style={{ backgroundColor: window.color, boxShadow: `0 0 10px ${window.color}80` }}
-                       />
-                    </div>
-                 </div>
-               ))}
-             </div>
+        <div className="lg:col-span-4 space-y-5">
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-5">
+              <CalendarDays size={16} className="text-slate-400" />
+              <h3 className="text-sm font-semibold text-slate-300">Risk Distribution</h3>
+            </div>
+            <p className="text-xs text-slate-500 mb-4">Based on {total} recent readings</p>
+            <div className="space-y-4">
+              {[
+                { label: 'Safe (0-50)', percent: safePct, color: '#22c55e' },
+                { label: 'Elevated (51-150)', percent: elevPct, color: '#eab308' },
+                { label: 'Dangerous (151+)', percent: dangPct, color: '#ef4444' },
+              ].map((w) => (
+                <div key={w.label}>
+                  <div className="flex justify-between mb-1.5">
+                    <span className="text-xs text-slate-400">{w.label}</span>
+                    <span className="text-xs font-semibold" style={{ color: w.color }}>{w.percent}%</span>
+                  </div>
+                  <div className="h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${w.percent}%` }} transition={{ duration: 1 }} className="h-full rounded-full" style={{ backgroundColor: w.color }} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Toxic Event Probability */}
-          <div className="bg-[#111827]/60 backdrop-blur-2xl border border-white/5 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
-             <div className="absolute -bottom-10 -right-10 opacity-10 blur-xl group-hover:opacity-20 transition-all duration-500">
-               <AlertTriangle size={150} className="text-pink-500" />
-             </div>
-             
-             <div className="relative z-10">
-               <div className="flex items-center space-x-3 mb-8">
-                  <Zap size={18} className="text-pink-500 shadow-[0_0_10px_#ec4899]" />
-                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Toxic Event Probability</h3>
-               </div>
-
-               <div className="space-y-4">
-                 {[
-                   { event: 'Dust Storm Influx', prob: '12%', icon: Wind, color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
-                   { event: 'Traffic Gridlock Peak', prob: '84%', icon: Activity, color: 'text-sky-500', bg: 'bg-sky-500/10', border: 'border-sky-500/20' },
-                   { event: 'Industrial Emission Spike', prob: '43%', icon: AlertTriangle, color: 'text-pink-500', bg: 'bg-pink-500/10', border: 'border-pink-500/20' },
-                 ].map((event, i) => (
-                   <div key={i} className={`flex items-center justify-between p-4 rounded-2xl border ${event.bg} ${event.border}`}>
-                     <div className="flex items-center space-x-4">
-                       <div className="p-2 bg-black/40 rounded-xl">
-                          <event.icon size={16} className={event.color} />
-                       </div>
-                       <span className="text-xs font-bold text-white tracking-wide">{event.event}</span>
-                     </div>
-                     <span className={`text-lg font-black ${event.color}`}>{event.prob}</span>
-                   </div>
-                 ))}
-               </div>
-             </div>
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-5">
+              <Activity size={16} className="text-slate-400" />
+              <h3 className="text-sm font-semibold text-slate-300">Hourly Forecast</h3>
+            </div>
+            <div className="space-y-2">
+              {forecast.map((f, i) => {
+                const time = new Date(f.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const c = f.aqi <= 50 ? '#22c55e' : f.aqi <= 100 ? '#eab308' : f.aqi <= 150 ? '#f97316' : '#ef4444';
+                return (
+                  <div key={i} className="flex items-center justify-between p-3 bg-slate-900/50 border border-slate-700/30 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-slate-500 w-12">{time}</span>
+                      <div className="w-16 h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full" style={{ backgroundColor: c, width: `${Math.min(f.aqi / 200 * 100, 100)}%` }} />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold tabular-nums" style={{ color: c }}>{f.aqi}</span>
+                      <span className="text-[10px] text-slate-600">{f.confidence}%</span>
+                    </div>
+                  </div>
+                );
+              })}
+              {forecast.length === 0 && <p className="text-xs text-slate-600 text-center py-4">No forecast data</p>}
+            </div>
           </div>
-
         </div>
       </div>
     </div>

@@ -1,290 +1,282 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Activity, Clock, AlertTriangle, Cpu, Database, Zap, MapPin, 
-  TrendingUp, RefreshCw, Wind, Shield, Thermometer, Droplets, Heart
+import {
+  Activity, Clock, MapPin, RefreshCw, Wind, Thermometer, Droplets, Heart, Gauge
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// ── Components ──────────────────────────────────────────────────
-
-const CountUp = ({ end, duration = 1500, decimals = 0 }) => {
-  const [count, setCount] = useState(0);
+/* ── Animated number ──────────────────────────────────── */
+const AnimatedNum = ({ value, decimals = 0 }) => {
+  const [display, setDisplay] = useState(value || 0);
+  const prev = useRef(value || 0);
 
   useEffect(() => {
-    if (end === undefined || end === null) return;
-    let startTimestamp = null;
-    const step = (timestamp) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      setCount(progress * end);
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      }
+    if (value == null) return;
+    const from = prev.current;
+    prev.current = value;
+    if (from === value) return;
+    let start = null;
+    let raf;
+    const step = (ts) => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / 600, 1);
+      setDisplay(from + (value - from) * p);
+      if (p < 1) raf = requestAnimationFrame(step);
     };
-    window.requestAnimationFrame(step);
-  }, [end, duration]);
-  return <>{count.toFixed(decimals)}</>;
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+
+  return <>{display.toFixed(decimals)}</>;
 };
 
-const StatusDot = ({ pulse = true, color = "bg-emerald-500", glow = "shadow-[0_0_10px_rgba(16,185,129,0.8)]" }) => (
-  <div className={`w-2 h-2 rounded-full ${color} ${pulse ? 'animate-pulse' : ''} ${glow}`} />
-);
+/* ── Sensor color helper ──────────────────────────────── */
+const sensorStatus = (id, val) => {
+  const thresholds = {
+    pm25: [12, 35, 55, 150],
+    co: [4.4, 9.4, 12.4, 15.4],
+    o3: [54, 70, 85, 105],
+    voc: [100, 200, 300, 400],
+  };
+  const t = thresholds[id];
+  if (!t) return '#94a3b8';
+  if (val <= t[0]) return '#22c55e';
+  if (val <= t[1]) return '#eab308';
+  if (val <= t[2]) return '#f97316';
+  return '#ef4444';
+};
 
-// ── Live Status Page ──────────────────────────────────────────
-
+/* ── LiveStatus Page ──────────────────────────────────── */
 const LiveStatus = () => {
-  const { data, loading, fetchLatest } = useAerisStore();
-  const [eventLog, setEventLog] = useState([]);
+  const data = useAerisStore((s) => s.data);
+  const loading = useAerisStore((s) => s.loading);
   const [lastUpdate, setLastUpdate] = useState(new Date());
-  const [envMode, setEnvMode] = useState('outdoor'); // indoor | outdoor
-  const prevDataRef = useRef(null);
+  const [eventLog, setEventLog] = useState([]);
 
-  // Poll 8s as per requirement "Poll API every 8 seconds"
   useEffect(() => {
-    fetchLatest();
-    const interval = setInterval(() => {
-      fetchLatest();
-      setLastUpdate(new Date());
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [fetchLatest]);
+    if (data?.sensors) setLastUpdate(new Date());
+  }, [data]);
 
-  // Build simulated tactical event log
+  // Build event log from alerts
   useEffect(() => {
     if (!data) return;
-    const events = [];
     const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    
+    const events = [];
+
     if (data.alerts?.length > 0) {
-      data.alerts.slice(0, 1).forEach(a => {
-        events.push({ time: ts, type: 'alert', title: 'TOXIC SPIKE DETECTED', message: a.message, severity: 'critical' });
+      data.alerts.slice(0, 2).forEach((a) => {
+        events.push({ time: ts, type: 'alert', message: a.message });
       });
     }
-    
-    // Simulate some tactical events to make it feel alive
-    if (Math.random() > 0.7) {
-      const msgs = [
-        "Industrial emission spike detected in Sector 4.",
-        "Dust storm approaching from North perimeter.",
-        "PM10 concentration normalized after wind shift.",
-        "Sensor Node N-003 re-established uplink.",
-        "Risk Engine calculated new baseline group risks."
-      ];
-      const type = Math.random() > 0.8 ? 'warning' : 'info';
-      const title = type === 'warning' ? 'ENVIRONMENTAL SHIFT' : 'SYSTEM UPDATE';
-      events.push({ time: ts, type, title, message: msgs[Math.floor(Math.random() * msgs.length)], severity: type });
-    }
-    
-    events.push({ time: ts, type: 'sync', title: 'MESH SYNC', message: 'Nodes reported back to AI core.', severity: 'normal' });
-    
-    setEventLog(prev => [...events, ...prev].slice(0, 50));
-    prevDataRef.current = data;
+
+    events.push({ time: ts, type: 'sync', message: 'Sensor data received and processed.' });
+
+    setEventLog((prev) => [...events, ...prev].slice(0, 30));
   }, [data]);
 
   if (!data?.sensors) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
-        <div className="w-16 h-16 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
-        <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Awaiting Telemetry...</span>
+      <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+        <div>
+          <div className="h-7 w-40 bg-slate-800/60 rounded-lg animate-pulse" />
+          <div className="h-4 w-64 bg-slate-800/40 rounded mt-2 animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="lg:col-span-8 grid grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-32 animate-pulse" />
+            ))}
+          </div>
+          <div className="lg:col-span-4 space-y-5">
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-64 animate-pulse" />
+          </div>
+        </div>
       </div>
     );
   }
 
   const { sensors, environment, derived, sectors, meta } = data;
-  const secondsSinceUpdate = Math.floor((new Date() - lastUpdate) / 1000);
+  const secondsAgo = Math.floor((new Date() - lastUpdate) / 1000);
 
-  // Enhancing the payload
-  const fullSensors = {
-    ...sensors,
-    temp: environment?.temperature || 24.5,
-    humidity: environment?.humidity || 45
-  };
-
-  const largeTiles = [
-    { id: 'pm25', label: 'PM2.5', value: fullSensors.pm25, unit: 'µg/m³', color: '#ef4444', icon: Activity },
-    { id: 'co', label: 'CO', value: fullSensors.co, unit: 'ppm', color: '#f59e0b', icon: Activity, decimals: 1 },
-    { id: 'voc', label: 'VOC', value: fullSensors.voc_index, unit: 'Index', color: '#8b5cf6', icon: Activity },
-    { id: 'o3', label: 'Ozone', value: fullSensors.o3, unit: 'ppb', color: '#0ea5e9', icon: Activity },
-    { id: 'temp', label: 'Temperature', value: fullSensors.temp, unit: '°C', color: '#f43f5e', icon: Thermometer, decimals: 1 },
-    { id: 'hum', label: 'Humidity', value: fullSensors.humidity, unit: '%', color: '#06b6d4', icon: Droplets },
+  const sensorTiles = [
+    { id: 'pm25', label: 'PM2.5', value: sensors.pm25, unit: 'ug/m3', icon: Activity, decimals: 1 },
+    { id: 'o3', label: 'Ozone', value: sensors.o3, unit: 'ppb', icon: Wind, decimals: 1 },
+    { id: 'co', label: 'CO', value: sensors.co, unit: 'ppm', icon: Gauge, decimals: 2 },
+    { id: 'voc', label: 'VOC Index', value: sensors.voc_index, unit: 'idx', icon: Activity, decimals: 0 },
+    { id: 'temp', label: 'Temperature', value: environment?.temperature || sensors.temperature, unit: 'C', icon: Thermometer, decimals: 1 },
+    { id: 'hum', label: 'Humidity', value: environment?.humidity || sensors.humidity, unit: '%', icon: Droplets, decimals: 0 },
   ];
 
-  const logColors = {
-    alert: 'border-red-500/30 bg-red-500/10 text-red-400',
-    warning: 'border-amber-500/30 bg-amber-500/10 text-amber-400',
-    sync: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-    info: 'border-sky-500/30 bg-sky-500/10 text-sky-400',
+  const mapCenter = sectors?.[0]?.lat ? [sectors[0].lat, sectors[0].lng] : [19.076, 72.877];
+  const riskColor = derived?.risk_color || '#10b981';
+
+  const eventColors = {
+    alert: 'border-red-500/30 bg-red-500/5 text-red-400',
+    sync: 'border-slate-700/50 bg-slate-800/30 text-slate-400',
   };
 
-  const mapCenter = [40.7128, -74.0060]; // Example static center for heatmap
-
   return (
-    <div className="p-8 pb-32 max-w-[1800px] mx-auto space-y-6 text-slate-100 selection:bg-sky-500/30">
-      
-      {/* ── Top Header Bar ──────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111827]/80 backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-2xl">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight flex items-center space-x-4 mb-2">
-            <span>Live Sector Intelligence</span>
-            <div className="flex items-center space-x-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-               <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.8)]" />
-               <span className="text-[10px] font-black uppercase text-emerald-400 tracking-widest leading-none mt-0.5">Engine Active</span>
-            </div>
-          </h1>
-          <p className="text-sm text-slate-400 font-medium">Real-time tactical environmental stream • Sector: {meta?.location}</p>
-        </div>
-        
-        <div className="flex items-center space-x-6">
-          {/* Indoor/Outdoor Toggle */}
-          <div className="flex bg-[#0B0F1A] border border-white/5 rounded-full p-1 shadow-inner">
-            <button 
-              onClick={() => setEnvMode('indoor')}
-              className={`flex items-center space-x-2 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${envMode === 'indoor' ? 'bg-indigo-500/20 text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.2)]' : 'text-slate-500 hover:text-slate-300'}`}
-            >
-              <Shield size={14} /> <span className="mt-0.5">Indoor</span>
-            </button>
-            <button 
-              onClick={() => setEnvMode('outdoor')}
-              className={`flex items-center space-x-2 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${envMode === 'outdoor' ? 'bg-sky-500/20 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'text-slate-500 hover:text-slate-300'}`}
-            >
-              <Wind size={14} /> <span className="mt-0.5">Outdoor</span>
-            </button>
-          </div>
-          
-          <div className="flex items-center space-x-2 px-4 py-2 bg-[#0B0F1A] rounded-xl border border-white/5">
-            <Clock size={16} className="text-slate-500" />
-            <span className="text-xs font-bold text-slate-300 uppercase tracking-widest w-24 text-center">
-              SYNC {secondsSinceUpdate}S AGO
-            </span>
-          </div>
+    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
 
-          <button onClick={fetchLatest} className="p-3 bg-white/5 border border-white/10 rounded-xl text-white hover:bg-white/10 transition-colors group">
-            <RefreshCw size={18} className={`${loading ? 'animate-spin text-sky-400' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
+      {/* ── Header ──────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Live Status</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Real-time sensor readings &middot; {meta?.location || 'Local Station'}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/60 border border-slate-700/40 rounded-lg">
+            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+            <Clock size={14} className="text-slate-500" />
+            <span className="text-xs text-slate-400 tabular-nums">{secondsAgo}s ago</span>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="p-2 bg-slate-800/60 border border-slate-700/40 rounded-lg text-slate-400 hover:text-white transition-colors"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
       </div>
 
-      {/* ── Main Layout Grid ─────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* ── Left Column: Live Tiles ─────────────────────────── */}
-        <div className="lg:col-span-8 space-y-6">
-           <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-              {largeTiles.map((tile, i) => (
-                <motion.div
+      {/* ── Main grid ──────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+        {/* Left: Sensor tiles + Advisory */}
+        <div className="lg:col-span-8 space-y-5">
+
+          {/* Sensor grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            {sensorTiles.map((tile) => {
+              const color = sensorStatus(tile.id, tile.value);
+              return (
+                <div
                   key={tile.id}
-                  initial={{ opacity: 0, scale: 0.95 }} 
-                  animate={{ opacity: 1, scale: 1 }} 
-                  transition={{ delay: i * 0.05 }}
-                  className="bg-[#111827]/60 backdrop-blur-xl border border-white/5 rounded-3xl p-6 relative overflow-hidden group hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
-                  style={{ '--hover-color': tile.color }}
+                  className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5 relative overflow-hidden"
                 >
-                  <div className="absolute -bottom-8 -right-8 opacity-10 blur-xl group-hover:opacity-30 transition-opacity duration-500">
-                    <tile.icon size={120} style={{ color: tile.color }} />
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-medium text-slate-500">{tile.label}</span>
+                    <tile.icon size={16} className="text-slate-600" />
                   </div>
-                  
-                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-2">{tile.label}</h3>
-                  
-                  <div className="flex items-end justify-between relative z-10 space-x-2">
-                    <span 
-                       className="text-6xl font-black tracking-tighter" 
-                       style={{ color: tile.color, textShadow: `0 0 30px ${tile.color}40` }}
-                    >
-                      <CountUp end={tile.value} decimals={tile.decimals || 0} />
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-white tabular-nums">
+                      <AnimatedNum value={tile.value} decimals={tile.decimals} />
                     </span>
-                    <span className="text-sm font-bold uppercase text-slate-600 mb-2">{tile.unit}</span>
+                    <span className="text-xs text-slate-500">{tile.unit}</span>
                   </div>
-                </motion.div>
-              ))}
-           </div>
+                  {/* Status bar */}
+                  <div className="mt-3 h-1 bg-slate-700/50 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{
+                        backgroundColor: color,
+                        width: `${Math.min((tile.value / (tile.id === 'pm25' ? 150 : tile.id === 'co' ? 15 : tile.id === 'o3' ? 120 : tile.id === 'voc' ? 500 : tile.id === 'temp' ? 50 : 100)) * 100, 100)}%`
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-           {/* ── Advisory Panel ─────────────────────────────── */}
-           <div className="bg-linear-to-r from-slate-900/60 to-[#111827]/60 backdrop-blur-xl border border-white/5 hover:border-white/10 rounded-3xl p-8 flex flex-col justify-center transition-colors">
-              <div className="flex items-center space-x-3 mb-4">
-                <Heart size={20} className="text-pink-500" />
-                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-pink-500">Personal Intelligence Advisory</h3>
+          {/* Advisory */}
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Heart size={16} className="text-rose-400" />
+              <span className="text-sm font-semibold text-slate-300">Health Advisory</span>
+            </div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <p className="text-sm text-slate-400 leading-relaxed max-w-xl">
+                {derived?.air_quality_text || 'Current air quality conditions are being monitored.'}
+                {' '}Dominant pollutant: <span className="text-slate-300 font-medium">{derived?.dominant || 'PM2.5'}</span>.
+              </p>
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="text-right">
+                  <p className="text-[11px] text-slate-500">Risk Score</p>
+                  <p className="text-2xl font-bold tabular-nums" style={{ color: riskColor }}>
+                    <AnimatedNum value={derived?.rri || 0} />
+                  </p>
+                </div>
+                <div className="w-px h-8 bg-slate-700" />
+                <div className="text-right">
+                  <p className="text-[11px] text-slate-500">AQI</p>
+                  <p className="text-2xl font-bold text-white tabular-nums">
+                    <AnimatedNum value={derived?.aqi || 0} />
+                  </p>
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-                 <div className="md:col-span-8 text-xl font-medium text-slate-300 leading-relaxed">
-                   {derived.air_quality_text || 'Monitoring baseline conditions.'}
-                   {" "}Your localized RRI modifier is active. Currently, prolonged exposure to ambient {derived.dominant || 'PM2.5'} is <span className="text-orange-400 font-bold">NOT</span> recommended.
-                 </div>
-                 <div className="md:col-span-4 flex justify-end">
-                    <div className="text-right">
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-1">RRI Threat Score</span>
-                       <span className="text-5xl font-black tracking-tighter" style={{ color: derived.risk_color || '#f59e0b' }}>
-                         <CountUp end={derived.rri} />
-                       </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Map + Events */}
+        <div className="lg:col-span-4 space-y-5">
+
+          {/* Map */}
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-700/40">
+              <div className="flex items-center gap-2">
+                <MapPin size={14} className="text-sky-400" />
+                <span className="text-xs font-medium text-slate-400">Sensor Map</span>
+              </div>
+              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+            </div>
+            <div className="h-[240px]">
+              <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%', background: '#0f172a' }} zoomControl={false} dragging={false}>
+                <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+                {sectors?.map((s, i) => (
+                  <CircleMarker
+                    key={s.id || i}
+                    center={[s.lat || mapCenter[0] + (i * 0.018 - 0.03), s.lng || mapCenter[1] + (i * 0.015 - 0.03)]}
+                    radius={8}
+                    pathOptions={{
+                      color: s.aqi > 100 ? '#f97316' : '#38bdf8',
+                      fillColor: s.aqi > 100 ? '#f97316' : '#38bdf8',
+                      fillOpacity: 0.7,
+                      weight: 2,
+                    }}
+                  />
+                ))}
+              </MapContainer>
+            </div>
+          </div>
+
+          {/* Event Feed */}
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl flex flex-col overflow-hidden min-h-[320px]">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-700/40">
+              <span className="text-xs font-medium text-slate-400">Event Log</span>
+              <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold rounded">LIVE</span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 max-h-[360px]">
+              <AnimatePresence mode="popLayout">
+                {eventLog.map((event, i) => (
+                  <motion.div
+                    key={`${event.time}-${i}`}
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className={`border rounded-lg p-3 ${eventColors[event.type]}`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide">
+                        {event.type === 'alert' ? 'Alert' : 'Update'}
+                      </span>
+                      <span className="text-[10px] font-mono opacity-60">{event.time}</span>
                     </div>
-                 </div>
-              </div>
-           </div>
+                    <p className="text-xs leading-relaxed">{event.message}</p>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              {eventLog.length === 0 && (
+                <p className="text-xs text-slate-600 text-center py-8">Waiting for events...</p>
+              )}
+            </div>
+          </div>
         </div>
-
-        {/* ── Right Column: Event Log & Map ───────────────────── */}
-        <div className="lg:col-span-4 flex flex-col space-y-6">
-           
-           {/* Spatial Heatmap Preview */}
-           <div className="bg-[#111827]/60 backdrop-blur-xl border border-white/5 rounded-3xl p-5 relative overflow-hidden h-[300px] flex flex-col group">
-              <div className="flex items-center justify-between z-20 relative mb-4">
-                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 flex items-center space-x-2">
-                   <MapPin size={16} className="text-sky-400" />
-                   <span>Spatial Heatmap</span>
-                 </h3>
-                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
-              </div>
-
-              <div className="absolute inset-0 top-14 rounded-b-3xl overflow-hidden border-t border-white/5">
-                 <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%', background: '#0B0F1A' }} zoomControl={false} dragging={false}>
-                   <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
-                   <CircleMarker center={mapCenter} radius={80} pathOptions={{ color: derived.risk_color || '#10b981', fillColor: derived.risk_color || '#10b981', fillOpacity: 0.2, weight: 0 }} />
-                   {sectors?.map((s, i) => (
-                     <CircleMarker key={i} center={[mapCenter[0] + (Math.random()-0.5)*0.06, mapCenter[1] + (Math.random()-0.5)*0.06]} radius={10}
-                        pathOptions={{ color: s.aqi > 100 ? '#f97316' : '#38bdf8', fillColor: s.aqi > 100 ? '#f97316' : '#38bdf8', fillOpacity: 0.8 }}
-                     />
-                   ))}
-                 </MapContainer>
-                 {/* Internal Vignette shadow */}
-                 <div className="absolute inset-0 shadow-[inset_0_0_60px_#0B0F1A] pointer-events-none z-400" />
-              </div>
-           </div>
-
-           {/* Tactical Scrollable Feed */}
-           <div className="bg-[#111827]/60 backdrop-blur-xl border border-white/5 rounded-3xl flex-1 flex flex-col overflow-hidden min-h-[400px]">
-              <div className="p-6 border-b border-white/5 bg-slate-900/30 flex justify-between items-center">
-                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 flex items-center space-x-2">
-                   <Activity size={16} className="text-emerald-400" />
-                   <span>Tactical Intelligence Feed</span>
-                 </h3>
-                 <span className="px-2 py-0.5 bg-red-500/10 text-red-500 text-[9px] font-black uppercase tracking-widest rounded">LIVE</span>
-              </div>
-              
-              {/* Event Scroller */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
-                 <AnimatePresence mode="popLayout">
-                    {eventLog.map((event, i) => (
-                      <motion.div
-                        key={`${event.time}-${i}`}
-                        initial={{ opacity: 0, x: 20, height: 0 }} animate={{ opacity: 1, x: 0, height: 'auto' }} exit={{ opacity: 0 }}
-                        className={`border rounded-2xl p-4 transition-colors ${logColors[event.type]}`}
-                      >
-                         <div className="flex items-center justify-between mb-2">
-                           <span className="text-[10px] font-black uppercase tracking-widest">{event.title}</span>
-                           <span className="text-[10px] font-mono opacity-60 bg-black/20 px-2 py-0.5 rounded">{event.time}</span>
-                         </div>
-                         <p className="text-sm font-medium opacity-90 leading-snug">{event.message}</p>
-                      </motion.div>
-                    ))}
-                 </AnimatePresence>
-                 {eventLog.length === 0 && <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest text-center py-12 animate-pulse">Awaiting mesh signals...</p>}
-              </div>
-           </div>
-
-        </div>
-
       </div>
     </div>
   );

@@ -1,361 +1,320 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  Shield, Wind, Activity, ArrowRight, Zap, MapPin, Heart, 
-  Cpu, Network, Database, Cloud, LayoutDashboard, Brain, AlertTriangle, Radio
+import {
+  Shield, Wind, Activity, ArrowRight, MapPin, Heart,
+  Cpu, Cloud, LayoutDashboard, Brain, ChevronRight, Check
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
 
-// ── Helpers ──────────────────────────────────────────────────
-const CountUp = ({ end, duration = 1500 }) => {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (typeof end !== 'number') return;
-    let startTimestamp = null;
-    const step = (timestamp) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      setCount(Math.floor(progress * end));
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      }
-    };
-    window.requestAnimationFrame(step);
-  }, [end, duration]);
-  return <>{count}</>;
+/* ── AQI color helper ──────────────────────────────────── */
+const getAqiColor = (aqi) => {
+  if (aqi <= 50) return '#22c55e';
+  if (aqi <= 100) return '#eab308';
+  if (aqi <= 150) return '#f97316';
+  if (aqi <= 200) return '#ef4444';
+  return '#7c3aed';
 };
 
-const ParticleFog = () => {
-  // Generate a few large blurred circles that drift around to simulate atmospheric fog
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-      <motion.div 
-        animate={{ x: [0, 100, -50, 0], y: [0, -50, 50, 0] }} 
-        transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-        className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-sky-500/10 rounded-full blur-[100px]"
-      />
-      <motion.div 
-        animate={{ x: [0, -100, 50, 0], y: [0, 100, -50, 0] }} 
-        transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-        className="absolute bottom-[20%] right-[10%] w-[400px] h-[400px] bg-[#10b981]/5 rounded-full blur-[120px]"
-      />
-      <motion.div 
-        animate={{ x: [0, 50, -100, 0], y: [0, 50, -100, 0] }} 
-        transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
-        className="absolute top-[40%] left-[60%] w-[600px] h-[600px] bg-[#f59e0b]/5 rounded-full blur-[150px]"
-      />
-    </div>
-  );
+const getAqiLabel = (aqi) => {
+  if (aqi <= 50) return 'Good';
+  if (aqi <= 100) return 'Moderate';
+  if (aqi <= 150) return 'Unhealthy for Sensitive';
+  if (aqi <= 200) return 'Unhealthy';
+  return 'Hazardous';
 };
 
-// ── Landing Page Component ───────────────────────────────────
+/* ── Landing Page ──────────────────────────────────────── */
 const Landing = () => {
   const navigate = useNavigate();
-  const { data, fetchLatest } = useAerisStore();
-
-  useEffect(() => {
-    fetchLatest();
-    const interval = setInterval(fetchLatest, 8000);
-    return () => clearInterval(interval);
-  }, [fetchLatest]);
+  const data = useAerisStore((s) => s.data);
 
   const aqi = data?.derived?.aqi || 0;
-  const aqiCategory = data?.derived?.aqi_category || 'SYNCING';
   const rri = data?.derived?.rri || 0;
-  const riskCategory = data?.derived?.risk_level || 'SYNCING';
   const riskColor = data?.derived?.risk_color || '#10b981';
+  const nodeCount = data?.nodes?.length || 0;
+  const aqiColor = getAqiColor(aqi);
 
-  const [simulatedProfile, setSimulatedProfile] = useState({
-    ageGroup: 'Elderly (65+)',
-    asthma: true,
-    smoking: false,
-    conditions: 'None',
-    multiplier: 1.35
-  });
-
-  const toggleAsthma = () => setSimulatedProfile(prev => ({ 
-    ...prev, 
-    asthma: !prev.asthma, 
-    multiplier: prev.asthma ? 1.0 : 1.35 
-  }));
+  const [hasAsthma, setHasAsthma] = useState(true);
+  const multiplier = hasAsthma ? 1.35 : 1.0;
 
   return (
-    <div className="min-h-screen bg-[#0B0F1A] text-slate-100 font-sans selection:bg-sky-500/30 overflow-x-hidden relative">
-      <ParticleFog />
+    <div className="min-h-screen bg-[#0B0F1A] text-slate-100 font-sans overflow-x-hidden">
 
-      {/* ── Navbar ────────────────────────────────────────────── */}
-      <nav className="relative z-50 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-linear-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-sky-500/20">
-            <Shield className="text-white w-6 h-6" />
+      {/* ── Navbar ─────────────────────────────────────── */}
+      <nav className="flex items-center justify-between px-6 md:px-10 py-5 max-w-7xl mx-auto">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 bg-gradient-to-br from-sky-400 to-blue-600 rounded-lg flex items-center justify-center">
+            <Shield className="text-white w-5 h-5" />
           </div>
-          <div>
-            <span className="text-xl font-black tracking-tight bg-linear-to-r from-white to-slate-400 bg-clip-text text-transparent block leading-none">AERIS</span>
-            <span className="text-[9px] font-bold text-sky-400 uppercase tracking-widest">Intelligence</span>
-          </div>
+          <span className="text-lg font-extrabold tracking-tight text-white">AERIS</span>
         </div>
-        <div className="flex items-center space-x-6">
-          <button onClick={() => navigate('/login')} className="text-sm font-bold text-slate-400 hover:text-white transition-colors">LOGIN</button>
-          <button onClick={() => navigate('/signup')} className="px-6 py-2.5 bg-white/5 border border-white/10 rounded-full text-sm font-bold text-white hover:bg-white/10 hover:border-white/20 hover:-translate-y-0.5 transition-all shadow-xl">
-            SIGN UP
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate('/login')} className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">
+            Log in
+          </button>
+          <button onClick={() => navigate('/signup')} className="px-5 py-2 bg-sky-500 hover:bg-sky-400 rounded-lg text-sm font-semibold text-white transition-colors">
+            Get Started
           </button>
         </div>
       </nav>
 
-      {/* ── Section 1: Hero ────────────────────────────────────── */}
-      <main className="relative z-10 max-w-7xl mx-auto px-8 pt-20 pb-32">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="space-y-8">
-            <div className="inline-flex items-center space-x-3 px-4 py-1.5 bg-sky-500/10 border border-sky-500/20 rounded-full mb-2">
-              <div className="w-2 h-2 bg-sky-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
-              <span className="text-[10px] font-black tracking-[0.2em] text-sky-400 uppercase">Live Intel Active</span>
+      {/* ── Hero ───────────────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-6 md:px-10 pt-16 pb-24">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-sky-500/10 border border-sky-500/20 rounded-full mb-6">
+              <span className="w-1.5 h-1.5 bg-sky-400 rounded-full animate-pulse" />
+              <span className="text-xs font-semibold text-sky-400">Live monitoring active</span>
             </div>
 
-            <h1 className="text-6xl md:text-7xl font-black leading-[1.05] tracking-tight">
-              Know your air.<br />
-              <span className="bg-linear-to-r from-sky-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent italic mr-2">
-                Know your risk.
-              </span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight mb-6">
+              Air quality,{' '}
+              <span className="text-sky-400">personalized</span>
+              <br />to your health.
             </h1>
 
-            <p className="text-lg text-slate-400 max-w-lg leading-relaxed font-medium">
-              We convert raw atmospheric telemetry into deeply personalized health intelligence. Protect your respiratory longevity in real-time.
+            <p className="text-lg text-slate-400 max-w-lg leading-relaxed mb-8">
+              AERIS combines real-time sensor data with your health profile to deliver a personal respiratory risk score — not just a generic AQI number.
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 pt-6">
-              <button onClick={() => navigate('/dashboard')} className="group px-8 py-4 bg-linear-to-r from-sky-500 to-blue-600 rounded-full font-black text-white shadow-[0_0_30px_rgba(56,189,248,0.3)] hover:shadow-[0_0_40px_rgba(56,189,248,0.5)] hover:-translate-y-1 transition-all flex items-center space-x-3">
-                <span>TRY DEMO MODE</span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => navigate('/signup')}
+                className="flex items-center gap-2 px-7 py-3.5 bg-sky-500 hover:bg-sky-400 rounded-lg font-semibold text-white transition-colors"
+              >
+                Start Monitoring <ArrowRight className="w-4 h-4" />
               </button>
-              <button onClick={() => navigate('/signup')} className="px-8 py-4 bg-[#111827]/60 backdrop-blur-md border border-white/10 rounded-full font-bold text-slate-300 hover:bg-white/5 hover:-translate-y-1 transition-all">
-                Create Account
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-7 py-3.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg font-semibold text-slate-300 transition-colors"
+              >
+                Try Demo
               </button>
             </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1, delay: 0.2 }} className="relative">
-            <div className="grid gap-6 relative z-10">
-              
-              {/* AQI Live Card */}
-              <div className="p-8 bg-[#111827]/80 backdrop-blur-2xl border border-white/5 hover:border-white/10 rounded-4xl shadow-2xl flex items-center justify-between group hover:-translate-y-1 transition-all duration-300">
-                <div className="flex items-center space-x-6">
-                  <div className="p-4 bg-white/5 rounded-2xl border border-white/5 group-hover:bg-emerald-500/10 transition-colors">
-                    <Wind className="w-8 h-8 text-emerald-400" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] block mb-1">Live Environment</span>
-                    <span className="text-xl font-bold">{aqiCategory}</span>
-                  </div>
+          {/* Live data cards */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.15 }} className="space-y-4">
+            {/* AQI Card */}
+            <div className="p-6 bg-slate-800/60 border border-slate-700/50 rounded-2xl flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${aqiColor}15` }}>
+                  <Wind className="w-6 h-6" style={{ color: aqiColor }} />
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-1">AQI INDEX</span>
-                  <span className="text-6xl font-black text-white tracking-tighter block leading-none"><CountUp end={aqi} /></span>
+                <div>
+                  <p className="text-xs font-medium text-slate-500 mb-0.5">Air Quality Index</p>
+                  <p className="text-sm font-semibold" style={{ color: aqiColor }}>{getAqiLabel(aqi)}</p>
                 </div>
               </div>
+              <div className="text-right">
+                <span className="text-4xl font-extrabold text-white tabular-nums">{aqi}</span>
+                <p className="text-xs text-slate-500 mt-0.5">AQI</p>
+              </div>
+            </div>
 
-              {/* RRI Live Card */}
-              <div className="p-8 bg-[#111827]/80 backdrop-blur-2xl border flex items-center justify-between rounded-4xl shadow-2xl group hover:-translate-y-1 transition-all duration-300" style={{ borderColor: `${riskColor}22` }}>
-                <div className="flex items-center space-x-6">
-                  <div className="p-4 bg-white/5 rounded-2xl border border-white/5 transition-colors" style={{ backgroundColor: `${riskColor}15` }}>
-                    <Activity className="w-8 h-8" style={{ color: riskColor }} />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] block mb-1">Personalized</span>
-                    <span className="text-xl font-bold" style={{ color: riskColor }}>{riskCategory}</span>
-                  </div>
+            {/* RRI Card */}
+            <div className="p-6 bg-slate-800/60 border border-slate-700/50 rounded-2xl flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${riskColor}15` }}>
+                  <Activity className="w-6 h-6" style={{ color: riskColor }} />
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] font-black uppercase tracking-widest block mb-1" style={{ color: riskColor }}>RISK GAUGE</span>
-                  <div className="flex items-baseline justify-end space-x-1">
-                    <span className="text-6xl font-black text-white tracking-tighter block leading-none"><CountUp end={rri} /></span>
-                    <span className="text-xl font-black text-slate-500">%</span>
-                  </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500 mb-0.5">Respiratory Risk Index</p>
+                  <p className="text-sm font-semibold" style={{ color: riskColor }}>
+                    {rri <= 40 ? 'Low' : rri <= 70 ? 'Moderate' : 'High'}
+                  </p>
                 </div>
               </div>
+              <div className="text-right">
+                <span className="text-4xl font-extrabold text-white tabular-nums">{rri}</span>
+                <p className="text-xs text-slate-500 mt-0.5">RRI</p>
+              </div>
+            </div>
 
+            {/* Stat row */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: 'Sensors', value: nodeCount || 6 },
+                { label: 'Pollutants', value: 5 },
+                { label: 'Update', value: '10s' },
+              ].map((s) => (
+                <div key={s.label} className="p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl text-center">
+                  <div className="text-xl font-bold text-white">{s.value}</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">{s.label}</div>
+                </div>
+              ))}
             </div>
           </motion.div>
         </div>
-      </main>
+      </section>
 
-      {/* ── Section 2: Feature Cards Grid ──────────────────────── */}
-      <section className="relative z-10 max-w-7xl mx-auto px-8 py-32 border-t border-white/5">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-4">Unprecedented Awareness</h2>
-          <p className="text-slate-400 font-medium">A unified suite delivering military-grade environmental telemetry.</p>
+      {/* ── Features ───────────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-6 md:px-10 py-20 border-t border-slate-800">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">What makes AERIS different</h2>
+          <p className="text-slate-400 max-w-xl mx-auto">Real hardware, real-time data, and personalized risk analysis — not just another weather widget.</p>
         </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {[
-            { icon: Radio, name: 'Real-Time Monitoring', desc: 'Continuous sub-10 second latency polling of all local IoT mesh nodes.' },
-            { icon: MapPin, name: 'Hyperlocal Mapping', desc: 'High-resolution spatial grid detailing exact sector toxicity levels.' },
-            { icon: Shield, name: 'Personalized Risk', desc: 'RRI algorithms adapt to your unique physiological baselines.' },
-            { icon: Brain, name: 'AI Prediction', desc: 'Neural net trajectory forecasting for 6-hour atmospheric planning.' },
-            { icon: Heart, name: 'Health Guidance', desc: 'Actionable, phase-based medical recommendations for mitigation.' },
-            { icon: Network, name: 'Sensor Network', desc: 'Decentralized hardware grid spanning industrial to residential zones.' }
+            { icon: Wind, name: 'Real-Time Sensors', desc: 'ESP32-based nodes capture PM2.5, O3, CO, NO2, VOCs and environmental data every 10 seconds.' },
+            { icon: MapPin, name: 'Hyperlocal Coverage', desc: 'Sector-level mapping shows air quality variations across your neighborhood, not just your city.' },
+            { icon: Shield, name: 'Personal Risk Score', desc: 'Your RRI factors in age, respiratory conditions, and activity level for a truly personal assessment.' },
+            { icon: Brain, name: 'Trend Forecasting', desc: 'Track air quality patterns and get 6-hour forecasts to plan outdoor activities safely.' },
+            { icon: Heart, name: 'Health Guidance', desc: 'Receive actionable recommendations based on your health profile and current conditions.' },
+            { icon: Cloud, name: 'Sensor Network', desc: 'Distributed IoT mesh across residential and industrial zones for comprehensive coverage.' },
           ].map((f, i) => (
-            <motion.div 
+            <motion.div
               key={f.name}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="p-8 bg-[#111827]/40 backdrop-blur-md border border-white/5 rounded-4xl hover:-translate-y-2 hover:bg-[#111827]/80 hover:shadow-2xl hover:shadow-sky-500/10 transition-all duration-300 group"
+              transition={{ delay: i * 0.08 }}
+              className="p-6 bg-slate-800/40 border border-slate-700/40 rounded-xl hover:border-slate-600/60 transition-colors"
             >
-              <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6 border border-white/5 group-hover:border-sky-500/30 group-hover:text-sky-400 transition-colors">
-                <f.icon size={24} className="text-slate-400 group-hover:text-sky-400" />
+              <div className="w-10 h-10 bg-sky-500/10 rounded-lg flex items-center justify-center mb-4">
+                <f.icon size={20} className="text-sky-400" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">{f.name}</h3>
-              <p className="text-sm font-medium text-slate-500 leading-relaxed">{f.desc}</p>
+              <h3 className="text-base font-bold text-white mb-1.5">{f.name}</h3>
+              <p className="text-sm text-slate-400 leading-relaxed">{f.desc}</p>
             </motion.div>
           ))}
         </div>
       </section>
 
-      {/* ── Section 3: How AERIS Works ─────────────────────────── */}
-      <section className="relative z-10 py-32 bg-linear-to-b from-transparent to-[#111827]/30 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="text-center mb-20">
-            <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-4">The Intelligence Flow</h2>
-            <p className="text-slate-400 font-medium">Data lineage from atmospheric capture to personalized insight.</p>
-          </div>
+      {/* ── How It Works ───────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-6 md:px-10 py-20 border-t border-slate-800">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">How it works</h2>
+          <p className="text-slate-400">From sensor to screen in under 10 seconds.</p>
+        </div>
 
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
-            {[
-              { icon: Cpu, name: 'ESP32 Nodes', desc: 'Raw sensor capture', color: 'text-slate-300' },
-              { icon: Cloud, name: 'AERIS Cloud', desc: 'Data ingestion & filtering', color: 'text-sky-400' },
-              { icon: Brain, name: 'Risk Engine', desc: 'RRI multiplier compute', color: 'text-indigo-400' },
-              { icon: LayoutDashboard, name: 'Dashboard', desc: 'Realtime visualization', color: 'text-emerald-400' }
-            ].map((step, i, arr) => (
-              <React.Fragment key={step.name}>
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.2 }}
-                  className="w-full lg:w-64 p-8 bg-[#111827]/60 border border-white/5 rounded-4xl text-center relative z-10 hover:-translate-y-1 hover:shadow-2xl transition-all"
-                >
-                  <div className={`mx-auto w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 border border-white/5 ${step.color}`}>
-                    <step.icon size={32} />
-                  </div>
-                  <h4 className="font-bold text-lg mb-1">{step.name}</h4>
-                  <p className="text-xs font-black uppercase tracking-widest text-slate-500">{step.desc}</p>
-                </motion.div>
-                
-                {i < arr.length - 1 && (
-                  <div className="hidden lg:flex w-16 justify-center">
-                    <motion.div 
-                      animate={{ x: [0, 10, 0] }} 
-                      transition={{ repeat: Infinity, duration: 1.5 }}
-                      className="text-white/20"
-                    >
-                      <ArrowRight size={32} />
-                    </motion.div>
-                  </div>
-                )}
-                {i < arr.length - 1 && (
-                  <div className="lg:hidden h-12 flex items-center justify-center">
-                    <motion.div 
-                      animate={{ y: [0, 10, 0] }} 
-                      transition={{ repeat: Infinity, duration: 1.5 }}
-                      className="text-white/20 rotate-90"
-                    >
-                      <ArrowRight size={24} />
-                    </motion.div>
-                  </div>
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {[
+            { icon: Cpu, step: '01', name: 'Sensor Capture', desc: 'ESP32 nodes read atmospheric data from calibrated gas and particulate sensors.' },
+            { icon: Cloud, step: '02', name: 'Cloud Ingestion', desc: 'Readings are validated, processed, and stored with sub-second latency.' },
+            { icon: Brain, step: '03', name: 'Risk Computation', desc: 'AQI is calculated per EPA standards, then personalized into your RRI.' },
+            { icon: LayoutDashboard, step: '04', name: 'Live Dashboard', desc: 'Real-time visualization with alerts, trends, and health recommendations.' },
+          ].map((s, i) => (
+            <motion.div
+              key={s.step}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="p-6 bg-slate-800/40 border border-slate-700/40 rounded-xl text-center"
+            >
+              <div className="text-xs font-bold text-sky-400 mb-3">{s.step}</div>
+              <div className="w-12 h-12 mx-auto bg-slate-700/50 rounded-xl flex items-center justify-center mb-4">
+                <s.icon size={24} className="text-slate-300" />
+              </div>
+              <h4 className="font-bold text-white mb-1.5">{s.name}</h4>
+              <p className="text-sm text-slate-400 leading-relaxed">{s.desc}</p>
+            </motion.div>
+          ))}
         </div>
       </section>
 
-      {/* ── Section 4: Health Profile Demo ─────────────────────── */}
-      <section className="relative z-10 max-w-7xl mx-auto px-8 py-32 border-t border-white/5">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+      {/* ── Personalization Demo ───────────────────────── */}
+      <section className="max-w-7xl mx-auto px-6 md:px-10 py-20 border-t border-slate-800">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-6">You are not a statistic.</h2>
-            <p className="text-lg text-slate-400 font-medium mb-8 leading-relaxed">
-              Standard AQI treats a professional athlete and an elderly asthma patient exactly the same. AERIS shifts the paradigm by applying a <strong>Personalized Risk Multiplier</strong> to base readings, outputting an RRI (Respiratory Risk Index) specifically tuned for your lungs.
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Not all lungs are equal</h2>
+            <p className="text-lg text-slate-400 leading-relaxed mb-6">
+              A standard AQI of 50 means different things for a healthy adult vs. someone with asthma. AERIS applies a personal risk multiplier based on your health profile.
             </p>
-            <ul className="space-y-4">
+            <ul className="space-y-3">
               {[
-                { label: 'Baseline calculation via standard EPA limits' },
-                { label: 'Age & cardiovascular health weighting applied' },
-                { label: 'Activity level multiplier integration' },
-                { label: 'Pre-existing respiratory condition offsets factored' }
+                'EPA-standard AQI as baseline',
+                'Age and cardiovascular health weighting',
+                'Respiratory condition adjustments',
+                'Activity level factored in',
               ].map((item, i) => (
-                <li key={i} className="flex items-center space-x-3 text-sm font-bold text-slate-300">
-                  <div className="w-5 h-5 bg-sky-500/20 text-sky-400 rounded-full flex items-center justify-center border border-sky-500/40">
-                    <Zap size={10} />
-                  </div>
-                  <span>{item.label}</span>
+                <li key={i} className="flex items-center gap-3 text-sm text-slate-300">
+                  <Check size={16} className="text-sky-400 shrink-0" />
+                  <span>{item}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="bg-[#111827]/80 backdrop-blur-2xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-[60px] rounded-full point-events-none" />
-             
-             <div className="flex items-center justify-between mb-8">
-               <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Profile Engine Simulator</h3>
-               <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-md text-[10px] font-bold text-sky-400 uppercase tracking-widest">Interactive</span>
-             </div>
+          {/* Interactive demo card */}
+          <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-6">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-5">Try it: toggle condition</p>
 
-             <div className="space-y-6">
-                <div>
-                  <span className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Pre-Existing Conditions</span>
-                  <div className="flex rounded-xl overflow-hidden border border-white/10">
-                    <button onClick={toggleAsthma} className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${!simulatedProfile.asthma ? 'bg-sky-500/20 text-sky-400' : 'bg-white/5 text-slate-400'}`}>None</button>
-                    <button onClick={toggleAsthma} className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest transition-colors border-l border-white/10 ${simulatedProfile.asthma ? 'bg-red-500/20 text-red-400' : 'bg-white/5 text-slate-400'}`}>Asthma</button>
-                  </div>
-                </div>
+            <div className="flex rounded-lg overflow-hidden border border-slate-700 mb-6">
+              <button
+                onClick={() => setHasAsthma(false)}
+                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${!hasAsthma ? 'bg-sky-500/20 text-sky-400' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                Healthy
+              </button>
+              <button
+                onClick={() => setHasAsthma(true)}
+                className={`flex-1 py-2.5 text-sm font-semibold transition-colors border-l border-slate-700 ${hasAsthma ? 'bg-red-500/15 text-red-400' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                Asthma
+              </button>
+            </div>
 
-                <div className="p-5 bg-slate-900/50 rounded-2xl border border-white/5 flex items-center justify-between">
-                  <div>
-                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Base Atmospheric Toxins</span>
-                    <span className="text-2xl font-black text-slate-300">50 AQI</span>
-                  </div>
-                  <div className="text-slate-600 font-bold">x</div>
-                  <div>
-                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 text-center">Multiplier</span>
-                    <span className="text-2xl font-black text-sky-400 text-center block">{simulatedProfile.multiplier}</span>
-                  </div>
-                  <div className="text-slate-600 font-bold">=</div>
-                  <div className="text-right">
-                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Your True RRI</span>
-                    <span className={`text-3xl font-black ${simulatedProfile.asthma ? 'text-red-400' : 'text-emerald-400'}`}>
-                      {Math.round(50 * simulatedProfile.multiplier)}
-                    </span>
-                  </div>
-                </div>
+            <div className="flex items-center justify-between gap-4 p-5 bg-slate-900/60 rounded-xl border border-slate-700/40 mb-4">
+              <div className="text-center">
+                <p className="text-[11px] text-slate-500 mb-1">Base AQI</p>
+                <p className="text-2xl font-bold text-white">50</p>
+              </div>
+              <span className="text-slate-600 font-bold text-lg">&times;</span>
+              <div className="text-center">
+                <p className="text-[11px] text-slate-500 mb-1">Multiplier</p>
+                <p className="text-2xl font-bold text-sky-400">{multiplier.toFixed(2)}</p>
+              </div>
+              <span className="text-slate-600 font-bold text-lg">=</span>
+              <div className="text-center">
+                <p className="text-[11px] text-slate-500 mb-1">Your RRI</p>
+                <p className={`text-2xl font-bold ${hasAsthma ? 'text-red-400' : 'text-emerald-400'}`}>
+                  {Math.round(50 * multiplier)}
+                </p>
+              </div>
+            </div>
 
-                <div className="p-4 bg-white/5 border border-white/5 rounded-xl flex items-start space-x-3">
-                  <AlertTriangle size={16} className={simulatedProfile.asthma ? 'text-amber-400 shrink-0 mt-0.5' : 'text-slate-500 shrink-0 mt-0.5'} />
-                  <p className="text-xs font-medium text-slate-300 leading-relaxed">
-                    {simulatedProfile.asthma 
-                      ? "Because you have asthma, an AQI of 50 translates to an effective risk of 68. Moderate caution advised for outdoor exertion."
-                      : "With no pre-existing conditions, an AQI of 50 poses minimal risk to your respiratory system. Clear for all activities."
-                    }
-                  </p>
-                </div>
-             </div>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              {hasAsthma
+                ? 'With asthma, an AQI of 50 translates to a personal risk score of 68. Moderate caution is advised for outdoor activities.'
+                : 'With no conditions, an AQI of 50 poses minimal respiratory risk. All activities are safe.'
+              }
+            </p>
           </div>
         </div>
       </section>
 
-      {/* ── Footer ─────────────────────────────────────────────── */}
-      <footer className="relative z-10 border-t border-white/5 py-12 px-8 bg-[#111827]/40 text-center">
-        <div className="w-10 h-10 mx-auto bg-linear-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-sky-500/20 mb-6">
-          <Shield className="text-white w-5 h-5" />
+      {/* ── CTA ────────────────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-6 md:px-10 py-20 border-t border-slate-800">
+        <div className="text-center max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Start protecting your lungs today</h2>
+          <p className="text-slate-400 mb-8">Create a free account to set up your health profile and get personalized air quality insights.</p>
+          <div className="flex justify-center gap-3">
+            <button
+              onClick={() => navigate('/signup')}
+              className="flex items-center gap-2 px-8 py-3.5 bg-sky-500 hover:bg-sky-400 rounded-lg font-semibold text-white transition-colors"
+            >
+              Create Free Account <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-        <div className="text-2xl font-black tracking-tighter mb-2">AERIS_CORE</div>
-        <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 mb-8">Personalized Respiratory Protection System</p>
-        <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
-          SYSTEM_ALPHA_SYNCED • SENSORS: {data?.nodes?.length || 0} ACTIVE • V2.0.4
+      </section>
+
+      {/* ── Footer ─────────────────────────────────────── */}
+      <footer className="border-t border-slate-800 py-10 px-6 md:px-10">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-gradient-to-br from-sky-400 to-blue-600 rounded-md flex items-center justify-center">
+              <Shield className="text-white w-4 h-4" />
+            </div>
+            <span className="font-bold text-sm text-slate-400">AERIS</span>
+          </div>
+          <p className="text-xs text-slate-600">
+            {nodeCount || 6} sensors active &middot; Real-time environmental monitoring
+          </p>
         </div>
       </footer>
     </div>

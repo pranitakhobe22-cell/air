@@ -1,11 +1,17 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAerisStore, useAppStore } from '@/store';
+import useAuthStore from '@/store/useAuthStore';
 import './TopBar.css';
 
 const TopBar = () => {
+  const navigate = useNavigate();
   const { meta, alerts, derived } = useAerisStore();
   const { currentLocationId, setCurrentLocationId } = useAppStore();
   const sectors = useAerisStore((s) => s.sectors);
+  const user = useAuthStore((s) => s.user);
+
+  const userInitial = user?.name ? user.name[0].toUpperCase() : 'U';
 
   const formatTime = (iso) => {
     if (!iso) return '--:--';
@@ -53,15 +59,20 @@ const TopBar = () => {
           )}
         </button>
 
-        {/* Profile Avatar */}
-        <div className="topbar__avatar">
-          <div className="topbar__avatar-img" style={{ background: `linear-gradient(135deg, var(--interactive), var(--success))` }}>
-            U
+        {/* Profile Avatar — shows real user initial */}
+        <button
+          onClick={() => navigate('/profile')}
+          className="topbar__avatar"
+          title={user?.name || 'Profile'}
+        >
+          <div className="topbar__avatar-img" style={{ background: `linear-gradient(135deg, #38bdf8, #2563eb)` }}>
+            {userInitial}
           </div>
-        </div>
+        </button>
       </div>
     </header>
   );
 };
 
 export default TopBar;
+

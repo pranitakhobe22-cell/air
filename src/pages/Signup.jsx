@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, ArrowRight, Eye, EyeOff, UserPlus } from 'lucide-react';
+import { registerUser } from '@/services/auth';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -13,25 +14,28 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    
+
     if (form.password !== form.confirm) {
       setError('Passphrases do not match');
       return;
     }
 
     setLoading(true);
-    // Demo signup — auto-approve
-    setTimeout(() => {
-      localStorage.setItem('aeris_token', 'demo_token');
-      navigate('/dashboard');
-    }, 800);
+    try {
+      await registerUser(form.name, form.email, form.password);
+      navigate('/onboarding');
+    } catch (err) {
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.05),transparent_50%)]" />
-      
-      <motion.div 
+
+      <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="relative w-full max-w-md"
       >
@@ -100,8 +104,8 @@ const Signup = () => {
               />
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading}
               className="w-full py-3.5 bg-linear-to-r from-sky-500 to-blue-600 rounded-xl text-sm font-bold uppercase tracking-widest text-white hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center space-x-2"
             >

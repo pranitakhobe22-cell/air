@@ -1,192 +1,112 @@
 /**
  * AERIS – Live Data Orchestration Hook
  * ────────────────────────────────────────────────────────────────
- * API-First Architecture:
- * 1. Tries to fetch initial state from the live backend API.
- * 2. Connects to the WebSocket server for real-time telemetry updates.
- * 3. FALLBACK: If the API is unreachable, seamlessly pivots to the 
- *    local Simulator engine to ensure the UI never renders empty.
+ * Socket.IO-First Architecture:
+ * 1. Connects to the AERIS WebSocket server (port 3000).
+ * 2. Any ESP32 push via `environment_update` → updates the store instantly.
+ * 3. FALLBACK: If no socket data arrives within 5 s, fetch the LAST REAL
+ *    reading from Cosmos DB via the REST API. Shows real data, not simulated.
  */
 import { useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { useAerisStore } from '@/store';
-import { generateTick, generateSectorUpdate } from '@/services/simulator';
-import { SIMULATION } from '@/config/constants';
+import useAerisStore from '@/store/aerisStore';
 import aerisApi from '@/services/aerisApi';
-import { API_ENDPOINTS, API_BASE_URL } from '@/config/api';
+
+const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:3000';
+const SOCKET_TIMEOUT_MS = 5000;
+
+const RISK_COLORS = {
+    Low: '#10b981',
+    Moderate: '#f59e0b',
+    High: '#f97316',
+    'Very High': '#ef4444',
+    Hazardous: '#7c3aed',
+};
 
 const useLiveData = () => {
-  const intervalRef = useRef(null);
-  const socketRef = useRef(null);
-  const retryIntervalRef = useRef(null);
-  
-  const {
-    setData,
-    updateSensors,
-    updateEnvironment,
-    updateDerived,
-    pushHistory,
-    addAlert,
-    updateSectors,
-    setDataSource,
-  } = useAerisStore();
+    const socketRef = useRef(null);
+    const fallbackTimer = useRef(null);
+    const hasRealData = useRef(false);
 
-  // ── Simulator Fallback Logic ──────────────────────────────────
-  const simulatorTick = useCallback(() => {
-    const { sensors: newSensors, alert } = generateTick();
+    const updateFromFirebase = useAerisStore((s) => s.updateFromFirebase);
+    const fetchLatest = useAerisStore((s) => s.fetchLatest);
 
-    updateSensors({
-      pm25: newSensors.pm25,
-      pm10: newSensors.pm10,
-      co: newSensors.co,
-      nox: newSensors.nox,
-      o3: newSensors.o3,
-      voc_index: newSensors.voc_index,
-    });
+    // ── Fetch last DB record as fallback ─────────────────────────
+    const fetchLastDBRecord = useCallback(async () => {
+        if (hasRealData.current) return;
+        try {
+            console.info('[AERIS] No live ESP32 data — loading last record from Cosmos DB...');
+            await fetchLatest(); // calls GET /api/v1/latest → reads Cosmos DB
+        } catch (err) {
+            console.warn('[AERIS] Could not load last DB record:', err.message);
+        }
+    }, [fetchLatest]);
 
-    updateEnvironment({
-      temperature: newSensors.temperature,
-      humidity: newSensors.humidity,
-      oxygen: newSensors.oxygen,
-      pressure: newSensors.pressure,
-    });
+    // ── Main Effect ───────────────────────────────────────────────
+    useEffect(() => {
+        // Fetch last DB record immediately on load (so UI isn't blank)
+        fetchLastDBRecord();
 
-    updateDerived();
-
-    const state = useAerisStore.getState();
-    pushHistory({
-      timestamp: new Date().toISOString(),
-      pm25: newSensors.pm25,
-      co: newSensors.co,
-      o3: newSensors.o3,
-      aqi: state.derived.aqi,
-      rri: state.derived.rri,
-      temperature: newSensors.temperature,
-      humidity: newSensors.humidity,
-    });
-
-    updateSectors(generateSectorUpdate(useAerisStore.getState().sectors));
-
-    if (alert) addAlert(alert);
-  }, [updateSensors, updateEnvironment, updateDerived, pushHistory, addAlert, updateSectors]);
-
-  // ── Main Orchestration ────────────────────────────────────────
-  useEffect(() => {
-    const connectAPI = async () => {
-      try {
-        setDataSource('api');
-        
-        // 1. Initial Fetch from REST APIs
-        const [latestRes, historyRes, alertsRes, forecastRes, networkRes, profileRes] = await Promise.all([
-          aerisApi.get(API_ENDPOINTS.ENVIRONMENT_LATEST),
-          aerisApi.get(API_ENDPOINTS.HISTORY),
-          aerisApi.get(API_ENDPOINTS.ALERTS),
-          aerisApi.get(API_ENDPOINTS.FORECAST),
-          aerisApi.get(API_ENDPOINTS.NETWORK_NODES),
-          aerisApi.get(API_ENDPOINTS.PROFILE)
-        ]);
-        
-        // Full Store Sync
-        setData({
-           meta: latestRes.data.meta,
-           sensors: latestRes.data.sensors,
-           environment: latestRes.data.environment,
-           derived: latestRes.data.derived,
-           trend: latestRes.data.trend,
-           history: historyRes.data,
-           alerts: alertsRes.data,
-           forecast: forecastRes.data,
-           nodes: networkRes.data.nodes,
-           network: networkRes.data.network,
-           userProfile: profileRes.data,
-        });
-        
-        // 2. Connect WebSocket for Real-time Streaming
-        // Strip the trailing API path suffix to connect to the raw domain root
-        const socketUrl = API_BASE_URL.replace('/api/v1', '');
-        const socket = io(socketUrl);
+        const socket = io(WS_URL, { transports: ['websocket'] });
         socketRef.current = socket;
-        
-        socket.on('connect', () => {
-           console.log('[AERIS WS] Connected to live telemetry stream.');
-        });
-        
-        // Listen for new sensor readings pushed by the ESP32 ingestion pipeline
+
         socket.on('environment_update', (payload) => {
-           updateSensors({
-              pm25: payload.sensors.pm25,
-              pm10: payload.sensors.pm10 || Math.round(payload.sensors.pm25 * 1.6),
-              co: payload.sensors.co,
-              nox: payload.sensors.nox || Math.round(payload.sensors.pm25 * 0.5),
-              o3: payload.sensors.o3,
-              voc_index: payload.sensors.vocIndex,
-           });
-           
-           updateEnvironment({
-              temperature: payload.sensors.temperature,
-              humidity: payload.sensors.humidity,
-              oxygen: payload.sensors.oxygen,
-              pressure: payload.sensors.pressure,
-           });
-           
-           // Ensures store parity locally (could also use the payload.derived directly)
-           updateDerived();
-           
-           const state = useAerisStore.getState();
-           pushHistory({
-             timestamp: payload.timestamp,
-             pm25: payload.sensors.pm25,
-             co: payload.sensors.co,
-             o3: payload.sensors.o3,
-             aqi: state.derived.aqi,
-             rri: state.derived.rri,
-             temperature: payload.sensors.temperature,
-             humidity: payload.sensors.humidity,
-           });
+            if (!payload?.sensors) return;
+
+            hasRealData.current = true;
+
+            if (fallbackTimer.current) {
+                clearTimeout(fallbackTimer.current);
+                fallbackTimer.current = null;
+            }
+
+            updateFromFirebase({
+                pm25: payload.sensors.pm25 || 0,
+                o3: payload.sensors.o3 || 0,
+                co: payload.sensors.co || 0,
+                no2_ppb: 0,
+                voc: payload.sensors.vocIndex || 0,
+                temp: payload.sensors.temperature || 0,
+                hum: payload.sensors.humidity || 0,
+                oxygen: payload.sensors.oxygen ?? null,
+                pressure: payload.sensors.pressure ?? null,
+                aqi: payload.derived?.aqi || 0,
+                rri: payload.derived?.rri || 0,
+                aqi_pm: 0, aqi_o3: 0, aqi_co: 0, aqi_no2: 0,
+                label: payload.derived?.aqiCategory || 'UNKNOWN',
+                riskLevel: payload.derived?.riskLevel || 'Low',
+                color: RISK_COLORS[payload.derived?.riskLevel] || '#10b981',
+            });
+
+            if (import.meta.env.DEV) {
+                console.log('📡 [ESP32] Live data received:', payload.derived);
+            }
         });
-        
-        // Listen for system intelligence alerts
-        socket.on('alert_update', (alerts) => {
-           alerts.forEach(alert => addAlert(alert));
+
+        socket.on('connect', () => {
+            console.log('[AERIS] WebSocket connected to backend');
         });
-        
+
         socket.on('disconnect', () => {
-           console.warn('[AERIS WS] Telemetry stream disconnected.');
+            console.warn('[AERIS] WebSocket disconnected — showing last known DB data');
+            if (!hasRealData.current) fetchLastDBRecord();
         });
-        
-      } catch (err) {
-        // 3. SEAMLESS FALLBACK: If backend is unreachable, pivot to simulation
-        console.warn('[AERIS Core] Live API unavailable. Pivoting to local Simulation Engine.', err.message);
-        setDataSource('simulator');
-        
-        // Start simulation immediately if not already running
-        if (!intervalRef.current) {
-          simulatorTick();
-          intervalRef.current = setInterval(simulatorTick, SIMULATION.INTERVAL_MS);
-        }
 
-        // 4. RETRY STRATEGY: Attempt to reconnect to API every 30 seconds
-        if (!retryIntervalRef.current) {
-          retryIntervalRef.current = setInterval(() => {
-            console.log('[AERIS Core] Attempting to restore Live API connection...');
-            connectAPI();
-          }, 30000);
-        }
-      }
-    };
+        // After timeout, re-poll DB for freshest record (in case ESP32 was recently on)
+        fallbackTimer.current = setTimeout(() => {
+            if (!hasRealData.current) {
+                console.warn('[AERIS] No ESP32 data after 5s — refreshing last DB record.');
+                fetchLastDBRecord();
+            }
+        }, SOCKET_TIMEOUT_MS);
 
-    // Initial connection attempt
-    connectAPI();
+        return () => {
+            socket.disconnect();
+            if (fallbackTimer.current) clearTimeout(fallbackTimer.current);
+        };
+    }, [fetchLastDBRecord, updateFromFirebase]);
 
-    // Cleanup routines on unmount
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (retryIntervalRef.current) clearInterval(retryIntervalRef.current);
-      if (socketRef.current) socketRef.current.disconnect();
-    };
-  }, [simulatorTick, setData, setDataSource, updateSensors, updateEnvironment, updateDerived, pushHistory, addAlert]);
-
-  return { refresh: () => {} };
+    return { refresh: fetchLastDBRecord };
 };
 
 export default useLiveData;

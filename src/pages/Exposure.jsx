@@ -1,289 +1,187 @@
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Activity, Shield, Clock, HeartPulse, Wind, 
-  Users, AlertTriangle, ChevronRight, Droplets 
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Activity, Shield, Clock, HeartPulse, Wind,
+  Users, AlertTriangle, Droplets
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
 
-// ── Helpers ──────────────────────────────────────────────────
-const rriToColor = (rri) => {
-  if (rri >= 75) return '#ef4444'; // Red
-  if (rri >= 55) return '#f97316'; // Orange
-  if (rri >= 35) return '#f59e0b'; // Amber
-  return '#10b981';                // Green
+const rriColor = (rri) => {
+  if (rri >= 75) return '#ef4444';
+  if (rri >= 55) return '#f97316';
+  if (rri >= 35) return '#f59e0b';
+  return '#22c55e';
 };
 
-const CountUp = ({ end, duration = 1500, decimals = 0 }) => {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (end === undefined || end === null) return;
-    let startTimestamp = null;
-    const step = (timestamp) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      setCount(progress * end);
-      if (progress < 1) window.requestAnimationFrame(step);
-    };
-    window.requestAnimationFrame(step);
-  }, [end, duration]);
-  return <>{count.toFixed(decimals)}</>;
-};
-
-// Demographic Multipliers
 const demographics = [
   { id: 'adult', label: 'Healthy Adult', multiplier: 1.0, icon: Users },
-  { id: 'child', label: 'Children (Under 12)', multiplier: 1.3, icon: Users },
+  { id: 'child', label: 'Children (<12)', multiplier: 1.3, icon: Users },
   { id: 'elderly', label: 'Elderly (65+)', multiplier: 1.4, icon: Users },
   { id: 'asthma', label: 'Asthmatics', multiplier: 1.8, icon: HeartPulse },
   { id: 'smoker', label: 'Smokers', multiplier: 1.5, icon: Wind },
 ];
 
 const Exposure = () => {
-  const { data, fetchLatest } = useAerisStore();
-  const [selectedDuration, setSelectedDuration] = useState(1); // Hours: 1, 4, 8, 24
-  const [activeDemographic, setActiveDemographic] = useState(demographics[0]);
-
-  useEffect(() => {
-    fetchLatest();
-  }, [fetchLatest]);
+  const data = useAerisStore((s) => s.data);
+  const [duration, setDuration] = useState(1);
+  const [activeDemo, setActiveDemo] = useState(demographics[0]);
 
   if (!data?.derived) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
+        <div className="w-10 h-10 border-3 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   const baseRri = data.derived.rri || 50;
   const pm25 = data.sensors?.pm25 || 35;
-  
-  // Calculate specific intelligence values
-  const personalRri = Math.min(Math.floor(baseRri * activeDemographic.multiplier), 100);
-  const orbColor = rriToColor(personalRri);
-  
-  // Formulas
-  // Average human inhales 0.48 cubic meters of air per hour resting.
-  // Particles inhaled = duration * 0.48 * pm25
-  const inhaledParticles = selectedDuration * 0.48 * pm25;
-  const healthImpactSeverity = personalRri * selectedDuration;
+  const personalRri = Math.min(Math.floor(baseRri * activeDemo.multiplier), 100);
+  const color = rriColor(personalRri);
+  const inhaledParticles = duration * 0.48 * pm25;
+  const stressLoad = personalRri * duration;
 
-  let impactText = "Minimal physiological impact expected over this duration.";
-  if (healthImpactSeverity > 500) impactText = "Critical particulate buildup. Immediate health effects likely (wheezing, cardiovascular stress).";
-  else if (healthImpactSeverity > 250) impactText = "Significant exposure. Respiratory irritation highly probable in sensitive demographics.";
-  else if (healthImpactSeverity > 100) impactText = "Moderate exposure. Prolonged outdoor activity not recommended without PPE.";
+  let advisory = 'Minimal physiological impact expected.';
+  if (stressLoad > 500) advisory = 'Critical exposure. Immediate health effects likely (wheezing, cardiovascular stress).';
+  else if (stressLoad > 250) advisory = 'Significant exposure. Respiratory irritation probable for sensitive groups.';
+  else if (stressLoad > 100) advisory = 'Moderate exposure. Prolonged outdoor activity not recommended.';
 
   return (
-    <div className="p-8 pb-32 max-w-[1600px] mx-auto space-y-8 text-slate-100 selection:bg-sky-500/30">
-      
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-3 mb-2">
-            <HeartPulse size={24} className="text-pink-500 shadow-[0_0_15px_#ec4899]" />
-            <h1 className="text-3xl font-black tracking-tight">Exposure Intelligence</h1>
-          </div>
-          <p className="text-slate-400 font-medium">Personalized physiological risk algorithms and dosage calculators.</p>
-        </div>
-        <div className="px-4 py-2 bg-pink-500/10 border border-pink-500/20 rounded-full flex items-center space-x-2">
-           <span className="w-2 h-2 rounded-full bg-pink-500 animate-pulse" />
-           <span className="text-[10px] font-black uppercase tracking-widest text-pink-400">Biological Engine Active</span>
-        </div>
+    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+
+      <div>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Exposure Calculator</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Personalized exposure risk based on demographics and duration.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* ── Left Column: Personal RRI Orb & Demographics ─── */}
-        <div className="lg:col-span-4 space-y-8">
-          
-          {/* RRI Orb */}
-          <div className="bg-[#111827]/60 backdrop-blur-2xl border border-white/5 rounded-3xl p-8 flex flex-col items-center justify-center relative overflow-hidden group shadow-2xl">
-             <div className="absolute inset-0 bg-linear-to-b from-white/5 to-transparent pointer-events-none" />
-             
-             <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] relative z-10 w-full text-center">
-                Effective Personal RRI
-             </h3>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-             <div className="relative mt-8 mb-4">
-               {/* Glowing Background Rings */}
-               <motion.div 
-                 animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.6, 0.3] }}
-                 transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-                 className="absolute inset-0 rounded-full blur-2xl"
-                 style={{ backgroundColor: orbColor }}
-               />
-               <div className="w-48 h-48 rounded-full border border-white/10 flex flex-col items-center justify-center relative z-10 bg-[#0B0F1A]/80 backdrop-blur-xl shadow-inner">
-                  <span className="text-7xl font-black tracking-tighter" style={{ color: orbColor, textShadow: `0 0 30px ${orbColor}80` }}>
-                    <CountUp end={personalRri} />
-                  </span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">/ 100</span>
-               </div>
-               
-               {/* Circular Progress SVG */}
-               <svg className="absolute top-0 left-0 w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 200 200">
-                  <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
-                  <motion.circle 
-                     cx="100" cy="100" r="90" fill="none" 
-                     stroke={orbColor} strokeWidth="4"
-                     strokeLinecap="round"
-                     initial={{ strokeDasharray: "0 1000" }}
-                     animate={{ strokeDasharray: `${(personalRri / 100) * 565} 1000` }}
-                     transition={{ duration: 1.5, ease: "easeOut" }}
+        {/* Left: RRI gauge + demographics */}
+        <div className="lg:col-span-4 space-y-5">
+
+          {/* RRI Gauge */}
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6 flex flex-col items-center">
+            <p className="text-xs text-slate-500 mb-4">Personal RRI</p>
+            <div className="relative w-40 h-40 mb-4">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 200 200">
+                <circle cx="100" cy="100" r="85" fill="none" stroke="#1e293b" strokeWidth="6" />
+                <motion.circle
+                  cx="100" cy="100" r="85" fill="none"
+                  stroke={color} strokeWidth="6" strokeLinecap="round"
+                  initial={{ strokeDasharray: '0 1000' }}
+                  animate={{ strokeDasharray: `${(personalRri / 100) * 534} 1000` }}
+                  transition={{ duration: 1 }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-4xl font-bold text-white tabular-nums">{personalRri}</span>
+                <span className="text-xs text-slate-500">/100</span>
+              </div>
+            </div>
+            <span className="text-xs font-medium px-3 py-1 rounded-full" style={{ backgroundColor: `${color}15`, color }}>
+              {activeDemo.multiplier > 1 ? 'Sensitive Group' : 'Standard Baseline'}
+            </span>
+          </div>
+
+          {/* Demographics */}
+          <div className="space-y-2">
+            <p className="text-xs text-slate-500 px-1 mb-2">Select profile</p>
+            {demographics.map((d) => {
+              const isActive = activeDemo.id === d.id;
+              const dColor = rriColor(Math.min(baseRri * d.multiplier, 100));
+              return (
+                <button
+                  key={d.id}
+                  onClick={() => setActiveDemo(d)}
+                  className={`w-full flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                    isActive ? 'bg-slate-800/60 border-slate-600' : 'bg-slate-800/30 border-slate-700/40 hover:bg-slate-800/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <d.icon size={16} style={{ color: isActive ? dColor : '#64748b' }} />
+                    <span className={`text-sm ${isActive ? 'text-white font-medium' : 'text-slate-400'}`}>{d.label}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 h-1 bg-slate-700/50 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full" style={{ backgroundColor: dColor, width: `${Math.min(baseRri * d.multiplier, 100)}%` }} />
+                    </div>
+                    <span className="text-xs font-mono tabular-nums" style={{ color: dColor }}>x{d.multiplier.toFixed(1)}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right: Duration + Results */}
+        <div className="lg:col-span-8 space-y-5">
+
+          {/* Duration */}
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
+            <div className="flex items-center gap-2 mb-5">
+              <Clock size={16} className="text-slate-400" />
+              <h3 className="text-sm font-semibold text-slate-300">Exposure Duration</h3>
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              {[1, 4, 8, 24].map((h) => (
+                <button
+                  key={h}
+                  onClick={() => setDuration(h)}
+                  className={`py-4 rounded-lg text-center border transition-colors ${
+                    duration === h
+                      ? 'bg-sky-500/10 border-sky-500/30 text-sky-400'
+                      : 'bg-slate-900/50 border-slate-700/40 text-slate-400 hover:bg-slate-800/50'
+                  }`}
+                >
+                  <span className="text-xl font-bold block">{h}</span>
+                  <span className="text-[11px]">hour{h > 1 ? 's' : ''}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Results */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            {/* Particulate Intake */}
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Droplets size={16} className="text-cyan-400" />
+                <h3 className="text-sm font-semibold text-slate-300">Particulate Intake</h3>
+              </div>
+              <div className="flex items-baseline gap-2 mb-3">
+                <span className="text-4xl font-bold text-cyan-400 tabular-nums">{inhaledParticles.toFixed(1)}</span>
+                <span className="text-sm text-slate-500">ug</span>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Based on a resting respiratory rate of 8L/min over {duration} hour{duration > 1 ? 's' : ''}.
+              </p>
+            </div>
+
+            {/* Health Advisory */}
+            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <HeartPulse size={16} className="text-rose-400" />
+                <h3 className="text-sm font-semibold text-slate-300">Advisory</h3>
+              </div>
+              <p className="text-sm text-slate-300 leading-relaxed mb-4">{advisory}</p>
+              <div>
+                <div className="flex justify-between mb-1.5">
+                  <span className="text-xs text-slate-500">Cumulative Stress</span>
+                  <span className="text-xs font-medium text-slate-400">{stressLoad} units</span>
+                </div>
+                <div className="h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-sky-400 via-amber-400 to-red-500 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min((stressLoad / 1000) * 100, 100)}%` }}
+                    transition={{ duration: 0.8 }}
                   />
-               </svg>
-             </div>
-
-             {/* Sensitive Badge Logic */}
-             <div className="flex items-center space-x-2 mt-4 z-10 relative px-4 py-2 rounded-full border" style={{ backgroundColor: `${orbColor}15`, borderColor: `${orbColor}30` }}>
-                <AlertTriangle size={14} style={{ color: orbColor }} />
-                <span className="text-xs font-bold uppercase tracking-widest" style={{ color: orbColor }}>
-                   {activeDemographic.multiplier > 1.0 ? 'SENSITIVE GROUP MULTIPLIER' : 'STANDARD BASELINE'}
-                </span>
-             </div>
+                </div>
+              </div>
+            </div>
           </div>
-
-          {/* Demographic Selector */}
-          <div className="space-y-3">
-             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 ml-2">Simulate Physiological Profile</h3>
-             <div className="space-y-2">
-                {demographics.map((demo) => {
-                  const isActive = activeDemographic.id === demo.id;
-                  const itemColor = isActive ? rriToColor(Math.min(baseRri * demo.multiplier, 100)) : '#64748b';
-                  
-                  return (
-                    <button
-                      key={demo.id}
-                      onClick={() => setActiveDemographic(demo)}
-                      className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${
-                        isActive 
-                          ? 'bg-slate-800/80' 
-                          : 'bg-[#111827]/40 border-white/5 hover:bg-white/5'
-                      }`}
-                      style={{ borderColor: isActive ? `${itemColor}50` : '' }}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <demo.icon size={18} style={{ color: itemColor }} className={isActive ? 'shadow-sm' : ''} />
-                        <span className={`text-sm font-bold ${isActive ? 'text-white' : 'text-slate-400'}`}>
-                          {demo.label}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="w-24 h-1.5 bg-black/50 rounded-full overflow-hidden">
-                           <motion.div 
-                             className="h-full rounded-full"
-                             style={{ backgroundColor: itemColor }}
-                             initial={{ width: 0 }}
-                             animate={{ width: `${(Math.min(baseRri * demo.multiplier, 100) / 100) * 100}%` }}
-                           />
-                        </div>
-                        <span className="text-xs font-mono font-bold" style={{ color: itemColor }}>
-                           x{demo.multiplier.toFixed(1)}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-             </div>
-          </div>
-
         </div>
-
-        {/* ── Right Column: Duration Calculator ────────────── */}
-        <div className="lg:col-span-8 space-y-8 flex flex-col">
-           
-           {/* Time Toggles */}
-           <div className="bg-[#111827]/60 backdrop-blur-2xl border border-white/5 rounded-3xl p-8 shadow-2xl">
-              <div className="flex items-center justify-between mb-8">
-                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 flex items-center space-x-2">
-                   <Clock size={16} /> <span>Exposure Duration Calculator</span>
-                 </h3>
-              </div>
-              
-              <div className="grid grid-cols-4 gap-4">
-                {[1, 4, 8, 24].map((hours) => (
-                   <button
-                     key={hours}
-                     onClick={() => setSelectedDuration(hours)}
-                     className={`py-4 flex flex-col items-center justify-center rounded-2xl border transition-all duration-300 ${
-                        selectedDuration === hours 
-                        ? 'bg-sky-500/20 border-sky-500/50 shadow-[0_0_20px_rgba(56,189,248,0.2)]' 
-                        : 'bg-white/5 border-white/5 hover:bg-white/10 text-slate-400'
-                     }`}
-                   >
-                      <span className={`text-2xl font-black ${selectedDuration === hours ? 'text-sky-400' : ''}`}>{hours}</span>
-                      <span className="text-[10px] font-bold uppercase tracking-widest mt-1">Hour{hours > 1 && 's'}</span>
-                   </button>
-                ))}
-              </div>
-           </div>
-
-           {/* Metrics Display */}
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1">
-              
-              {/* Inhaled Toxins */}
-              <div className="bg-[#111827]/60 backdrop-blur-2xl border border-white/5 rounded-3xl p-8 relative overflow-hidden group flex flex-col justify-center">
-                 <div className="absolute -bottom-10 -right-10 opacity-10 blur-xl group-hover:opacity-20 transition-all duration-500">
-                    <Droplets size={200} className="text-cyan-500" />
-                 </div>
-                 <div className="relative z-10">
-                    <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-6 flex items-center space-x-2">
-                      <Wind size={14} /> <span>Estimated Particulate Intake</span>
-                    </h3>
-                    <div className="flex items-end space-x-2">
-                       <span className="text-6xl font-black text-cyan-400 tracking-tighter" style={{ textShadow: '0 0 30px rgba(6,182,212,0.4)' }}>
-                         <CountUp end={inhaledParticles} decimals={1} />
-                       </span>
-                       <span className="text-sm font-bold uppercase text-slate-500 mb-2">µg</span>
-                    </div>
-                    
-                    <div className="mt-8 pt-6 border-t border-white/5 flex items-start space-x-3">
-                       <Activity size={18} className="text-cyan-500 shrink-0 mt-0.5" />
-                       <p className="text-xs font-medium text-slate-400 leading-relaxed">
-                         Calculated utilizing a standard resting respiratory rate of 8L/min. Does not account for cardiovascular exertion.
-                       </p>
-                    </div>
-                 </div>
-              </div>
-
-              {/* Health Impact Assessment */}
-              <div className="bg-[#111827]/60 backdrop-blur-2xl border border-white/5 rounded-3xl p-8 relative overflow-hidden group flex flex-col justify-center">
-                 <div className="absolute -bottom-10 -right-10 opacity-10 blur-xl group-hover:opacity-20 transition-all duration-500">
-                    <Shield size={200} className="text-pink-500" />
-                 </div>
-                 <div className="relative z-10 flex flex-col h-full justify-between">
-                    <div>
-                      <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-6 flex items-center space-x-2">
-                        <HeartPulse size={14} className="text-pink-500" /> <span>Clinical Advisory</span>
-                      </h3>
-                      
-                      <div className="px-4 py-3 rounded-xl border border-white/5 bg-black/40 mb-6">
-                         <p className="text-sm font-medium text-slate-200 leading-relaxed">
-                           {impactText}
-                         </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                       <div className="flex justify-between items-center">
-                         <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Cumulative Stress Load</span>
-                         <span className="text-[10px] font-mono text-pink-400 font-bold">{healthImpactSeverity.toFixed(0)} units</span>
-                       </div>
-                       <div className="w-full h-2 bg-black/50 rounded-full overflow-hidden">
-                          <motion.div 
-                            className="h-full bg-linear-to-r from-sky-400 via-amber-400 to-red-500 rounded-full"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${Math.min((healthImpactSeverity / 1000) * 100, 100)}%` }}
-                            transition={{ duration: 1 }}
-                          />
-                       </div>
-                    </div>
-                 </div>
-              </div>
-
-           </div>
-        </div>
-
       </div>
     </div>
   );

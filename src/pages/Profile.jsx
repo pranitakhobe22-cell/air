@@ -1,323 +1,416 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  User, Shield, Save, Edit3, Activity, Heart, Clock, 
-  Wind, Lock, AlertTriangle, Calculator, FileText 
+import {
+  User, Shield, Save, Edit3, Clock, Wind, Lock,
+  AlertTriangle, CheckCircle, HeartPulse
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
+import useAuthStore from '@/store/useAuthStore';
+import aerisApi from '@/services/aerisApi';
 
-// Helper to simulate the exact math the engine runs
-const calculateLiveModifier = (form, baseAqi) => {
-  let modifier = 1.0;
-  
-  // Age impact
-  if (form.age < 12) modifier += 0.25;
-  else if (form.age > 65) modifier += 0.3;
-  
-  // Conditions
-  if (form.conditions?.includes('Asthma')) modifier += 0.4;
-  if (form.conditions?.includes('Heart Disease')) modifier += 0.35;
-  if (form.conditions?.includes('COPD')) modifier += 0.5;
-  
-  // Smoking
-  if (form.smoking === 'heavy') modifier += 0.3;
-  else if (form.smoking === 'light') modifier += 0.15;
+const calcModifier = (form, baseAqi) => {
+  let mod = 1.0;
+  if (form.age < 12) mod += 0.25;
+  else if (form.age > 65) mod += 0.3;
+  if (form.conditions?.includes('Asthma')) mod += 0.4;
+  if (form.conditions?.includes('Heart Disease')) mod += 0.35;
+  if (form.conditions?.includes('COPD')) mod += 0.5;
+  if (form.smoking === 'heavy') mod += 0.3;
+  else if (form.smoking === 'light') mod += 0.15;
+  if (form.activityLevel === 'very_active') mod += 0.25;
+  else if (form.activityLevel === 'active') mod += 0.15;
+  if (form.commuteMode === 'biking' || form.commuteMode === 'walking') mod += 0.2;
+  else if (form.commuteMode === 'transit') mod += 0.1;
+  if (form.environment === 'urban') mod += 0.15;
 
-  return {
-    rawLevel: Number(modifier.toFixed(2)),
-    simulatedRri: Math.min(100, Math.round(baseAqi * modifier)),
-    color: modifier >= 1.5 ? '#ef4444' : modifier >= 1.2 ? '#f59e0b' : '#10b981'
-  };
+  const rri = Math.min(100, Math.round(baseAqi * mod));
+  const color = mod >= 1.5 ? '#ef4444' : mod >= 1.2 ? '#f59e0b' : '#22c55e';
+  return { modifier: Number(mod.toFixed(2)), rri, color };
 };
 
-const Profile = () => {
-  const { data, fetchLatest, updateProfile } = useAerisStore();
+const SENSITIVITY = { low: 'Low', moderate: 'Moderate', high: 'High', very_high: 'Very High' };
+const CONDITIONS = ['Asthma', 'COPD', 'Heart Disease', 'Diabetes', 'Allergies', 'Immunocompromised'];
 
-  useEffect(() => {
-    fetchLatest();
-  }, [fetchLatest]);
+const Profile = () => {
+  const data = useAerisStore((s) => s.data);
+  const user = useAuthStore((s) => s.user);
 
   const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
-    name: 'User',
-    age: 32,
-    gender: 'prefer_not_to_say',
-    smoking: 'none',
-    conditions: [],
+    name: '', email: '', age: 28, gender: 'prefer_not_to_say',
+    smoking: 'none', conditions: [], sensitivity: 'moderate',
+    outdoorExposureHours: 3, activityLevel: 'moderate',
+    commuteMode: 'mixed', environment: 'suburban',
   });
 
+  const [accountForm, setAccountForm] = useState({ name: '', email: '', currentPassword: '', newPassword: '' });
+  const [savingAccount, setSavingAccount] = useState(false);
+  const [accountSaved, setAccountSaved] = useState(false);
+  const [accountError, setAccountError] = useState('');
+
   useEffect(() => {
-    if (data?.userProfile) {
-      setForm(prev => ({ ...prev, ...data.userProfile }));
-    }
-  }, [data?.userProfile]);
+    const load = async () => {
+      try {
+        const res = await aerisApi.get('/profile');
+        if (res.data?.success) {
+          const p = res.data.data;
+          setForm((prev) => ({
+            ...prev,
+            name: p.name || user?.name || '',
+            email: p.email || user?.email || '',
+            age: p.age || 28,
+            conditions: Array.isArray(p.conditions) ? p.conditions : [],
+            sensitivity: p.sensitivity || 'moderate',
+            outdoorExposureHours: p.outdoorExposureHours || 3,
+            activityLevel: p.activityLevel || 'moderate',
+            commuteMode: p.commuteMode || 'mixed',
+            environment: p.environment || 'suburban',
+          }));
+        }
+      } catch {
+        if (user) setForm((prev) => ({ ...prev, name: user.name || '', email: user.email || '' }));
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [user]);
+
+  useEffect(() => {
+    if (user) setAccountForm((prev) => ({ ...prev, name: user.name || '', email: user.email || '' }));
+  }, [user]);
 
   const handleSave = async () => {
+    setSaving(true);
     try {
-      await updateProfile(form);
+      await aerisApi.put('/profile', {
+        age: form.age, sensitivity: form.sensitivity, conditions: form.conditions,
+        outdoorExposureHours: form.outdoorExposureHours, smoking: form.smoking,
+        activityLevel: form.activityLevel, commuteMode: form.commuteMode, environment: form.environment,
+      });
       setEditing(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
     } catch (e) {
-      console.error('Profile save failed:', e);
+      console.error('Save failed:', e);
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (!data?.derived) {
+  const handleAccountSave = async (e) => {
+    e.preventDefault();
+    setAccountError('');
+    if (!accountForm.currentPassword) { setAccountError('Current password is required.'); return; }
+    setSavingAccount(true);
+    try {
+      const payload = { name: accountForm.name, email: accountForm.email, currentPassword: accountForm.currentPassword };
+      if (accountForm.newPassword) payload.newPassword = accountForm.newPassword;
+      const res = await aerisApi.put('/auth/update', payload);
+      if (res.data?.success) {
+        setAccountSaved(true);
+        setAccountForm((prev) => ({ ...prev, currentPassword: '', newPassword: '' }));
+        useAuthStore.getState().setUser(res.data.data);
+        setTimeout(() => setAccountSaved(false), 3000);
+      } else {
+        setAccountError(res.data?.error || 'Update failed');
+      }
+    } catch (err) {
+      setAccountError(err.response?.data?.error || 'Failed to update');
+    } finally {
+      setSavingAccount(false);
+    }
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
+        <div className="w-10 h-10 border-3 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
       </div>
     );
   }
 
-  const { derived } = data;
-  const baseAqi = derived.aqi || 50;
-  const liveMath = calculateLiveModifier(form, baseAqi);
-  
-  const conditionOptions = ['Asthma', 'COPD', 'Heart Disease', 'Diabetes', 'Allergies', 'Immunocompromised'];
+  const baseAqi = data?.derived?.aqi || 50;
+  const live = calcModifier(form, baseAqi);
 
   return (
-    <div className="p-8 pb-32 max-w-[1600px] mx-auto space-y-8 text-slate-100 selection:bg-purple-500/30">
-      
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-3 mb-2">
-            <User size={24} className="text-purple-400 shadow-[0_0_15px_rgba(192,132,252,0.5)]" />
-            <h1 className="text-3xl font-black tracking-tight">Physiological Profile</h1>
-          </div>
-          <p className="text-slate-400 font-medium">Configure medical baselines to calculate your precise RRI multiplier.</p>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-           {/* Secure Data Notice */}
-           <div className="hidden md:flex items-center space-x-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-             <Lock size={12} className="text-emerald-500" />
-             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">HIPAA Compliant Local Storage</span>
-           </div>
+    <div className="p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
 
-           <button
-             onClick={() => editing ? handleSave() : setEditing(true)}
-             className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg ${
-               editing 
-                 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
-                 : 'bg-purple-500/10 text-purple-400 border border-purple-500/30 hover:bg-purple-500/20'
-             }`}
-           >
-             {editing ? <><Save size={16} /> <span>Save Parameters</span></> : <><Edit3 size={16} /> <span>Edit Profile</span></>}
-           </button>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Profile</h1>
+          {form.name && (
+            <div className="flex items-center gap-2.5 mt-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-xs font-bold text-white">
+                {form.name[0]?.toUpperCase() || '?'}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-white">{form.name}</p>
+                <p className="text-[11px] text-slate-500">{form.email}</p>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {saved && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+              <CheckCircle size={14} className="text-emerald-400" />
+              <span className="text-xs text-emerald-400">Saved</span>
+            </div>
+          )}
+          <button
+            onClick={() => (editing ? handleSave() : setEditing(true))}
+            disabled={saving}
+            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+              editing ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-300 border border-slate-700'
+            }`}
+          >
+            {editing ? <><Save size={16} />{saving ? 'Saving...' : 'Save'}</> : <><Edit3 size={16} />Edit</>}
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        
-        {/* ── Left Column: Configuration Form ─────────────── */}
-        <div className="xl:col-span-7 space-y-6">
-          <div className="bg-[#111827]/60 backdrop-blur-2xl border border-white/5 rounded-3xl p-8 shadow-2xl relative">
-            
-            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-8 flex items-center space-x-2">
-               <FileText size={14} className="text-purple-400" />
-               <span>Medical Baseline Intake</span>
-            </h3>
-            
-            <div className="space-y-8">
-               {/* Basic Demo Row */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <div>
-                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Biological Age</label>
-                   {editing ? (
-                     <div className="relative">
-                       <input 
-                         type="number" 
-                         value={form.age} 
-                         onChange={(e) => setForm({...form, age: Number(e.target.value)})}
-                         className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
-                       />
-                       <Clock size={16} className="absolute right-4 top-3.5 text-slate-600" />
-                     </div>
-                   ) : (
-                     <div className="text-lg font-bold text-white p-3 border border-white/5 rounded-xl bg-white/5">{form.age} Years</div>
-                   )}
-                 </div>
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
 
-                 <div>
-                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Gender</label>
-                   {editing ? (
-                     <select 
-                       value={form.gender} 
-                       onChange={(e) => setForm({...form, gender: e.target.value})}
-                       className="w-full bg-[#0B0F1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors appearance-none"
-                     >
-                       <option value="male">Male</option>
-                       <option value="female">Female</option>
-                       <option value="prefer_not_to_say">Prefer Not To Say</option>
-                     </select>
-                   ) : (
-                     <div className="text-lg font-bold text-white p-3 border border-white/5 rounded-xl bg-white/5 capitalize">{form.gender.replace(/_/g, ' ')}</div>
-                   )}
-                 </div>
-               </div>
+        {/* Left: Form */}
+        <div className="xl:col-span-7 space-y-5">
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6 space-y-6">
+            <h3 className="text-sm font-semibold text-slate-300">Health Profile</h3>
 
-               {/* Smoking / Vaping */}
-               <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Smoking / Vaping Frequency</label>
-                  {editing ? (
-                    <div className="grid grid-cols-3 gap-3">
-                       {['none', 'light', 'heavy'].map(lvl => (
-                         <button
-                           key={lvl}
-                           onClick={() => setForm({...form, smoking: lvl})}
-                           className={`py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border ${
-                             form.smoking === lvl 
-                               ? 'bg-purple-500/20 border-purple-500/50 text-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.2)]' 
-                               : 'bg-[#0B0F1A] border-white/5 text-slate-500 hover:text-slate-300'
-                           }`}
-                         >
-                           {lvl}
-                         </button>
-                       ))}
-                    </div>
-                  ) : (
-                    <div className="text-lg font-bold text-slate-300 p-3 border border-white/5 rounded-xl bg-white/5 capitalize">
-                      {form.smoking === 'none' ? 'Non-Smoker' : `${form.smoking} Frequency`}
-                    </div>
-                  )}
-               </div>
-
-               {/* Pre-existing Conditions */}
-               <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center space-x-2 block">
-                     <span>Pre-Existing Conditions</span>
-                     <AlertTriangle size={12} className="text-amber-500" />
-                  </label>
-                  
-                  {editing ? (
-                    <div className="flex flex-wrap gap-3">
-                       {conditionOptions.map(cond => {
-                         const isSelected = form.conditions?.includes(cond);
-                         return (
-                           <button
-                             key={cond}
-                             onClick={() => {
-                               const arr = form.conditions || [];
-                               setForm({...form, conditions: isSelected ? arr.filter(c => c !== cond) : [...arr, cond]});
-                             }}
-                             className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all border ${
-                               isSelected 
-                                 ? 'bg-rose-500/20 border-rose-500/50 text-rose-400' 
-                                 : 'bg-[#0B0F1A] border-white/5 text-slate-500 hover:text-slate-300 hover:bg-white/5'
-                             }`}
-                           >
-                             {cond}
-                           </button>
-                         )
-                       })}
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                       {form.conditions?.length > 0 ? (
-                         form.conditions.map(c => (
-                           <span key={c} className="px-4 py-2 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-lg text-xs font-bold">
-                             {c}
-                           </span>
-                         ))
-                       ) : (
-                         <span className="text-sm font-medium text-slate-500 italic p-3 border border-white/5 rounded-xl bg-[#0B0F1A] w-full block">No conditions reported.</span>
-                       )}
-                    </div>
-                  )}
-               </div>
-
+            {/* Age + Gender */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-slate-500 mb-1.5 block">Age</label>
+                {editing ? (
+                  <input type="number" min={1} max={120} value={form.age}
+                    onChange={(e) => setForm({ ...form, age: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-sky-500 transition-colors"
+                  />
+                ) : (
+                  <div className="text-sm text-white p-2.5 bg-slate-900/50 border border-slate-700/30 rounded-lg">{form.age} years</div>
+                )}
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 mb-1.5 block">Gender</label>
+                {editing ? (
+                  <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-sky-500 appearance-none"
+                  >
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="prefer_not_to_say">Prefer not to say</option>
+                  </select>
+                ) : (
+                  <div className="text-sm text-white p-2.5 bg-slate-900/50 border border-slate-700/30 rounded-lg capitalize">{(form.gender || '').replace(/_/g, ' ')}</div>
+                )}
+              </div>
             </div>
+
+            {/* Sensitivity */}
+            <div>
+              <label className="text-xs text-slate-500 mb-1.5 block">Air Sensitivity</label>
+              {editing ? (
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { id: 'low', color: '#22c55e' }, { id: 'moderate', color: '#eab308' },
+                    { id: 'high', color: '#f97316' }, { id: 'very_high', color: '#ef4444' },
+                  ].map((s) => (
+                    <button key={s.id} onClick={() => setForm({ ...form, sensitivity: s.id })}
+                      className={`py-2 rounded-lg text-xs font-medium transition-colors border ${
+                        form.sensitivity === s.id ? 'border-slate-500 text-white' : 'border-slate-700/40 text-slate-500 bg-slate-900/50'
+                      }`}
+                      style={form.sensitivity === s.id ? { borderColor: `${s.color}60`, color: s.color, background: `${s.color}10` } : {}}
+                    >
+                      {SENSITIVITY[s.id]}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-white p-2.5 bg-slate-900/50 border border-slate-700/30 rounded-lg">{SENSITIVITY[form.sensitivity]}</div>
+              )}
+            </div>
+
+            {/* Smoking */}
+            <div>
+              <label className="text-xs text-slate-500 mb-1.5 block">Smoking</label>
+              {editing ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {['none', 'light', 'heavy'].map((l) => (
+                    <button key={l} onClick={() => setForm({ ...form, smoking: l })}
+                      className={`py-2 rounded-lg text-xs font-medium capitalize transition-colors border ${
+                        form.smoking === l ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : 'bg-slate-900/50 border-slate-700/40 text-slate-500'
+                      }`}
+                    >
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-white p-2.5 bg-slate-900/50 border border-slate-700/30 rounded-lg capitalize">
+                  {form.smoking === 'none' ? 'Non-smoker' : form.smoking}
+                </div>
+              )}
+            </div>
+
+            {/* Outdoor hours */}
+            <div>
+              <label className="text-xs text-slate-500 mb-1.5 block">Daily Outdoor Exposure</label>
+              {editing ? (
+                <div className="bg-slate-900 border border-slate-700 rounded-lg p-3">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-lg font-bold text-sky-400">{form.outdoorExposureHours}h</span>
+                    <span className="text-xs text-slate-500">per day</span>
+                  </div>
+                  <input type="range" min={0} max={12} step={1} value={form.outdoorExposureHours}
+                    onChange={(e) => setForm({ ...form, outdoorExposureHours: Number(e.target.value) })}
+                    className="w-full accent-sky-400"
+                  />
+                </div>
+              ) : (
+                <div className="text-sm text-white p-2.5 bg-slate-900/50 border border-slate-700/30 rounded-lg">
+                  {form.outdoorExposureHours}h per day
+                </div>
+              )}
+            </div>
+
+            {/* Conditions */}
+            <div>
+              <label className="text-xs text-slate-500 mb-1.5 block">Pre-existing Conditions</label>
+              {editing ? (
+                <div className="flex flex-wrap gap-2">
+                  {CONDITIONS.map((c) => {
+                    const sel = form.conditions?.includes(c);
+                    return (
+                      <button key={c}
+                        onClick={() => setForm({ ...form, conditions: sel ? form.conditions.filter((x) => x !== c) : [...(form.conditions || []), c] })}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                          sel ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-slate-900/50 border-slate-700/40 text-slate-500 hover:text-slate-300'
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {form.conditions?.length > 0 ? form.conditions.map((c) => (
+                    <span key={c} className="px-3 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-md text-xs">{c}</span>
+                  )) : (
+                    <span className="text-sm text-slate-500 p-2.5 bg-slate-900/50 border border-slate-700/30 rounded-lg w-full block">None reported</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Account */}
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
+            <h3 className="text-sm font-semibold text-slate-300 mb-5">Account Settings</h3>
+            <form onSubmit={handleAccountSave} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-slate-500 mb-1.5 block">Name</label>
+                  <input type="text" value={accountForm.name} onChange={(e) => setAccountForm({ ...accountForm, name: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 mb-1.5 block">Email</label>
+                  <input type="email" value={accountForm.email} onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-slate-500 mb-1.5 block">Current Password *</label>
+                  <input type="password" placeholder="Required" value={accountForm.currentPassword}
+                    onChange={(e) => setAccountForm({ ...accountForm, currentPassword: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 mb-1.5 block">New Password</label>
+                  <input type="password" placeholder="Optional" value={accountForm.newPassword}
+                    onChange={(e) => setAccountForm({ ...accountForm, newPassword: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+              </div>
+              {accountError && (
+                <div className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-lg flex items-center gap-2">
+                  <AlertTriangle size={14} />{accountError}
+                </div>
+              )}
+              {accountSaved && (
+                <div className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-lg flex items-center gap-2">
+                  <CheckCircle size={14} />Updated successfully
+                </div>
+              )}
+              <button type="submit" disabled={savingAccount || !accountForm.currentPassword}
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-medium bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors disabled:opacity-50"
+              >
+                <Lock size={16} />{savingAccount ? 'Updating...' : 'Update Account'}
+              </button>
+            </form>
           </div>
         </div>
 
-        {/* ── Right Column: Risk Math Breakdown ───────────── */}
-        <div className="xl:col-span-5 space-y-6">
-          
-          <div className="bg-[#111827]/60 backdrop-blur-2xl border border-white/5 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
-             
-             {/* Glow matched to the multiplier danger */}
-             <div className="absolute top-0 right-0 w-64 h-64 blur-[80px] opacity-20 transition-all duration-1000 pointer-events-none" style={{ backgroundColor: liveMath.color }} />
-             
-             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-8 flex items-center space-x-2 relative z-10">
-               <Calculator size={14} className="text-white" />
-               <span>Live Engine Calculation</span>
-             </h3>
-             
-             <div className="space-y-6 relative z-10">
-                {/* 1. Base AQI */}
-                <div className="flex items-center justify-between p-4 bg-[#0B0F1A] border border-white/5 rounded-xl">
-                   <div className="flex flex-col">
-                      <span className="text-[10px] uppercase font-black tracking-widest text-slate-500 bg-slate-800/50 px-2 py-1 rounded w-max mb-1">Step 1</span>
-                      <span className="text-xs font-bold text-slate-300">Global AQI Metric</span>
-                   </div>
-                   <span className="text-2xl font-black text-white">{baseAqi}</span>
+        {/* Right: Live RRI Calculation */}
+        <div className="xl:col-span-5">
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6 sticky top-6">
+            <h3 className="text-sm font-semibold text-slate-300 mb-5">Live Risk Calculation</h3>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-slate-900/50 border border-slate-700/30 rounded-lg">
+                <div>
+                  <p className="text-[11px] text-slate-500">Step 1</p>
+                  <p className="text-xs text-slate-300">Base AQI</p>
                 </div>
+                <span className="text-xl font-bold text-white">{baseAqi}</span>
+              </div>
 
-                {/* Mathematical Operator */}
-                <div className="flex justify-center -my-3 relative z-20">
-                   <div className="w-8 h-8 rounded-full bg-slate-800 border-4 border-[#111827] flex items-center justify-center text-slate-400">
-                     <span className="font-mono font-bold">✕</span>
-                   </div>
+              <div className="flex justify-center text-slate-600 text-lg">&times;</div>
+
+              <div className="flex items-center justify-between p-3 bg-slate-900/50 border rounded-lg" style={{ borderColor: `${live.color}30` }}>
+                <div>
+                  <p className="text-[11px]" style={{ color: live.color }}>Step 2</p>
+                  <p className="text-xs text-slate-300">Vulnerability Modifier</p>
                 </div>
+                <span className="text-xl font-bold" style={{ color: live.color }}>{live.modifier}x</span>
+              </div>
 
-                {/* 2. Demographic Multiplier */}
-                <div className="flex items-center justify-between p-4 bg-[#0B0F1A] border border-white/5 rounded-xl" style={{ borderColor: `${liveMath.color}40` }}>
-                   <div className="flex flex-col">
-                      <span className="text-[10px] uppercase font-black tracking-widest text-slate-500 bg-slate-800/50 px-2 py-1 rounded w-max mb-1" style={{ color: liveMath.color }}>Step 2</span>
-                      <span className="text-xs font-bold text-slate-300">Vulnerability Modifier</span>
-                   </div>
-                   <div className="flex items-baseline space-x-1">
-                      <span className="text-2xl font-black" style={{ color: liveMath.color }}>{liveMath.rawLevel}</span>
-                      <span className="text-xs font-bold text-slate-500">x</span>
-                   </div>
-                </div>
+              {/* Breakdown */}
+              <div className="pl-4 border-l-2 border-slate-700/50 space-y-1.5 text-xs text-slate-500">
+                <div className="flex justify-between"><span>Base</span><span>1.00x</span></div>
+                {(form.age < 12 || form.age > 65) && (
+                  <div className="flex justify-between text-amber-500"><span>Age ({form.age})</span><span>+{form.age < 12 ? '0.25' : '0.30'}x</span></div>
+                )}
+                {form.smoking !== 'none' && (
+                  <div className="flex justify-between text-orange-400"><span>Smoking</span><span>+{form.smoking === 'heavy' ? '0.30' : '0.15'}x</span></div>
+                )}
+                {form.conditions?.length > 0 && (
+                  <div className="flex justify-between text-rose-400"><span>Conditions</span><span>applied</span></div>
+                )}
+              </div>
 
-                {/* Math Breakdown List */}
-                <div className="pl-6 border-l-2 border-slate-800 space-y-2 py-2">
-                   <div className="flex justify-between text-[10px] uppercase font-bold tracking-wider text-slate-500">
-                     <span>Base Healthy Adult</span>
-                     <span>1.00x</span>
-                   </div>
-                   {(form.age < 12 || form.age > 65) && (
-                     <div className="flex justify-between text-[10px] uppercase font-bold tracking-wider text-amber-500">
-                       <span>Age Factor ({form.age})</span>
-                       <span>+{form.age < 12 ? '0.25' : '0.30'}x</span>
-                     </div>
-                   )}
-                   {form.smoking !== 'none' && (
-                     <div className="flex justify-between text-[10px] uppercase font-bold tracking-wider text-orange-500">
-                       <span>Smoking ({form.smoking})</span>
-                       <span>+{form.smoking === 'heavy' ? '0.30' : '0.15'}x</span>
-                     </div>
-                   )}
-                   {form.conditions?.length > 0 && (
-                     <div className="flex justify-between text-[10px] uppercase font-bold tracking-wider text-rose-500">
-                       <span>Clinical Conditions</span>
-                       <span>+{(liveMath.rawLevel - 1.0 - (form.age < 12 ? 0.25 : form.age > 65 ? 0.3 : 0) - (form.smoking === 'heavy' ? 0.3 : form.smoking === 'light' ? 0.15 : 0)).toFixed(2)}x</span>
-                     </div>
-                   )}
-                </div>
+              <div className="h-px bg-slate-700/40" />
 
-                {/* Equals */}
-                <div className="w-full h-px bg-white/10 my-4" />
-
-                {/* 3. Final Personalized RRI */}
-                <div className="text-center py-6 bg-linear-to-b from-white/5 to-transparent rounded-2xl border border-white/10" style={{ borderColor: `${liveMath.color}50` }}>
-                   <span className="text-[10px] uppercase font-black tracking-[0.3em] text-slate-400 mb-2 block">Your Simulated RRI</span>
-                   <div className="text-7xl font-black tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]" style={{ color: liveMath.color }}>
-                     {liveMath.simulatedRri}
-                   </div>
-                   {(editing && liveMath.simulatedRri !== derived.rri) && (
-                     <p className="text-xs font-bold text-sky-400 mt-4 animate-pulse uppercase tracking-widest">
-                        Unsaved Changes Preview
-                     </p>
-                   )}
-                </div>
-
-             </div>
+              {/* Result */}
+              <div className="text-center py-6 bg-slate-900/50 rounded-xl border" style={{ borderColor: `${live.color}30` }}>
+                <p className="text-xs text-slate-500 mb-2">Your Simulated RRI</p>
+                <span className="text-5xl font-bold tabular-nums" style={{ color: live.color }}>{live.rri}</span>
+                {editing && live.rri !== data?.derived?.rri && (
+                  <p className="text-xs text-sky-400 mt-3">Unsaved preview</p>
+                )}
+              </div>
+            </div>
           </div>
-
         </div>
       </div>
     </div>

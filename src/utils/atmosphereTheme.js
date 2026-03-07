@@ -6,7 +6,7 @@
 
 export const getAtmosphereTheme = (aqi, riskLevel = 'Low Risk') => {
   let mode = "clean";
-  
+
   if (aqi <= 50) {
     mode = "clean";
   } else if (aqi <= 100) {
@@ -20,37 +20,37 @@ export const getAtmosphereTheme = (aqi, riskLevel = 'Low Risk') => {
   const themes = {
     clean: {
       mode: "clean",
-      backgroundGradient: "linear-gradient(180deg, #EAF7FB 0%, #D8F0F7 100%)",
-      cardBackground: "rgba(255, 255, 255, 0.65)",
-      textPrimary: "#1F2933",
-      textSecondary: "#475569",
-      glowColor: "rgba(34, 211, 238, 0.3)",
-      hazeOverlay: "radial-gradient(circle, rgba(167, 243, 208, 0.1) 0%, transparent 70%)",
+      backgroundGradient: "linear-gradient(180deg, #0B1320 0%, #060B14 100%)",
+      cardBackground: "rgba(11, 19, 32, 0.65)",
+      textPrimary: "#E2E8F0",
+      textSecondary: "#94A3B8",
+      glowColor: "rgba(34, 211, 238, 0.2)",
+      hazeOverlay: "radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, transparent 70%)",
       sectionSpacing: "32px",
-      cardShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+      cardShadow: "0 4px 12px rgba(0, 0, 0, 0.5)",
       chartTokens: {
-        line: "#0ea5e9",
-        area: "rgba(14, 165, 233, 0.2)",
-        grid: "rgba(203, 213, 225, 0.4)",
-        text: "#475569",
+        line: "#10b981",
+        area: "rgba(16, 185, 129, 0.2)",
+        grid: "rgba(255, 255, 255, 0.05)",
+        text: "#94A3B8",
         thickness: 3
       }
     },
     moderate: {
       mode: "moderate",
-      backgroundGradient: "linear-gradient(180deg, #F4F9FC 0%, #E7EEF4 100%)",
-      cardBackground: "rgba(255, 255, 255, 0.55)",
-      textPrimary: "#1F2933",
-      textSecondary: "#475569",
-      glowColor: "rgba(251, 191, 36, 0.3)",
-      hazeOverlay: "radial-gradient(circle, rgba(251, 191, 36, 0.08) 0%, transparent 70%)",
+      backgroundGradient: "linear-gradient(180deg, #0A1424 0%, #050B14 100%)",
+      cardBackground: "rgba(10, 20, 36, 0.65)",
+      textPrimary: "#E2E8F0",
+      textSecondary: "#94A3B8",
+      glowColor: "rgba(251, 191, 36, 0.2)",
+      hazeOverlay: "radial-gradient(circle, rgba(251, 191, 36, 0.05) 0%, transparent 70%)",
       sectionSpacing: "24px",
-      cardShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+      cardShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
       chartTokens: {
         line: "#f59e0b",
         area: "rgba(245, 158, 11, 0.2)",
-        grid: "rgba(203, 213, 225, 0.4)",
-        text: "#475569",
+        grid: "rgba(255, 255, 255, 0.05)",
+        text: "#94A3B8",
         thickness: 3
       }
     },

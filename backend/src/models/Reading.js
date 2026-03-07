@@ -1,16 +1,27 @@
 const BaseModel = require('./BaseModel');
+const { execute } = require('../config/db');
 
 class Reading extends BaseModel {
     constructor() {
         super('sensor_readings');
     }
 
-    findLatestByNode(nodeId) {
-        return this.db.prepare('SELECT * FROM sensor_readings WHERE node_id = ? ORDER BY created_at DESC LIMIT 1').get(nodeId);
+    async findLatestByNode(nodeId) {
+        const result = await execute(
+            `SELECT * FROM sensor_readings WHERE node_id = :1
+             ORDER BY created_at DESC FETCH FIRST 1 ROWS ONLY`,
+            [nodeId]
+        );
+        return result.rows[0] || null;
     }
 
-    findHistoryByNode(nodeId, limit = 50) {
-        return this.db.prepare('SELECT * FROM sensor_readings WHERE node_id = ? ORDER BY created_at DESC LIMIT ?').all(nodeId, limit);
+    async findHistoryByNode(nodeId, limit = 50) {
+        const result = await execute(
+            `SELECT * FROM sensor_readings WHERE node_id = :1
+             ORDER BY created_at DESC FETCH FIRST :2 ROWS ONLY`,
+            [nodeId, limit]
+        );
+        return result.rows;
     }
 }
 

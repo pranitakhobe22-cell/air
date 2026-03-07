@@ -5,7 +5,7 @@
  *
  * Pipeline:
  *   ESP32 → POST /ingest → Zod validation → AQI/RRI calc
- *         → WebSocket broadcast → (DB storage — future)
+ *         → Firestore persistence → WebSocket broadcast
  *
  * Payload Contract:
  *   {
@@ -18,27 +18,27 @@
 const { z } = require('zod');
 const { calculateRiskMetrics } = require('../utils/riskEngine');
 const { broadcastEnvironmentUpdate } = require('../websocket/socketService');
+const { getContainer, isConfigured } = require('../config/cosmosdb');
+const { geolocateIp, setEspLocation } = require('../utils/geolocate');
 
 // ── Validation Schema ───────────────────────────────────────────
-// Strict range validation per ESP32 ingestion contract.
-
 const sensorSchema = z.object({
-  pm25:      z.number().min(0).max(500, 'PM2.5 must be 0–500 µg/m³'),
-  co:        z.number().min(0).max(100, 'CO must be 0–100 ppm'),
-  o3:        z.number().min(0).max(1,   'O3 must be 0–1 ppm'),
+  pm25: z.number().min(0).max(500, 'PM2.5 must be 0–500 µg/m³'),
+  co: z.number().min(0).max(100, 'CO must be 0–100 ppm'),
+  o3: z.number().min(0).max(1, 'O3 must be 0–1 ppm'),
   voc_index: z.number().min(0).max(500, 'VOC index must be 0–500'),
 });
 
 const environmentSchema = z.object({
   temperature: z.number().min(-50).max(60),
-  humidity:    z.number().min(0).max(100),
-  oxygen:      z.number().min(0).max(100).optional(),
-  pressure:    z.number().min(300).max(1100).optional(),
+  humidity: z.number().min(0).max(100),
+  oxygen: z.number().min(0).max(100).optional(),
+  pressure: z.number().min(300).max(1100).optional(),
 });
 
 const ingestPayloadSchema = z.object({
-  node_id:     z.string().min(1, 'node_id is required'),
-  sensors:     sensorSchema,
+  node_id: z.string().min(1, 'node_id is required'),
+  sensors: sensorSchema,
   environment: environmentSchema,
 });
 
@@ -53,51 +53,77 @@ const ingestData = async (req, res) => {
     const norm = (val) => Number(val.toFixed(2));
 
     const normalized = {
-      pm25:        norm(payload.sensors.pm25),
-      co:          norm(payload.sensors.co),
-      o3:          norm(payload.sensors.o3),
-      vocIndex:    norm(payload.sensors.voc_index),
+      pm25: norm(payload.sensors.pm25),
+      co: norm(payload.sensors.co),
+      o3: norm(payload.sensors.o3),
+      vocIndex: norm(payload.sensors.voc_index),
       temperature: norm(payload.environment.temperature),
-      humidity:    norm(payload.environment.humidity),
-      oxygen:      payload.environment.oxygen  != null ? norm(payload.environment.oxygen)   : null,
-      pressure:    payload.environment.pressure != null ? norm(payload.environment.pressure) : null,
+      humidity: norm(payload.environment.humidity),
+      oxygen: payload.environment.oxygen != null ? norm(payload.environment.oxygen) : null,
+      pressure: payload.environment.pressure != null ? norm(payload.environment.pressure) : null,
     };
 
     // 3. Compute AQI + RRI via risk engine
     //    riskEngine expects o3 in ppb-scale internally;
     //    payload sends o3 in ppm (0–1), so convert: ppm × 1000 = ppb
     const riskMetrics = calculateRiskMetrics({
-      pm25:     normalized.pm25,
-      co:       normalized.co,
-      o3:       normalized.o3 * 1000,   // ppm → ppb for engine
+      pm25: normalized.pm25,
+      co: normalized.co,
+      o3: normalized.o3 * 1000,   // ppm → ppb for engine
       vocIndex: normalized.vocIndex,
     });
 
     // 4. Server-assigned timestamp
-    const timestamp = new Date().toISOString();
+    const timestampISO = new Date().toISOString();
 
-    // 5. Broadcast over WebSocket to all connected frontends
+    // 5. Persist to Azure Cosmos DB — SensorData/LiveLogs
+    //    Partition key: /sensorId  |  TTL: 7 days (604800 s)
+    const cosmosDoc = {
+      id:          `${payload.node_id}-${Date.now()}`,
+      sensorId:    payload.node_id,   // partition key
+      timestamp:   timestampISO,
+      pm25:        normalized.pm25,
+      co:          normalized.co,
+      o3:          normalized.o3,
+      vocIndex:    normalized.vocIndex,
+      temperature: normalized.temperature,
+      humidity:    normalized.humidity,
+      oxygen:      normalized.oxygen,
+      pressure:    normalized.pressure,
+      aqi:         riskMetrics.aqi,
+      aqiCategory: riskMetrics.aqiCategory,
+      rri:         riskMetrics.rri,
+      riskLevel:   riskMetrics.riskLevel,
+      ttl:         604800,            // auto-delete after 7 days
+    };
+
+    // 6. Persist to Azure Cosmos DB
+    const container = await getContainer();
+    await container.items.create(cosmosDoc);
+
+    // 7. Broadcast over WebSocket to all connected frontends
     const wsPayload = {
       type: 'TELEMETRY_UPDATE',
       nodeId: payload.node_id,
-      timestamp,
+      timestamp: timestampISO,
       sensors: normalized,
       derived: riskMetrics,
     };
     broadcastEnvironmentUpdate(wsPayload);
 
-    // 6. (Future) Database persistence — not implemented yet
-    // await persistReading(payload.node_id, normalized, riskMetrics);
-    // await detectAndStoreAlerts(payload.node_id, normalized);
-    // await generateAndStoreForecast(reading);
+    // 8. Geolocate the ESP32's public IP (non-blocking, cached)
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
+    geolocateIp(clientIp).then(geo => {
+      if (geo) setEspLocation({ ...geo, nodeId: payload.node_id });
+    }).catch(() => {});
 
-    // 7. Return success
+    // 9. Return success
     return res.status(201).json({
       success: true,
-      message: 'Telemetry ingested and processed',
+      message: 'Telemetry ingested and persisted',
       data: {
         nodeId: payload.node_id,
-        timestamp,
+        timestamp: timestampISO,
         aqi: riskMetrics.aqi,
         aqiCategory: riskMetrics.aqiCategory,
         rri: riskMetrics.rri,
@@ -106,7 +132,6 @@ const ingestData = async (req, res) => {
     });
 
   } catch (error) {
-    // Zod validation failures → 400
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         success: false,
@@ -118,7 +143,6 @@ const ingestData = async (req, res) => {
       });
     }
 
-    // Unexpected errors → 500
     console.error('[INGEST] Processing error:', error);
     return res.status(500).json({
       success: false,
@@ -128,3 +152,4 @@ const ingestData = async (req, res) => {
 };
 
 module.exports = { ingestData };
+
