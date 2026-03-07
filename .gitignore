@@ -22,3 +22,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment
+.env
+.env.local
+
+# Claude Code
+.claude/
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+data/
