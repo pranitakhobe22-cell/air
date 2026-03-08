@@ -218,7 +218,8 @@ const getLatestData = async (req, res) => {
 
         const sorted = latestReadings
             .sort((a, b) => new Date(b.CREATED_AT) - new Date(a.CREATED_AT));
-        const primaryReading = sorted[0] || null;
+        // Prefer a reading with actual sensor data (non-zero AQI) as the primary display reading
+        const primaryReading = sorted.find(r => r.AQI > 0) || sorted[0] || null;
 
         const nodes = await SensorNode.findAll();
         const locations = await Location.findAll();
@@ -245,11 +246,15 @@ const getLatestData = async (req, res) => {
         })).slice(0, 60);
 
         // Multi-node ESP32 support: dynamically detect all unique nodes from recent readings.
-        // This works regardless of node naming convention (ESP32_01, aeris-1, sensor-A, etc.)
+        // Skip test/probe entries so they don't clutter the dashboard.
+        const TEST_PREFIXES = ['TEST_', 'DHT22'];
+        const isTestNode = (id) => TEST_PREFIXES.some(p => id.startsWith(p));
+
         const espNodeMap = {}; // nodeId -> { latest reading, geo }
         const seenNodeIds = new Set();
         for (const r of sorted) {
             if (!r.NODE_ID || seenNodeIds.has(r.NODE_ID)) continue;
+            if (isTestNode(r.NODE_ID)) continue; // skip test/probe nodes
             seenNodeIds.add(r.NODE_ID);
 
             const nodeReadings = sorted.filter(x => x.NODE_ID === r.NODE_ID);
