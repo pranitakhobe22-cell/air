@@ -147,6 +147,26 @@ const useAerisStore = create((set, get) => ({
         else sectors.push(sectorData);
       }
 
+      // Update nodes array — mark this node as active with fresh lastPing
+      const nodes = [...(base.nodes || [])];
+      if (payload.nodeId) {
+        const nodeIdx = nodes.findIndex(n => n.id === payload.nodeId);
+        const nodeData = {
+          id: payload.nodeId,
+          location_name: payload.geo
+            ? `${payload.geo.city}, ${payload.geo.region}`
+            : (nodeIdx >= 0 ? nodes[nodeIdx].location_name : `Sensor ${payload.nodeId}`),
+          type: 'outdoor',
+          status: 'active',
+          battery: 100,
+          lastPing: new Date().toISOString(),
+          lat: payload.geo?.lat || (nodeIdx >= 0 ? nodes[nodeIdx].lat : null),
+          lng: payload.geo?.lng || (nodeIdx >= 0 ? nodes[nodeIdx].lng : null),
+        };
+        if (nodeIdx >= 0) nodes[nodeIdx] = nodeData;
+        else nodes.push(nodeData);
+      }
+
       // Generate dynamic alerts
       const alerts = [...(base.alerts || [])];
       if (aqi > 150 && !alerts.some(a => a.type === 'aqi_high')) {
@@ -194,6 +214,7 @@ const useAerisStore = create((set, get) => ({
           history: updatedHistory,
           forecast,
           alerts: alerts.slice(0, 5),
+          nodes,
           sectors,
           perNode,
         },

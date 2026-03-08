@@ -308,11 +308,12 @@ const getLatestData = async (req, res) => {
                 lat, lng,
             });
 
+            const ageMs = Date.now() - new Date(latest.CREATED_AT).getTime();
             nodeList.push({
                 id:            espId,
                 location_name: locationName,
                 type:          'outdoor',
-                status:        'active',
+                status:        ageMs < 60000 ? 'active' : 'offline',
                 battery:       100,
                 lastPing:      latest.CREATED_AT,
                 lat, lng,

@@ -1,10 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Network as NetIcon, Server, Database, Activity, Wifi,
   Cpu, Clock, ChevronDown, ChevronUp, AlertCircle, ShieldCheck
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
+
+const ONLINE_THRESHOLD_MS = 60000; // 60s — node is offline if no data for this long
+
+const getTimeAgo = (timestamp, now) => {
+  if (!timestamp) return 'Never';
+  const diffSec = Math.floor((now - new Date(timestamp).getTime()) / 1000);
+  if (diffSec < 0) return 'Just now';
+  if (diffSec < 10) return 'Just now';
+  if (diffSec < 60) return `${diffSec}s ago`;
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+  return `${Math.floor(diffSec / 86400)}d ago`;
+};
+
+const isNodeOnline = (node, now) => {
+  if (!node.lastPing) return false;
+  return (now - new Date(node.lastPing).getTime()) < ONLINE_THRESHOLD_MS;
+};
 
 const learningData = [
   {
@@ -32,6 +50,13 @@ const learningData = [
 const Network = () => {
   const data = useAerisStore((s) => s.data);
   const [expandedId, setExpandedId] = useState(null);
+  const [now, setNow] = useState(Date.now());
+
+  // Re-render every 5s to keep "time ago" and online/offline status fresh
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (!data?.derived) {
     return (
@@ -132,7 +157,7 @@ const Network = () => {
                   </span>
                 )}
                 <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md">
-                  {nodes.filter((n) => n.status === 'active').length} Active
+                  {nodes.filter((n) => isNodeOnline(n, now)).length} Online
                 </span>
               </div>
             </div>
@@ -158,7 +183,7 @@ const Network = () => {
                       <tr key={i} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
                         <td className="py-3 pl-2">
                           <div className="flex items-center gap-2">
-                            <div className={`w-1.5 h-1.5 rounded-full ${node.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                            <div className={`w-1.5 h-1.5 rounded-full ${isNodeOnline(node, now) ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
                             <span className="font-mono text-slate-300">{node.id}</span>
                           </div>
                         </td>
@@ -170,8 +195,8 @@ const Network = () => {
                           )}
                         </td>
                         <td className="py-3">
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded ${node.status === 'active' ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10'}`}>
-                            {node.status}
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded ${isNodeOnline(node, now) ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10'}`}>
+                            {isNodeOnline(node, now) ? 'online' : 'offline'}
                           </span>
                         </td>
                         <td className="py-3 text-slate-400 truncate max-w-[150px]">{node.location_name || 'Assigned'}</td>
@@ -192,7 +217,9 @@ const Network = () => {
                         <td className="py-3 pr-2 text-right">
                           <div className="flex items-center justify-end gap-1.5 text-slate-400">
                             <Clock size={12} />
-                            <span className="text-xs">{node.lastPing ? new Date(node.lastPing).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Just now'}</span>
+                            <span className={`text-xs ${isNodeOnline(node, now) ? 'text-emerald-400' : 'text-slate-500'}`}>
+                              {getTimeAgo(node.lastPing, now)}
+                            </span>
                           </div>
                         </td>
                       </tr>
