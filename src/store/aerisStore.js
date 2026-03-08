@@ -10,26 +10,55 @@ import { computeAqi, detectTrend, forecastAqi } from '../utils/aqiEngine';
  * trend detection, and EWMA-based forecasting.
  */
 
+const CACHE_KEY = 'aeris_data_cache';
+const CACHE_TS_KEY = 'aeris_data_cached_at';
+
+const saveCache = (data) => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
+  } catch (_) { /* quota exceeded — ignore */ }
+};
+
+const loadCache = () => {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    const ts = localStorage.getItem(CACHE_TS_KEY);
+    if (raw) return { data: JSON.parse(raw), cachedAt: Number(ts) || Date.now() };
+  } catch (_) { /* corrupt — ignore */ }
+  return null;
+};
+
 const useAerisStore = create((set, get) => ({
   // AERIS_DATA structure
   data: null,
   loading: true,
   error: null,
+  isStale: false,   // true when showing cached data
+  cachedAt: null,    // timestamp of when cached data was saved
 
   /**
    * Fetch initial data snapshot from the REST API.
-   * Real-time updates then overlay via WebSocket / Simulator.
+   * Falls back to cached localStorage data if backend is unreachable.
    */
   fetchLatest: async () => {
     try {
       set({ loading: true, error: null });
       const response = await aerisApi.get('/latest');
       if (response.data) {
-        set({ data: response.data, loading: false, error: null });
+        saveCache(response.data);
+        set({ data: response.data, loading: false, error: null, isStale: false, cachedAt: null });
       }
     } catch (err) {
       console.warn('[Store] Initial fetch failed, waiting for WebSocket:', err.message);
-      set({ loading: false, error: err.message });
+      // Try loading cached data so the site isn't blank
+      const cached = loadCache();
+      if (cached && !get().data) {
+        console.info('[Store] Loaded cached data from', new Date(cached.cachedAt).toLocaleString());
+        set({ data: cached.data, loading: false, error: err.message, isStale: true, cachedAt: cached.cachedAt });
+      } else {
+        set({ loading: false, error: err.message });
+      }
     }
   },
 
@@ -187,8 +216,7 @@ const useAerisStore = create((set, get) => ({
         if (idx >= 0) alerts.splice(idx, 1);
       }
 
-      return {
-        data: {
+      const newData = {
           ...base,
           meta: { ...base.meta, timestamp: Date.now() },
           sensors: sensorData,
@@ -217,8 +245,16 @@ const useAerisStore = create((set, get) => ({
           nodes,
           sectors,
           perNode,
-        },
+      };
+
+      saveCache(newData);
+
+      return {
+        data: newData,
         loading: false,
+        isStale: false,
+        cachedAt: null,
+        error: null,
       };
     });
     if (import.meta.env.DEV) {

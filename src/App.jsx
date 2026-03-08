@@ -26,7 +26,7 @@ const Profile = lazy(() => import('@/pages/Profile'));
 const Onboarding = lazy(() => import('@/pages/Onboarding'));
 
 const PageLoader = () => (
-  <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center">
+  <div className="min-h-screen bg-[#060910] flex items-center justify-center">
     <div className="w-8 h-8 border-2 border-sky-500/30 border-t-sky-500 rounded-full animate-spin" />
   </div>
 );
@@ -46,7 +46,7 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ minHeight: '100vh', background: '#0B0F1A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#f1f5f9', fontFamily: 'sans-serif', padding: '2rem', textAlign: 'center' }}>
+        <div style={{ minHeight: '100vh', background: '#060910', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#f1f5f9', fontFamily: 'sans-serif', padding: '2rem', textAlign: 'center' }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1rem' }}>AERIS System Error</h2>
           <p style={{ color: '#ef4444', fontSize: '0.875rem', maxWidth: '600px', wordBreak: 'break-word' }}>
             {this.state.error?.message || 'Unknown error'}

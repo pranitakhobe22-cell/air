@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Radio, Wind, Network, MapPin, Shield, Heart,
-  TrendingUp, User, Radiation, LogOut, WifiOff, Menu, X
+  TrendingUp, User, Radiation, LogOut, WifiOff, Menu, X, RefreshCw, ServerOff, Clock
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
 import useAuthStore from '@/store/useAuthStore';
@@ -25,12 +25,38 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const data = useAerisStore((s) => s.data);
+  const loading = useAerisStore((s) => s.loading);
+  const storeError = useAerisStore((s) => s.error);
+  const isStale = useAerisStore((s) => s.isStale);
+  const cachedAt = useAerisStore((s) => s.cachedAt);
+  const fetchLatest = useAerisStore((s) => s.fetchLatest);
   const user = useAuthStore((s) => s.user);
   const selectedNode = useNodeStore((s) => s.selectedNode);
   const setSelectedNode = useNodeStore((s) => s.setSelectedNode);
   const detectLocation = useNodeStore((s) => s.detectLocation);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const [now, setNow] = useState(Date.now());
+
+  // Backend is unreachable AND no cached data at all
+  const backendOffline = !loading && !data && !!storeError;
+
+  // Update "time ago" every 30s for the stale banner
+  useEffect(() => {
+    if (!isStale) return;
+    const id = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, [isStale]);
+
+  const staleLabel = cachedAt ? (() => {
+    const diffMin = Math.floor((now - cachedAt) / 60000);
+    if (diffMin < 1) return 'just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return `${diffHr}h ago`;
+    return `${Math.floor(diffHr / 24)}d ago`;
+  })() : null;
 
   const perNode = data?.perNode || {};
   const espNodeIds = Object.keys(perNode);
@@ -187,13 +213,65 @@ const AppLayout = () => {
 
       {/* Main Content */}
       <main className="lg:ml-[260px] min-h-screen pt-14 lg:pt-0">
-        {!isOnline && (
+        {/* Browser offline banner */}
+        {!isOnline && !backendOffline && !isStale && (
           <div className="bg-rose-500/8 border-b border-rose-500/15 px-4 py-2.5 flex items-center justify-center gap-2">
             <WifiOff size={14} className="text-rose-400" />
             <span className="text-xs font-medium text-rose-400">You are offline. Showing last known data.</span>
           </div>
         )}
-        <Outlet />
+
+        {/* Stale cached data banner */}
+        {isStale && (
+          <div className="bg-amber-500/[0.06] px-4 py-2.5 flex items-center justify-center gap-3">
+            <div className="flex items-center gap-2">
+              <Clock size={13} className="text-amber-400" />
+              <span className="text-xs font-medium text-amber-400">
+                Server offline — showing cached data{staleLabel ? ` from ${staleLabel}` : ''}
+              </span>
+            </div>
+            <button
+              onClick={async () => {
+                setRetrying(true);
+                await fetchLatest();
+                setRetrying(false);
+              }}
+              disabled={retrying}
+              className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-400 rounded-lg text-[11px] font-semibold hover:bg-amber-500/15 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw size={11} className={retrying ? 'animate-spin' : ''} />
+              <span>{retrying ? 'Retrying...' : 'Retry'}</span>
+            </button>
+          </div>
+        )}
+
+        {/* No data at all — full offline screen */}
+        {backendOffline ? (
+          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] lg:min-h-screen px-6 text-center">
+            <div className="w-16 h-16 bg-white/[0.03] rounded-2xl flex items-center justify-center mb-6">
+              <ServerOff size={28} className="text-slate-500" />
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">Server Unreachable</h2>
+            <p className="text-sm text-slate-500 max-w-sm mb-8 leading-relaxed">
+              Unable to connect to the AERIS backend. The server may be starting up or temporarily unavailable.
+            </p>
+            <button
+              onClick={async () => {
+                setRetrying(true);
+                await fetchLatest();
+                setRetrying(false);
+              }}
+              disabled={retrying}
+              className="flex items-center gap-2 px-6 py-3 bg-sky-500/10 text-sky-400 rounded-xl text-sm font-semibold hover:bg-sky-500/15 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw size={15} className={retrying ? 'animate-spin' : ''} />
+              <span>{retrying ? 'Connecting...' : 'Retry Connection'}</span>
+            </button>
+            <p className="text-[11px] text-slate-600 mt-4">Auto-retry via WebSocket is active in the background.</p>
+          </div>
+        ) : (
+          <Outlet />
+        )}
       </main>
     </div>
   );
