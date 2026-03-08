@@ -336,15 +336,78 @@ const Dashboard = () => {
             Details <ArrowUpRight size={12} />
           </button>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3">
           <MetricCard label="PM2.5" value={sensors.pm25} unit="µg/m³" icon={Wind} color="#ef4444" sparkData={historyData.map(h => ({ v: h.pm25 }))} />
-          <MetricCard label="PM10" value={sensors.pm10} unit="µg/m³" icon={Wind} color="#f97316" sparkData={historyData.map(h => ({ v: h.pm10 || h.pm25 * 1.2 }))} />
-          <MetricCard label="CO" value={sensors.co} unit="ppm" icon={Activity} color="#eab308" decimals={1} sparkData={historyData.map(h => ({ v: h.co }))} />
+          <MetricCard label="CO" value={sensors.co || 0} unit="ppm" icon={Activity} color="#eab308" decimals={2} sparkData={historyData.map(h => ({ v: h.co || 0 }))} />
           <MetricCard label="Ozone" value={sensors.o3} unit="ppb" icon={Eye} color="#06b6d4" sparkData={historyData.map(h => ({ v: h.o3 }))} />
           <MetricCard label="VOC" value={sensors.voc_index} unit="index" icon={Gauge} color="#8b5cf6" sparkData={historyData.map(h => ({ v: h.voc_index }))} />
-          <MetricCard label="NOx" value={sensors.nox} unit="ppb" icon={Activity} color="#ec4899" sparkData={historyData.map(h => ({ v: h.nox || 0 }))} />
+          <MetricCard label="NOx" value={sensors.nox || 0} unit="ppb" icon={Activity} color="#ec4899" sparkData={historyData.map(h => ({ v: h.nox || 0 }))} />
         </div>
       </div>
+
+      {/* ── Per-Node Individual Graphs ──────────────────────── */}
+      {espNodes.length > 0 && (
+        <div>
+          <h2 className="text-sm font-medium text-slate-400 mb-4">Node Readings</h2>
+          <div className={`grid gap-4 ${espNodes.length === 1 ? 'grid-cols-1 max-w-sm' : espNodes.length === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
+            {espNodes.map(([nodeId, nd]) => {
+              const nodeHistory = (nd.history || []).slice(-20);
+              const nodeTrendData = nodeHistory.map((h, i) => ({
+                time: h.timestamp ? new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : `${i}`,
+                AQI: h.aqi || 0,
+              }));
+              const nodeAqi = nd.latest?.aqi || 0;
+              const nodeBand = getAqiBand(nodeAqi);
+              return (
+                <div key={nodeId} className="bg-slate-800/40 rounded-xl border border-slate-700/40 p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{nodeId}</span>
+                      <p className="text-sm font-medium text-slate-200 mt-0.5">{nd.location || nodeId}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-2xl font-bold tabular-nums" style={{ color: nodeBand.color }}>{nodeAqi}</span>
+                      <span className="block text-[10px] text-slate-500 uppercase">{nodeBand.label.split(' ')[0]}</span>
+                    </div>
+                  </div>
+                  <div className="h-20">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={nodeTrendData}>
+                        <defs>
+                          <linearGradient id={`nf-${nodeId}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={nodeBand.color} stopOpacity={0.2} />
+                            <stop offset="100%" stopColor={nodeBand.color} stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <Area type="linear" dataKey="AQI" stroke={nodeBand.color} strokeWidth={1.5} fill={`url(#nf-${nodeId})`} isAnimationActive={false} dot={false} />
+                        <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.15)', strokeWidth: 1 }} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="mt-3 grid grid-cols-4 gap-1 text-center border-t border-slate-700/30 pt-3">
+                    <div>
+                      <span className="text-[9px] text-slate-500 block uppercase">PM2.5</span>
+                      <span className="text-xs font-semibold text-slate-200">{nd.latest?.pm25 != null ? nd.latest.pm25.toFixed(1) : '--'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-500 block uppercase">CO</span>
+                      <span className="text-xs font-semibold text-slate-200">{nd.latest?.co > 0 ? nd.latest.co.toFixed(2) : '--'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-500 block uppercase">NOx</span>
+                      <span className="text-xs font-semibold text-slate-200">{nd.latest?.nox > 0 ? Math.round(nd.latest.nox) : '--'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-500 block uppercase">O3</span>
+                      <span className="text-xs font-semibold text-slate-200">{nd.latest?.o3 != null ? nd.latest.o3.toFixed(1) : '--'}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Trend Chart + Stations ──────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
@@ -387,7 +450,7 @@ const Dashboard = () => {
           <div className="bg-slate-800/40 rounded-xl border border-slate-700/40 p-5 flex-1">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-medium text-slate-400">Stations</h2>
-              <span className="text-xs text-emerald-400">{nodes?.filter(n => n.status === 'active' || n.status === 'online')?.length || 0} online</span>
+              <span className="text-xs text-emerald-400">{espNodes.length > 0 ? espNodes.length : nodes?.filter(n => n.status === 'active' || n.status === 'online')?.length || 0} online</span>
             </div>
             <div>
               {espNodes.length > 0 ? (

@@ -66,7 +66,6 @@ const useAerisStore = create((set, get) => ({
       // Build sensor readings
       const sensorData = {
         pm25: payload.pm25 || 0,
-        pm10: payload.pm10 || Math.round((payload.pm25 || 0) * 1.6),
         co: payload.co || 0,
         nox: payload.no2_ppb || payload.nox || 0,
         o3: payload.o3 || 0,
@@ -83,7 +82,6 @@ const useAerisStore = create((set, get) => ({
         aqi,
         rri,
         pm25: sensorData.pm25,
-        pm10: sensorData.pm10,
         co: sensorData.co,
         o3: sensorData.o3,
         nox: sensorData.nox,
@@ -107,7 +105,7 @@ const useAerisStore = create((set, get) => ({
         const nodeHistoryPoint = {
           timestamp: payload.timestamp || new Date().toISOString(),
           aqi, rri,
-          pm25: sensorData.pm25, pm10: sensorData.pm10,
+          pm25: sensorData.pm25,
           co: sensorData.co, o3: sensorData.o3,
           nox: sensorData.nox, voc_index: sensorData.voc_index,
           temperature: payload.temp || 0, humidity: payload.hum || 0,
@@ -118,7 +116,7 @@ const useAerisStore = create((set, get) => ({
         perNode[payload.nodeId] = {
           latest: {
             aqi, rri,
-            pm25: sensorData.pm25, pm10: sensorData.pm10,
+            pm25: sensorData.pm25,
             co: sensorData.co, o3: sensorData.o3,
             nox: sensorData.nox, voc_index: sensorData.voc_index,
             temperature: payload.temp || 0, humidity: payload.hum || 0,

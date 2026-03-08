@@ -114,7 +114,6 @@ const LiveStatus = () => {
 
   const sensorTiles = [
     { id: 'pm25', label: 'PM2.5', value: activeSensors.pm25, unit: 'µg/m³', icon: Activity, decimals: 1, max: 150 },
-    { id: 'pm10', label: 'PM10', value: activeSensors.pm10, unit: 'µg/m³', icon: Activity, decimals: 0, max: 354 },
     { id: 'o3', label: 'Ozone', value: activeSensors.o3, unit: 'ppb', icon: Wind, decimals: 1, max: 120 },
     { id: 'co', label: 'CO', value: activeSensors.co, unit: 'ppm', icon: Gauge, decimals: 2, max: 15 },
     { id: 'nox', label: 'NOx', value: activeSensors.nox, unit: 'ppb', icon: Activity, decimals: 0, max: 360 },
