@@ -216,10 +216,12 @@ const getLatestData = async (req, res) => {
             ? await fetchCosmosReadings(50)
             : await Reading.findAll();
 
+        // Only keep real ESP32 node readings — filter out test/probe/fake entries
+        const REAL_NODE_IDS = new Set(['ESP32_01', 'ESP32_02', 'ESP32_03']);
         const sorted = latestReadings
+            .filter(r => REAL_NODE_IDS.has(r.NODE_ID))
             .sort((a, b) => new Date(b.CREATED_AT) - new Date(a.CREATED_AT));
-        // Prefer a reading with actual sensor data (non-zero AQI) as the primary display reading
-        const primaryReading = sorted.find(r => r.AQI > 0) || sorted[0] || null;
+        const primaryReading = sorted[0] || null;
 
         const nodes = await SensorNode.findAll();
         const locations = await Location.findAll();
@@ -245,16 +247,11 @@ const getLatestData = async (req, res) => {
             humidity:    r.HUMIDITY || 0,
         })).slice(0, 60);
 
-        // Multi-node ESP32 support: dynamically detect all unique nodes from recent readings.
-        // Skip test/probe entries so they don't clutter the dashboard.
-        const TEST_PREFIXES = ['TEST_', 'DHT22'];
-        const isTestNode = (id) => TEST_PREFIXES.some(p => id.startsWith(p));
-
+        // Build node map from real ESP32 readings only
         const espNodeMap = {}; // nodeId -> { latest reading, geo }
         const seenNodeIds = new Set();
         for (const r of sorted) {
             if (!r.NODE_ID || seenNodeIds.has(r.NODE_ID)) continue;
-            if (isTestNode(r.NODE_ID)) continue; // skip test/probe nodes
             seenNodeIds.add(r.NODE_ID);
 
             const nodeReadings = sorted.filter(x => x.NODE_ID === r.NODE_ID);
@@ -324,37 +321,6 @@ const getLatestData = async (req, res) => {
                 lat, lng,
             });
         });
-
-        // Only add simulated DB nodes when NO real ESP32 hardware is detected
-        // When real hardware is active, skip fake nodes entirely
-        if (activeEspIds.length === 0) {
-            nodes.forEach((n, i) => {
-                const loc = locations.find(l => l.ID === n.LOCATION_ID);
-                const simReading = sorted.find(r => r.NODE_ID === n.ID);
-                const offset = { dlat: i * 0.005, dlng: i * 0.005 };
-                const lat = loc?.LAT || (baseLat != null ? baseLat + offset.dlat : null);
-                const lng = loc?.LNG || (baseLng != null ? baseLng + offset.dlng : null);
-
-                sectors.push({
-                    id:     loc?.ID || n.ID,
-                    name:   loc?.NAME || 'Sector',
-                    aqi:    simReading ? simReading.AQI || 0 : 0,
-                    rri:    simReading ? simReading.RRI || 0 : 0,
-                    status: simReading ? (simReading.RISK_LEVEL || aqiToRiskLevel(simReading.AQI || 0)) : 'Safe',
-                    lat, lng,
-                });
-
-                nodeList.push({
-                    id:            n.ID,
-                    location_name: loc?.NAME || 'Assigned',
-                    type:          'outdoor',
-                    status:        n.STATUS === 'online' ? 'active' : n.STATUS,
-                    battery:       88 + Math.floor(Math.random() * 10),
-                    lastPing:      n.LAST_SYNC,
-                    lat, lng,
-                });
-            });
-        }
 
         const espLocationName = primaryGeo
             ? `${primaryGeo.city}, ${primaryGeo.region}, ${primaryGeo.country}`
