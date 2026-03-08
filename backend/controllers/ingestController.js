@@ -20,6 +20,7 @@ const { calculateRiskMetrics } = require('../utils/riskEngine');
 const { broadcastEnvironmentUpdate } = require('../websocket/socketService');
 const { getContainer, isConfigured } = require('../config/cosmosdb');
 const { geolocateIp, getEspLocation, setEspLocation } = require('../utils/geolocate');
+const { NODE_LOCATIONS } = require('../config/nodeLocations');
 
 // ── Validation Schema ───────────────────────────────────────────
 const sensorSchema = z.object({
@@ -81,13 +82,23 @@ const ingestData = async (req, res) => {
     // 4. Server-assigned timestamp
     const timestampISO = new Date().toISOString();
 
-    // 5. Geolocate ESP32 — use cache first (instant), fall back to IP lookup
-    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
-    let geo = getEspLocation(payload.node_id);
-    if (!geo) {
-      try { geo = await geolocateIp(clientIp); } catch (_) {}
+    // 5. Geolocate ESP32 — priority: static NODE_LOCATIONS config > cache > IP lookup
+    //    Static config gives exact device coordinates (not city-level IP geo).
+    const staticLoc = NODE_LOCATIONS[payload.node_id];
+    let geo;
+    if (staticLoc) {
+      // Exact coordinates from env config — use directly, no network call needed
+      geo = { lat: staticLoc.lat, lng: staticLoc.lng, city: staticLoc.name, region: '', country: '' };
+      setEspLocation({ ...geo, nodeId: payload.node_id });
+    } else {
+      // Fall back to in-memory cache, then IP geolocation (city-level accuracy)
+      const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
+      geo = getEspLocation(payload.node_id);
+      if (!geo) {
+        try { geo = await geolocateIp(clientIp); } catch (_) {}
+      }
+      if (geo) setEspLocation({ ...geo, nodeId: payload.node_id });
     }
-    if (geo) setEspLocation({ ...geo, nodeId: payload.node_id });
 
     // 6. Persist to Azure Cosmos DB — SensorData/LiveLogs
     //    Partition key: /sensorId  |  TTL: 7 days (604800 s)

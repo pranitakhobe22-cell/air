@@ -770,20 +770,23 @@ void drawWifiInfo(String ip) {
   display.clearDisplay();
   display.setTextColor(SH110X_WHITE);
 
+  // Row 0: AERIS title
   display.setTextSize(2);
   display.setCursor(20, 0);
   display.print("AERIS");
 
+  // Row 16: Node ID — makes it clear which physical device this is
   display.setTextSize(1);
-  display.setCursor(0, 22);
-  display.print("WiFi: Connected");
+  display.setCursor(0, 17);
+  display.print("Node: ");
+  display.print(AERIS_NODE_ID);
 
-  display.setCursor(0, 38);
-  display.print("Open in browser:");
+  // Row 30: WiFi status
+  display.setCursor(0, 30);
+  display.print("WiFi OK  IP:");
 
-  display.setTextSize(1);
-  display.setCursor(0, 52);
-  display.print("http://");
+  // Row 44: IP address
+  display.setCursor(0, 44);
   display.print(ip);
 
   display.display();
@@ -900,7 +903,8 @@ void setup() {
   Serial.println();
   Serial.println("==============================");
   Serial.println("   AERIS Air Quality System");
-  Serial.println("   Improved v2 (ADC2 fix)");
+  Serial.print  ("   Node: ");
+  Serial.println(AERIS_NODE_ID);
   Serial.println("==============================");
   Serial.println();
 
@@ -1018,9 +1022,12 @@ void setup() {
     display.setCursor(20, 0);
     display.print("AERIS");
     display.setTextSize(1);
-    display.setCursor(0, 25);
+    display.setCursor(0, 18);
+    display.print("Node: ");
+    display.print(AERIS_NODE_ID);
+    display.setCursor(0, 32);
     display.print("Connecting WiFi...");
-    display.setCursor(0, 40);
+    display.setCursor(0, 46);
     display.print(WIFI_SSID);
     display.display();
   }

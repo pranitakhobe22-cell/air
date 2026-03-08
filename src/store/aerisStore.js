@@ -130,17 +130,20 @@ const useAerisStore = create((set, get) => ({
         };
       }
 
-      // Update sectors with real geo coordinates from ESP32
+      // Update sectors — always register node even if geo is not yet resolved
       const sectors = [...(base.sectors || [])];
-      if (payload.nodeId && payload.geo?.lat) {
+      if (payload.nodeId) {
         const sectorIdx = sectors.findIndex(s => s.id === payload.nodeId);
+        const existingSector = sectorIdx >= 0 ? sectors[sectorIdx] : null;
         const sectorData = {
           id: payload.nodeId,
-          name: `${payload.geo.city}, ${payload.geo.region}`,
+          name: payload.geo
+            ? (payload.geo.region ? `${payload.geo.city}, ${payload.geo.region}` : payload.geo.city)
+            : existingSector?.name || `Sensor ${payload.nodeId}`,
           aqi, rri,
           status: payload.riskLevel || 'Low',
-          lat: payload.geo.lat,
-          lng: payload.geo.lng,
+          lat: payload.geo?.lat || existingSector?.lat || null,
+          lng: payload.geo?.lng || existingSector?.lng || null,
         };
         if (sectorIdx >= 0) sectors[sectorIdx] = sectorData;
         else sectors.push(sectorData);

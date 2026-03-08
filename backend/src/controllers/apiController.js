@@ -5,46 +5,89 @@ const Alert = require('../models/Alert');
 const Profile = require('../models/Profile');
 const { getContainer, isConfigured: isCosmosConfigured } = require('../../config/cosmosdb');
 const { getEspLocation, getAllEspLocations } = require('../../utils/geolocate');
+const { NODE_LOCATIONS } = require('../../config/nodeLocations');
+
+/** Normalize a Cosmos DB document to the internal row format. */
+const normalizeDoc = (r) => ({
+    CREATED_AT:       r.timestamp,
+    PM25:             r.pm25,
+    PM10:             r.pm25 * 1.2,
+    CO:               r.co,
+    NOX:              r.no2 || r.nox || 0,
+    O3:               r.o3,
+    VOC_INDEX:        r.vocIndex,
+    TEMPERATURE:      r.temperature,
+    HUMIDITY:         r.humidity,
+    OXYGEN:           r.oxygen,
+    PRESSURE:         r.pressure,
+    AQI:              r.aqi,
+    AQI_CATEGORY:     r.aqiCategory,
+    AIR_QUALITY_TEXT: null,
+    RRI:              r.rri,
+    RISK_LEVEL:       r.riskLevel,
+    RISK_COLOR:       null,
+    DOMINANT:         null,
+    NODE_ID:          r.sensorId,
+    RAIN:             r.rain || false,
+    PM25_RAIN_DELTA:  r.pm25RainDelta || 0,
+    LAT:              r.lat || null,
+    LNG:              r.lng || null,
+    CITY:             r.city || null,
+    REGION:           r.region || null,
+});
 
 /**
- * Fetch the latest sensor readings from Cosmos DB.
+ * Fetch sensor readings from Cosmos DB.
+ *
+ * Two-phase strategy that guarantees at least one record per active node:
+ *  1. Broad cross-partition query to discover all unique node IDs present.
+ *  2. For each node, a partition-scoped query fetching its latest N readings.
+ *
+ * This prevents one fast-posting node from dominating the result set and
+ * hiding slower or less-frequent nodes when using a plain TOP N sort.
  */
-const fetchCosmosReadings = async (limit = 50) => {
+const fetchCosmosReadings = async (historyPerNode = 30) => {
     const container = await getContainer();
-    const { resources } = await container.items
+
+    // ── Phase 1: Discover all unique sensorId values in the last 24 h ──
+    // Fetch just enough docs to find all active nodes (cheap query).
+    const discoveryRes = await container.items
         .query(
-            `SELECT TOP ${limit} * FROM c ORDER BY c.timestamp DESC`,
+            'SELECT DISTINCT VALUE c.sensorId FROM c',
             { enableCrossPartitionQuery: true }
         )
         .fetchAll();
 
-    return resources.map(r => ({
-        CREATED_AT:      r.timestamp,
-        PM25:            r.pm25,
-        PM10:            r.pm25 * 1.2,
-        CO:              r.co,
-        NOX:             r.no2 || r.nox || 0,
-        O3:              r.o3,
-        VOC_INDEX:       r.vocIndex,
-        TEMPERATURE:     r.temperature,
-        HUMIDITY:        r.humidity,
-        OXYGEN:          r.oxygen,
-        PRESSURE:        r.pressure,
-        AQI:             r.aqi,
-        AQI_CATEGORY:    r.aqiCategory,
-        AIR_QUALITY_TEXT: null,
-        RRI:             r.rri,
-        RISK_LEVEL:      r.riskLevel,
-        RISK_COLOR:      null,
-        DOMINANT:        null,
-        NODE_ID:         r.sensorId,
-        RAIN:            r.rain || false,
-        PM25_RAIN_DELTA: r.pm25RainDelta || 0,
-        LAT:             r.lat || null,
-        LNG:             r.lng || null,
-        CITY:            r.city || null,
-        REGION:          r.region || null,
-    }));
+    const nodeIds = (discoveryRes.resources || []).filter(Boolean);
+
+    if (nodeIds.length === 0) {
+        // No data at all — return empty
+        return [];
+    }
+
+    // ── Phase 2: Fetch latest N readings per node (partition-scoped = fast) ──
+    const perNodePromises = nodeIds.map(async (nodeId) => {
+        const { resources } = await container.items
+            .query(
+                {
+                    query: `SELECT TOP @n * FROM c WHERE c.sensorId = @id ORDER BY c.timestamp DESC`,
+                    parameters: [
+                        { name: '@n',  value: historyPerNode },
+                        { name: '@id', value: nodeId },
+                    ],
+                },
+                { partitionKey: nodeId }
+            )
+            .fetchAll();
+        return resources.map(normalizeDoc);
+    });
+
+    const perNodeArrays = await Promise.all(perNodePromises);
+
+    // Flatten and sort newest-first across all nodes
+    const all = perNodeArrays.flat();
+    all.sort((a, b) => new Date(b.CREATED_AT) - new Date(a.CREATED_AT));
+    return all;
 };
 
 /** Map AQI to color */
@@ -201,22 +244,31 @@ const getLatestData = async (req, res) => {
             humidity:    r.HUMIDITY || 0,
         })).slice(0, 60);
 
-        // Multi-node ESP32 support: detect all hardware ESP32 nodes from readings
-        const ESP_IDS = ['ESP32_01', 'ESP32_02', 'ESP32_03'];
+        // Multi-node ESP32 support: dynamically detect all unique nodes from recent readings.
+        // This works regardless of node naming convention (ESP32_01, aeris-1, sensor-A, etc.)
         const espNodeMap = {}; // nodeId -> { latest reading, geo }
-        for (const espId of ESP_IDS) {
-            const espReadings = sorted.filter(r => r.NODE_ID === espId);
-            if (espReadings.length > 0) {
-                const latest = espReadings[0];
-                // Geo: in-memory cache first, then Cosmos DB fields as fallback
-                const memGeo = getEspLocation(espId);
-                const geo = memGeo || (latest.LAT ? { lat: latest.LAT, lng: latest.LNG, city: latest.CITY, region: latest.REGION } : null);
-                espNodeMap[espId] = { latest, geo };
-            }
+        const seenNodeIds = new Set();
+        for (const r of sorted) {
+            if (!r.NODE_ID || seenNodeIds.has(r.NODE_ID)) continue;
+            seenNodeIds.add(r.NODE_ID);
+
+            const nodeReadings = sorted.filter(x => x.NODE_ID === r.NODE_ID);
+            const latest = nodeReadings[0];
+
+            // Location priority: 1) static NODE_LOCATIONS env config, 2) in-memory IP-geo cache, 3) Cosmos DB geo fields
+            const staticLoc = NODE_LOCATIONS[r.NODE_ID];
+            const memGeo    = getEspLocation(r.NODE_ID);
+            const geo = staticLoc
+                ? { lat: staticLoc.lat, lng: staticLoc.lng, city: staticLoc.name, region: '', country: '' }
+                : memGeo
+                    || (latest.LAT ? { lat: latest.LAT, lng: latest.LNG, city: latest.CITY, region: latest.REGION } : null);
+
+            espNodeMap[r.NODE_ID] = { latest, geo };
         }
         const activeEspIds = Object.keys(espNodeMap);
-        // Primary geo: in-memory first, then from first ESP node's Cosmos data
-        const primaryGeo = getEspLocation() || (activeEspIds.length > 0 ? espNodeMap[activeEspIds[0]].geo : null);
+        // Primary geo: first node's location (static config preferred)
+        const primaryGeo = (activeEspIds.length > 0 ? espNodeMap[activeEspIds[0]].geo : null)
+            || getEspLocation();
 
         // Base coordinates: use ESP32 geo, fallback to DB locations
         const baseLat = primaryGeo?.lat || locations[0]?.LAT || null;
@@ -229,16 +281,23 @@ const getLatestData = async (req, res) => {
         // Add each ESP32 hardware node as a sector + node
         activeEspIds.forEach((espId, i) => {
             const { latest, geo } = espNodeMap[espId];
-            // Offset nodes slightly so they don't overlap on the map
+            // Spread nodes with IP-geo fallback so they don't all overlap on the map
             const offsets = [
-                { dlat: 0, dlng: 0 },
-                { dlat: 0.008, dlng: 0.012 },
+                { dlat: 0,      dlng: 0      },
+                { dlat: 0.008,  dlng: 0.012  },
                 { dlat: -0.006, dlng: -0.010 },
+                { dlat: 0.012,  dlng: -0.008 },
             ];
             const offset = offsets[i] || { dlat: i * 0.005, dlng: i * 0.005 };
             const lat = geo?.lat || (baseLat != null ? baseLat + offset.dlat : null);
             const lng = geo?.lng || (baseLng != null ? baseLng + offset.dlng : null);
-            const locationName = geo ? `${geo.city}, ${geo.region}` : `Hardware Sensor ${i + 1}`;
+            // Use static config name if available, otherwise geo city name
+            const staticName = NODE_LOCATIONS[espId]?.name;
+            const locationName = staticName
+                ? staticName
+                : geo
+                    ? (geo.region ? `${geo.city}, ${geo.region}` : geo.city)
+                    : `Hardware Sensor ${i + 1}`;
 
             sectors.push({
                 id:     espId,
