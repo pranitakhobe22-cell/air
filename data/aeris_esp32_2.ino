@@ -136,7 +136,7 @@ bool  memsCalibrated    = false;
 // =============================================
 //  SMOOTHING (EMA)
 // =============================================
-const float EMA_ALPHA = 0.2;
+const float EMA_ALPHA = 0.1;  // Lower = smoother readings, less noise
 
 float pm25_ema    = -1;
 float mq131Rs_ema = -1;
@@ -155,7 +155,7 @@ float applyEMA(float val, float prev) {
 //  STATE
 // =============================================
 unsigned long bootTime;
-const unsigned long WARMUP_MS = 120000;
+const unsigned long WARMUP_MS = 300000;  // 5 min — MQ sensors need time to stabilize
 bool warmedUp = false;
 int oledPage  = 0;
 
@@ -212,8 +212,13 @@ float readMQResistance(int pin, float rl, float vcc) {
     delayMicroseconds(200);
   }
   float voltage = (total / 50.0) * (3.3 / 4095.0);
-  if (voltage < 0.005) voltage = 0.005;
-  return rl * ((vcc / voltage) - 1.0);
+  if (voltage < 0.01) voltage = 0.01;
+  // Clamp: ESP32 ADC saturates at 3.3V — if sensor VCC is 5V,
+  // voltage > 3.1V means ADC is near saturation → reading unreliable
+  if (voltage > 3.1) voltage = 3.1;
+  float rs = rl * ((vcc / voltage) - 1.0);
+  // Sanity clamp: MQ sensor resistance should be 0.1k – 200k
+  return constrain(rs, 0.1, 200.0);
 }
 
 // Read ADC2 pin — only call when WiFi is paused!
@@ -1085,7 +1090,7 @@ void setup() {
   Serial.println();
 
   bootTime = millis();
-  Serial.println("[INFO] Warming up MQ sensors (2 min)...");
+  Serial.println("[INFO] Warming up MQ sensors (5 min)...");
   Serial.println("[INFO] ADC2 sensors (CO/NO2 MEMS) read every 15s via WiFi pause");
   Serial.println();
 }
@@ -1242,11 +1247,17 @@ void loop() {
   // ---- Calculate ----
 
   float pm25       = pm25_ema;
-  float o3_raw     = ozonePPB(mq131Rs_ema / MQ131_Ro);
+
+  // Guard against division by zero / bad calibration
+  float o3_ratio  = (MQ131_Ro > 0.1) ? (mq131Rs_ema / MQ131_Ro) : 1.0;
+  float co_ratio  = (MQ7_Ro   > 0.1) ? (mq7Rs_ema   / MQ7_Ro)   : 1.0;
+  float co2_ratio = (MQ135_Ro > 0.1) ? (mq135Rs_ema / MQ135_Ro) : 1.0;
+
+  float o3_raw     = ozonePPB(o3_ratio);
   if (o3_raw > 0) g_o3_lastgood = o3_raw;
   float o3_ppb     = (o3_raw > 0) ? o3_raw : g_o3_lastgood;
-  float co_mq_ppm  = coPPM_MQ(mq7Rs_ema / MQ7_Ro);
-  float co2_ppm    = mq135CO2(mq135Rs_ema / MQ135_Ro);
+  float co_mq_ppm  = coPPM_MQ(co_ratio);
+  float co2_ppm    = mq135CO2(co2_ratio);
   float uvIdx      = uv_ema;
 
   // CO from MEMS sensor (ADC2 — uses cached voltage from last WiFi-pause read)
