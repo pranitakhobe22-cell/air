@@ -86,8 +86,9 @@ Adafruit_SHT31  sht31;
 #define CO_MEMS_PIN     26   // ADC2_CH9 — SEN0564 CO
 #define NO2_MEMS_PIN    27   // ADC2_CH7 — SEN0574 NO2
 
-// Rain detection sensor (digital input — LOW when water detected)
+// Rain detection sensor (digital input — standard module: LOW when water detected)
 #define RAIN_SENSOR_PIN 23
+#define RAIN_DEBOUNCE_COUNT 3  // Require 3 consecutive reads to confirm state
 
 // =============================================
 //  SENSOR FLAGS
@@ -99,6 +100,7 @@ bool wifiConnected = false;
 
 // Rain detection state
 bool g_raining = false;
+int  g_rain_count = 0;          // Debounce counter for stable detection
 float g_pm25_before_rain = 0;   // PM2.5 snapshot when rain started
 float g_pm25_rain_delta  = 0;   // reduction in PM2.5 during rain
 
@@ -178,6 +180,7 @@ float g_co_mems_v  = 0;
 float g_no2_mems_v = 0;
 
 // Last-known-good values (retain last valid non-zero reading)
+float    g_o3_lastgood  = 0;
 float    g_co_lastgood  = 0;
 float    g_no2_lastgood = 0;
 uint16_t g_voc_lastgood = 0;
@@ -309,36 +312,41 @@ void readADC2Sensors() {
 // =============================================
 
 float ozonePPB(float r) {
-  if (r < 0.01) return 1000;
-  return constrain(316.2 * pow(r, -1.661), 0, 1000);
+  if (r < 0.01) return 0;  // Sensor error — don't spike AQI
+  return constrain(316.2 * pow(r, -1.661), 0, 500);
 }
 
 float coPPM_MQ(float r) {
-  if (r < 0.01) return 10000;
-  return constrain(100.0 * pow(r, -1.53), 0, 10000);
+  if (r < 0.01) return 0;  // Sensor error — don't spike AQI
+  return constrain(100.0 * pow(r, -1.53), 0, 50);
 }
 
 float mq135CO2(float r) {
-  if (r < 0.01) return 5000;
-  return constrain(1000.0 * pow(r, -0.715), 0, 5000);
+  if (r < 0.01) return 400;  // Return ambient baseline (~400 ppm)
+  return constrain(1000.0 * pow(r, -0.715), 400, 5000);
 }
 
 // Convert CO MEMS voltage to ppm (SEN0564)
+// Requires voltage to exceed baseline by at least MIN_DELTA to avoid noise
+const float MEMS_MIN_DELTA = 0.05;  // 50mV noise floor
+
 float coPPM_MEMS(float voltage) {
   if (!memsCalibrated) return 0;
-  if (voltage <= CO_MEMS_BASELINE) return 0;
   if (CO_MEMS_BASELINE >= 3.2) return 0;
-  float ppm = (voltage - CO_MEMS_BASELINE) / (3.3 - CO_MEMS_BASELINE) * SEN0564_RANGE;
-  return constrain(ppm, 0, 100);  // Backend Zod caps at 100
+  float delta = voltage - CO_MEMS_BASELINE;
+  if (delta < MEMS_MIN_DELTA) return 0;  // Below noise floor
+  float ppm = delta / (3.3 - CO_MEMS_BASELINE) * SEN0564_RANGE;
+  return constrain(ppm, 0, 50);  // Cap at 50 ppm (realistic indoor max)
 }
 
 // Convert NO2 MEMS voltage to ppb (SEN0574)
 float no2PPB_MEMS(float voltage) {
   if (!memsCalibrated) return 0;
-  if (voltage <= NO2_MEMS_BASELINE) return 0;
   if (NO2_MEMS_BASELINE >= 3.2) return 0;
-  float ppm = (voltage - NO2_MEMS_BASELINE) / (3.3 - NO2_MEMS_BASELINE) * SEN0574_RANGE;
-  return constrain(ppm, 0, 10) * 1000.0;  // ppm -> ppb
+  float delta = voltage - NO2_MEMS_BASELINE;
+  if (delta < MEMS_MIN_DELTA) return 0;  // Below noise floor
+  float ppm = delta / (3.3 - NO2_MEMS_BASELINE) * SEN0574_RANGE;
+  return constrain(ppm, 0, 5) * 1000.0;  // ppm -> ppb, cap at 5000 ppb
 }
 
 // =============================================
@@ -891,8 +899,8 @@ void setup() {
   Serial.println("==============================");
   Serial.println();
 
-  // Rain sensor (digital input — module outputs HIGH when water detected)
-  pinMode(RAIN_SENSOR_PIN, INPUT);
+  // Rain sensor (digital input — standard module: LOW when water detected)
+  pinMode(RAIN_SENSOR_PIN, INPUT_PULLUP);
 
   // Analog pins (ADC1 — always work)
   pinMode(DUST_LED_PIN, OUTPUT);
@@ -1156,9 +1164,17 @@ void loop() {
     readADC2Sensors();
   }
 
-  // ---- Rain Detection ----
+  // ---- Rain Detection (debounced) ----
   bool wasRaining = g_raining;
-  g_raining = (digitalRead(RAIN_SENSOR_PIN) == HIGH);  // HIGH = water detected
+  bool pinLow = (digitalRead(RAIN_SENSOR_PIN) == LOW);  // LOW = water detected (standard module)
+
+  // Debounce: require RAIN_DEBOUNCE_COUNT consecutive same-state reads
+  if (pinLow) {
+    g_rain_count = min(g_rain_count + 1, RAIN_DEBOUNCE_COUNT + 1);
+  } else {
+    g_rain_count = max(g_rain_count - 1, 0);
+  }
+  g_raining = (g_rain_count >= RAIN_DEBOUNCE_COUNT);
 
   if (g_raining && !wasRaining) {
     // Rain just started — snapshot current PM2.5
@@ -1206,11 +1222,11 @@ void loop() {
     MQ135_Ro = mq135Rs_ema / MQ135_CLEAN_AIR_FACTOR;
 
     // Calibrate MEMS baselines — do one fresh ADC2 read
-    // Use 95% of clean-air voltage as baseline → headroom for natural fluctuation
+    // Use full clean-air voltage as baseline; MEMS_MIN_DELTA handles noise
     Serial.println("[CAL] Reading ADC2 for MEMS baseline calibration...");
     readADC2Sensors();
-    CO_MEMS_BASELINE  = g_co_mems_v * 0.95;
-    NO2_MEMS_BASELINE = g_no2_mems_v * 0.95;
+    CO_MEMS_BASELINE  = g_co_mems_v;
+    NO2_MEMS_BASELINE = g_no2_mems_v;
     memsCalibrated = true;
 
     Serial.println("-------- Calibration --------");
@@ -1226,7 +1242,9 @@ void loop() {
   // ---- Calculate ----
 
   float pm25       = pm25_ema;
-  float o3_ppb     = ozonePPB(mq131Rs_ema / MQ131_Ro);
+  float o3_raw     = ozonePPB(mq131Rs_ema / MQ131_Ro);
+  if (o3_raw > 0) g_o3_lastgood = o3_raw;
+  float o3_ppb     = (o3_raw > 0) ? o3_raw : g_o3_lastgood;
   float co_mq_ppm  = coPPM_MQ(mq7Rs_ema / MQ7_Ro);
   float co2_ppm    = mq135CO2(mq135Rs_ema / MQ135_Ro);
   float uvIdx      = uv_ema;
