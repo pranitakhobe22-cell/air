@@ -15,12 +15,7 @@ const POLLUTANTS = {
     desc: 'Fine particulate matter that penetrates deep into lung tissue.',
     impact: 'Cardiovascular stress and respiratory irritation.',
   },
-  pm10: {
-    label: 'PM10', unit: 'µg/m³', safe: 54, moderate: 154, danger: 254,
-    color: '#818cf8',
-    desc: 'Coarse particles from construction and road dust.',
-    impact: 'Upper respiratory inflammation; aggravates asthma.',
-  },
+  
   o3: {
     label: 'Ozone (O3)', unit: 'ppb', safe: 54, moderate: 70, danger: 85,
     color: '#34d399',
