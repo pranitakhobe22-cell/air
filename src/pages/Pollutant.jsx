@@ -15,7 +15,7 @@ const POLLUTANTS = {
     desc: 'Fine particulate matter that penetrates deep into lung tissue.',
     impact: 'Cardiovascular stress and respiratory irritation.',
   },
-  
+
   o3: {
     label: 'Ozone (O3)', unit: 'ppb', safe: 54, moderate: 70, danger: 85,
     color: '#34d399',
