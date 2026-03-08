@@ -390,7 +390,7 @@ const getLatestData = async (req, res) => {
 
         const fullData = {
             meta: {
-                location:  ESP_IDS.includes(primaryReading?.NODE_ID) ? espLocationName : 'Live Sector',
+                location:  activeEspIds.includes(primaryReading?.NODE_ID) ? espLocationName : 'Live Sector',
                 timestamp: primaryReading?.CREATED_AT || new Date().toISOString(),
                 source:    'live-api',
             },
