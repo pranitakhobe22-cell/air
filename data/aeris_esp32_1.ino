@@ -898,13 +898,19 @@ void pushToBackend() {
 // =============================================
 void setup() {
   Serial.begin(115200);
-  delay(1000);
+  delay(2000);  // Give serial monitor time to connect
+
+  // Instant boot ping — confirms board is alive and baud rate is correct
+  Serial.println(">>> AERIS BOOTING...");
+  Serial.flush();
+  delay(200);
 
   Serial.println();
   Serial.println("==============================");
   Serial.println("   AERIS Air Quality System");
   Serial.print  ("   Node: ");
   Serial.println(AERIS_NODE_ID);
+  Serial.println("   Baud: 115200");
   Serial.println("==============================");
   Serial.println();
 
