@@ -137,7 +137,7 @@ const Profile = () => {
   const live = calcModifier(form, baseAqi);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5 sm:space-y-6">
+    <div className="p-5 sm:p-8 lg:p-10 max-w-[1400px] mx-auto space-y-6">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -145,7 +145,7 @@ const Profile = () => {
           <h1 className="text-2xl font-bold text-white tracking-tight">Profile</h1>
           {form.name && (
             <div className="flex items-center gap-2.5 mt-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-xs font-bold text-white">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-indigo-500 shadow-sm shadow-sky-500/20 flex items-center justify-center text-xs font-bold text-white">
                 {form.name[0]?.toUpperCase() || '?'}
               </div>
               <div>
@@ -157,7 +157,7 @@ const Profile = () => {
         </div>
         <div className="flex items-center gap-3">
           {saved && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/[0.08] rounded-xl">
               <CheckCircle size={14} className="text-emerald-400" />
               <span className="text-xs text-emerald-400">Saved</span>
             </div>
@@ -165,8 +165,8 @@ const Profile = () => {
           <button
             onClick={() => (editing ? handleSave() : setEditing(true))}
             disabled={saving}
-            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
-              editing ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-300 border border-slate-700'
+            className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${
+              editing ? 'bg-emerald-500/15 text-emerald-400' : 'bg-white/[0.04] text-slate-300'
             }`}
           >
             {editing ? <><Save size={16} />{saving ? 'Saving...' : 'Save'}</> : <><Edit3 size={16} />Edit</>}
@@ -178,8 +178,8 @@ const Profile = () => {
 
         {/* Left: Form */}
         <div className="xl:col-span-7 space-y-5">
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6 space-y-6">
-            <h3 className="text-sm font-semibold text-slate-300">Health Profile</h3>
+          <div className="bg-white/[0.03] rounded-2xl p-6 space-y-6">
+            <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Health Profile</h3>
 
             {/* Age + Gender */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -188,24 +188,24 @@ const Profile = () => {
                 {editing ? (
                   <input type="number" min={1} max={120} value={form.age}
                     onChange={(e) => setForm({ ...form, age: Number(e.target.value) })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-sky-500 transition-colors"
+                    className="w-full bg-white/[0.04] rounded-xl px-3 py-2.5 text-white focus:outline-none focus:ring-1 focus:ring-sky-500/40 transition-colors"
                   />
                 ) : (
-                  <div className="text-sm text-white p-2.5 bg-slate-900/50 border border-slate-700/30 rounded-lg">{form.age} years</div>
+                  <div className="text-sm text-white p-2.5 bg-white/[0.02] rounded-xl">{form.age} years</div>
                 )}
               </div>
               <div>
                 <label className="text-xs text-slate-500 mb-1.5 block">Gender</label>
                 {editing ? (
                   <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-sky-500 appearance-none"
+                    className="w-full bg-white/[0.04] rounded-xl px-3 py-2.5 text-white focus:outline-none focus:ring-1 focus:ring-sky-500/40 appearance-none"
                   >
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                     <option value="prefer_not_to_say">Prefer not to say</option>
                   </select>
                 ) : (
-                  <div className="text-sm text-white p-2.5 bg-slate-900/50 border border-slate-700/30 rounded-lg capitalize">{(form.gender || '').replace(/_/g, ' ')}</div>
+                  <div className="text-sm text-white p-2.5 bg-white/[0.02] rounded-xl capitalize">{(form.gender || '').replace(/_/g, ' ')}</div>
                 )}
               </div>
             </div>
@@ -220,17 +220,17 @@ const Profile = () => {
                     { id: 'high', color: '#f97316' }, { id: 'very_high', color: '#ef4444' },
                   ].map((s) => (
                     <button key={s.id} onClick={() => setForm({ ...form, sensitivity: s.id })}
-                      className={`py-2 rounded-lg text-xs font-medium transition-colors border ${
-                        form.sensitivity === s.id ? 'border-slate-500 text-white' : 'border-slate-700/40 text-slate-500 bg-slate-900/50'
+                      className={`py-2 rounded-xl text-xs font-medium transition-colors ${
+                        form.sensitivity === s.id ? 'text-white' : 'bg-white/[0.03] text-slate-500'
                       }`}
-                      style={form.sensitivity === s.id ? { borderColor: `${s.color}60`, color: s.color, background: `${s.color}10` } : {}}
+                      style={form.sensitivity === s.id ? { color: s.color, background: `${s.color}10` } : {}}
                     >
                       {SENSITIVITY[s.id]}
                     </button>
                   ))}
                 </div>
               ) : (
-                <div className="text-sm text-white p-2.5 bg-slate-900/50 border border-slate-700/30 rounded-lg">{SENSITIVITY[form.sensitivity]}</div>
+                <div className="text-sm text-white p-2.5 bg-white/[0.02] rounded-xl">{SENSITIVITY[form.sensitivity]}</div>
               )}
             </div>
 
@@ -241,8 +241,8 @@ const Profile = () => {
                 <div className="grid grid-cols-3 gap-2">
                   {['none', 'light', 'heavy'].map((l) => (
                     <button key={l} onClick={() => setForm({ ...form, smoking: l })}
-                      className={`py-2 rounded-lg text-xs font-medium capitalize transition-colors border ${
-                        form.smoking === l ? 'bg-sky-500/10 border-sky-500/30 text-sky-400' : 'bg-slate-900/50 border-slate-700/40 text-slate-500'
+                      className={`py-2 rounded-xl text-xs font-medium capitalize transition-colors ${
+                        form.smoking === l ? 'bg-sky-500/10 text-sky-400' : 'bg-white/[0.03] text-slate-500'
                       }`}
                     >
                       {l}
@@ -250,7 +250,7 @@ const Profile = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-sm text-white p-2.5 bg-slate-900/50 border border-slate-700/30 rounded-lg capitalize">
+                <div className="text-sm text-white p-2.5 bg-white/[0.02] rounded-xl capitalize">
                   {form.smoking === 'none' ? 'Non-smoker' : form.smoking}
                 </div>
               )}
@@ -260,7 +260,7 @@ const Profile = () => {
             <div>
               <label className="text-xs text-slate-500 mb-1.5 block">Daily Outdoor Exposure</label>
               {editing ? (
-                <div className="bg-slate-900 border border-slate-700 rounded-lg p-3">
+                <div className="bg-white/[0.04] rounded-xl p-3">
                   <div className="flex justify-between mb-2">
                     <span className="text-lg font-bold text-sky-400">{form.outdoorExposureHours}h</span>
                     <span className="text-xs text-slate-500">per day</span>
@@ -271,7 +271,7 @@ const Profile = () => {
                   />
                 </div>
               ) : (
-                <div className="text-sm text-white p-2.5 bg-slate-900/50 border border-slate-700/30 rounded-lg">
+                <div className="text-sm text-white p-2.5 bg-white/[0.02] rounded-xl">
                   {form.outdoorExposureHours}h per day
                 </div>
               )}
@@ -287,8 +287,8 @@ const Profile = () => {
                     return (
                       <button key={c}
                         onClick={() => setForm({ ...form, conditions: sel ? form.conditions.filter((x) => x !== c) : [...(form.conditions || []), c] })}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
-                          sel ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-slate-900/50 border-slate-700/40 text-slate-500 hover:text-slate-300'
+                        className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${
+                          sel ? 'bg-rose-500/10 text-rose-400' : 'bg-white/[0.03] text-slate-500 hover:text-slate-300'
                         }`}
                       >
                         {c}
@@ -299,9 +299,9 @@ const Profile = () => {
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {form.conditions?.length > 0 ? form.conditions.map((c) => (
-                    <span key={c} className="px-3 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-md text-xs">{c}</span>
+                    <span key={c} className="px-3 py-1 bg-rose-500/10 text-rose-400 rounded-xl text-xs">{c}</span>
                   )) : (
-                    <span className="text-sm text-slate-500 p-2.5 bg-slate-900/50 border border-slate-700/30 rounded-lg w-full block">None reported</span>
+                    <span className="text-sm text-slate-500 p-2.5 bg-white/[0.02] rounded-xl w-full block">None reported</span>
                   )}
                 </div>
               )}
@@ -309,20 +309,20 @@ const Profile = () => {
           </div>
 
           {/* Account */}
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
-            <h3 className="text-sm font-semibold text-slate-300 mb-5">Account Settings</h3>
+          <div className="bg-white/[0.03] rounded-2xl p-6">
+            <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-5">Account Settings</h3>
             <form onSubmit={handleAccountSave} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-slate-500 mb-1.5 block">Name</label>
                   <input type="text" value={accountForm.name} onChange={(e) => setAccountForm({ ...accountForm, name: e.target.value })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-sky-500"
+                    className="w-full bg-white/[0.04] rounded-xl px-3 py-2.5 text-white focus:outline-none focus:ring-1 focus:ring-sky-500/40"
                   />
                 </div>
                 <div>
                   <label className="text-xs text-slate-500 mb-1.5 block">Email</label>
                   <input type="email" value={accountForm.email} onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-sky-500"
+                    className="w-full bg-white/[0.04] rounded-xl px-3 py-2.5 text-white focus:outline-none focus:ring-1 focus:ring-sky-500/40"
                   />
                 </div>
               </div>
@@ -331,29 +331,29 @@ const Profile = () => {
                   <label className="text-xs text-slate-500 mb-1.5 block">Current Password *</label>
                   <input type="password" placeholder="Required" value={accountForm.currentPassword}
                     onChange={(e) => setAccountForm({ ...accountForm, currentPassword: e.target.value })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-sky-500"
+                    className="w-full bg-white/[0.04] rounded-xl px-3 py-2.5 text-white focus:outline-none focus:ring-1 focus:ring-sky-500/40 placeholder:text-slate-600"
                   />
                 </div>
                 <div>
                   <label className="text-xs text-slate-500 mb-1.5 block">New Password</label>
                   <input type="password" placeholder="Optional" value={accountForm.newPassword}
                     onChange={(e) => setAccountForm({ ...accountForm, newPassword: e.target.value })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-sky-500"
+                    className="w-full bg-white/[0.04] rounded-xl px-3 py-2.5 text-white focus:outline-none focus:ring-1 focus:ring-sky-500/40 placeholder:text-slate-600"
                   />
                 </div>
               </div>
               {accountError && (
-                <div className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-lg flex items-center gap-2">
+                <div className="text-xs text-rose-400 bg-rose-500/[0.08] p-2.5 rounded-xl flex items-center gap-2">
                   <AlertTriangle size={14} />{accountError}
                 </div>
               )}
               {accountSaved && (
-                <div className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-lg flex items-center gap-2">
+                <div className="text-xs text-emerald-400 bg-emerald-500/[0.08] p-2.5 rounded-xl flex items-center gap-2">
                   <CheckCircle size={14} />Updated successfully
                 </div>
               )}
               <button type="submit" disabled={savingAccount || !accountForm.currentPassword}
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-medium bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors disabled:opacity-50"
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-medium bg-white/[0.04] text-slate-300 hover:bg-white/[0.05] transition-colors disabled:opacity-50"
               >
                 <Lock size={16} />{savingAccount ? 'Updating...' : 'Update Account'}
               </button>
@@ -363,13 +363,13 @@ const Profile = () => {
 
         {/* Right: Live RRI Calculation */}
         <div className="xl:col-span-5">
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6 sticky top-6">
-            <h3 className="text-sm font-semibold text-slate-300 mb-5">Live Risk Calculation</h3>
+          <div className="bg-white/[0.03] rounded-2xl p-6 sticky top-6">
+            <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-5">Live Risk Calculation</h3>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-slate-900/50 border border-slate-700/30 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-white/[0.02] rounded-xl">
                 <div>
-                  <p className="text-[11px] text-slate-500">Step 1</p>
+                  <p className="text-[11px] text-slate-600">Step 1</p>
                   <p className="text-xs text-slate-300">Base AQI</p>
                 </div>
                 <span className="text-xl font-bold text-white">{baseAqi}</span>
@@ -377,7 +377,7 @@ const Profile = () => {
 
               <div className="flex justify-center text-slate-600 text-lg">&times;</div>
 
-              <div className="flex items-center justify-between p-3 bg-slate-900/50 border rounded-lg" style={{ borderColor: `${live.color}30` }}>
+              <div className="flex items-center justify-between p-3 bg-white/[0.02] rounded-xl">
                 <div>
                   <p className="text-[11px]" style={{ color: live.color }}>Step 2</p>
                   <p className="text-xs text-slate-300">Vulnerability Modifier</p>
@@ -386,7 +386,7 @@ const Profile = () => {
               </div>
 
               {/* Breakdown */}
-              <div className="pl-4 border-l-2 border-slate-700/50 space-y-1.5 text-xs text-slate-500">
+              <div className="pl-4 border-l-2 border-white/[0.05] space-y-1.5 text-xs text-slate-500">
                 <div className="flex justify-between"><span>Base</span><span>1.00x</span></div>
                 {(form.age < 12 || form.age > 65) && (
                   <div className="flex justify-between text-amber-500"><span>Age ({form.age})</span><span>+{form.age < 12 ? '0.25' : '0.30'}x</span></div>
@@ -399,10 +399,10 @@ const Profile = () => {
                 )}
               </div>
 
-              <div className="h-px bg-slate-700/40" />
+              <div className="h-px bg-white/[0.05]" />
 
               {/* Result */}
-              <div className="text-center py-6 bg-slate-900/50 rounded-xl border" style={{ borderColor: `${live.color}30` }}>
+              <div className="text-center py-6 bg-[#060910] rounded-xl">
                 <p className="text-xs text-slate-500 mb-2">Your Simulated RRI</p>
                 <span className="text-5xl font-bold tabular-nums" style={{ color: live.color }}>{live.rri}</span>
                 {editing && live.rri !== data?.derived?.rri && (

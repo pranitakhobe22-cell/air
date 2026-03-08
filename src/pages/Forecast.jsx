@@ -13,7 +13,7 @@ const ChartTooltip = ({ active, payload, label }) => {
   const valid = payload.filter((p) => p.value != null && !isNaN(p.value));
   if (valid.length === 0) return null;
   return (
-    <div className="bg-slate-900 border border-slate-700 px-3 py-2 rounded-lg">
+    <div className="bg-[#0c1322] px-3 py-2 rounded-xl shadow-xl shadow-black/40">
       <p className="text-[11px] text-slate-500 mb-1">{label}</p>
       {valid.map((p, i) => (
         <p key={i} className="text-sm font-bold" style={{ color: p.color }}>
@@ -61,16 +61,16 @@ const Forecast = () => {
 
   if (!data?.derived) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
+      <div className="p-5 sm:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6">
         <div>
-          <div className="h-7 w-32 bg-slate-800/60 rounded-lg animate-pulse" />
-          <div className="h-4 w-72 bg-slate-800/40 rounded mt-2 animate-pulse" />
+          <div className="h-7 w-32 bg-white/[0.03] rounded-2xl animate-pulse" />
+          <div className="h-4 w-72 bg-white/[0.02] rounded-xl mt-2 animate-pulse" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div className="lg:col-span-8 bg-slate-800/40 border border-slate-700/40 rounded-xl h-80 animate-pulse" />
+          <div className="lg:col-span-8 bg-white/[0.03] rounded-2xl h-80 animate-pulse" />
           <div className="lg:col-span-4 space-y-5">
-            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-36 animate-pulse" />
-            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-36 animate-pulse" />
+            <div className="bg-white/[0.03] rounded-2xl h-36 animate-pulse" />
+            <div className="bg-white/[0.03] rounded-2xl h-36 animate-pulse" />
           </div>
         </div>
       </div>
@@ -91,7 +91,7 @@ const Forecast = () => {
   const dangPct = Math.round(allAqi.filter(a => a > 150).length / total * 100);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
+    <div className="p-5 sm:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white tracking-tight">Forecast</h1>
         <p className="text-sm text-slate-500 mt-0.5">
@@ -101,11 +101,11 @@ const Forecast = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <div className="lg:col-span-8 space-y-5">
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
+          <div className="bg-white/[0.03] rounded-2xl p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
               <div className="flex items-center gap-3">
                 <h3 className="text-sm font-semibold text-slate-300">AQI Trajectory</h3>
-                <span className="flex items-center gap-1 px-2 py-0.5 bg-purple-500/10 border border-purple-500/20 rounded text-[10px] font-semibold text-purple-400">
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-purple-500/10 rounded-xl text-[10px] font-semibold text-purple-400">
                   <Cpu size={10} /> EWMA Model
                 </span>
               </div>
@@ -127,13 +127,13 @@ const Forecast = () => {
                       <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
                   <XAxis dataKey="time" stroke="#475569" fontSize={10} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                   <YAxis stroke="#475569" fontSize={10} tickLine={false} axisLine={false} width={40} domain={[0, 'auto']} allowDecimals={false} tickCount={6} />
                   <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.3)', strokeWidth: 1, strokeDasharray: '4 4' }} />
                   <ReferenceLine x="Now" stroke="rgba(255,255,255,0.15)" strokeDasharray="3 3" />
-                  <Area type="linear" dataKey="actualAqi" name="Recorded" stroke="#34d399" strokeWidth={2} fill="url(#colorActual)" isAnimationActive={false} dot={false} activeDot={{ r: 4, fill: '#34d399', stroke: '#0f172a', strokeWidth: 2 }} />
-                  <Area type="linear" dataKey="forecastAqi" name="Forecast" stroke="#38bdf8" strokeWidth={2} strokeDasharray="6 4" fill="url(#colorForecast)" isAnimationActive={false} dot={false} activeDot={{ r: 4, fill: '#38bdf8', stroke: '#0f172a', strokeWidth: 2 }} />
+                  <Area type="linear" dataKey="actualAqi" name="Recorded" stroke="#34d399" strokeWidth={2} fill="url(#colorActual)" isAnimationActive={false} dot={false} activeDot={{ r: 4, fill: '#34d399', stroke: '#060910', strokeWidth: 2 }} />
+                  <Area type="linear" dataKey="forecastAqi" name="Forecast" stroke="#38bdf8" strokeWidth={2} strokeDasharray="6 4" fill="url(#colorForecast)" isAnimationActive={false} dot={false} activeDot={{ r: 4, fill: '#38bdf8', stroke: '#060910', strokeWidth: 2 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -146,7 +146,7 @@ const Forecast = () => {
               { label: 'Peak Time', value: peakLabel, color: 'text-white' },
               { label: 'Confidence', value: `${avgConf}%`, color: 'text-emerald-400' },
             ].map((m, i) => (
-              <div key={i} className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5">
+              <div key={i} className="bg-white/[0.03] rounded-2xl p-5">
                 <p className="text-xs text-slate-500 mb-2">{m.label}</p>
                 <p className={`text-2xl font-bold ${m.color}`}>{m.value}</p>
               </div>
@@ -155,7 +155,7 @@ const Forecast = () => {
         </div>
 
         <div className="lg:col-span-4 space-y-5">
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5">
+          <div className="bg-white/[0.03] rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-5">
               <CalendarDays size={16} className="text-slate-400" />
               <h3 className="text-sm font-semibold text-slate-300">Risk Distribution</h3>
@@ -172,7 +172,7 @@ const Forecast = () => {
                     <span className="text-xs text-slate-400">{w.label}</span>
                     <span className="text-xs font-semibold" style={{ color: w.color }}>{w.percent}%</span>
                   </div>
-                  <div className="h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${w.percent}%` }} transition={{ duration: 1 }} className="h-full rounded-full" style={{ backgroundColor: w.color }} />
                   </div>
                 </div>
@@ -180,7 +180,7 @@ const Forecast = () => {
             </div>
           </div>
 
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5">
+          <div className="bg-white/[0.03] rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-5">
               <Activity size={16} className="text-slate-400" />
               <h3 className="text-sm font-semibold text-slate-300">Hourly Forecast</h3>
@@ -190,10 +190,10 @@ const Forecast = () => {
                 const time = new Date(f.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const c = f.aqi <= 50 ? '#22c55e' : f.aqi <= 100 ? '#eab308' : f.aqi <= 150 ? '#f97316' : '#ef4444';
                 return (
-                  <div key={i} className="flex items-center justify-between p-3 bg-slate-900/50 border border-slate-700/30 rounded-lg">
+                  <div key={i} className="flex items-center justify-between p-3 bg-white/[0.02] rounded-xl">
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-slate-500 w-12">{time}</span>
-                      <div className="w-16 h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+                      <div className="w-16 h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
                         <div className="h-full rounded-full" style={{ backgroundColor: c, width: `${Math.min(f.aqi / 200 * 100, 100)}%` }} />
                       </div>
                     </div>

@@ -32,14 +32,14 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.05),transparent_50%)]" />
+    <div className="min-h-screen bg-[#060910] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.04),transparent_50%)]" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="relative w-full max-w-md"
       >
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-3xl p-10 shadow-2xl">
+        <div className="bg-white/[0.03] backdrop-blur-xl rounded-3xl p-10 shadow-2xl shadow-black/20">
           {/* Logo */}
           <div className="flex flex-col items-center mb-10">
             <div className="w-14 h-14 bg-linear-to-br from-sky-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg mb-4">
@@ -50,7 +50,7 @@ const Signup = () => {
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-6 text-sm text-red-400 text-center">{error}</div>
+            <div className="bg-red-500/[0.06] rounded-xl p-3 mb-6 text-sm text-red-400 text-center">{error}</div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -62,7 +62,7 @@ const Signup = () => {
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Jane Doe"
                 required
-                className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:border-sky-500/50 transition-colors"
+                className="w-full px-4 py-3.5 bg-white/[0.04] rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500/40 transition-colors"
               />
             </div>
             <div>
@@ -73,7 +73,7 @@ const Signup = () => {
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="operator@aeris.io"
                 required
-                className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:border-sky-500/50 transition-colors"
+                className="w-full px-4 py-3.5 bg-white/[0.04] rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500/40 transition-colors"
               />
             </div>
             <div>
@@ -85,7 +85,7 @@ const Signup = () => {
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   placeholder="••••••••"
                   required
-                  className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:border-sky-500/50 transition-colors pr-12"
+                  className="w-full px-4 py-3.5 bg-white/[0.04] rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500/40 transition-colors pr-12"
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors">
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -100,7 +100,7 @@ const Signup = () => {
                 onChange={(e) => setForm({ ...form, confirm: e.target.value })}
                 placeholder="••••••••"
                 required
-                className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:border-sky-500/50 transition-colors"
+                className="w-full px-4 py-3.5 bg-white/[0.04] rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500/40 transition-colors"
               />
             </div>
 

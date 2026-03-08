@@ -85,14 +85,14 @@ const MapPage = () => {
     : [];
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] lg:h-screen w-full bg-[#0B0F1A] text-slate-100 flex overflow-hidden relative">
+    <div className="h-[calc(100vh-3.5rem)] lg:h-screen w-full bg-[#060910] text-slate-100 flex overflow-hidden relative">
 
       {/* Map */}
       <div className="absolute inset-0 z-0">
         <MapContainer
           center={center}
           zoom={12}
-          style={{ height: '100%', width: '100%', background: '#0B0F1A' }}
+          style={{ height: '100%', width: '100%', background: '#060910' }}
           zoomControl={false}
           className="leaflet-dark custom-map-tiles"
         >
@@ -123,9 +123,9 @@ const MapPage = () => {
                 }}
               >
                 <Popup className="custom-popup" closeButton={false}>
-                  <div className="bg-slate-900 border border-slate-700 p-2.5 rounded-lg min-w-[140px]">
+                  <div className="bg-[#0c1322] p-2.5 rounded-xl min-w-[140px]">
                     <div className="flex items-center gap-1.5 mb-1">
-                      {m.isHardware && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400 border border-sky-500/20">ESP32</span>}
+                      {m.isHardware && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400">ESP32</span>}
                       <p className="text-xs text-slate-400">{m.name}</p>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -133,7 +133,7 @@ const MapPage = () => {
                       <span className="font-medium" style={{ color }}>RRI {m.rri}</span>
                     </div>
                     {m.nodeData && (
-                      <div className="flex gap-3 mt-1.5 pt-1.5 border-t border-slate-700/50 text-[10px] text-slate-500">
+                      <div className="flex gap-3 mt-1.5 pt-1.5 border-t border-white/[0.05] text-[10px] text-slate-500">
                         <span>PM2.5: {m.nodeData.latest.pm25}</span>
                         <span>CO: {m.nodeData.latest.co}</span>
                       </div>
@@ -154,10 +154,10 @@ const MapPage = () => {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -320, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed lg:absolute bottom-0 lg:top-4 left-0 lg:left-4 lg:bottom-4 w-full lg:w-72 max-h-[60vh] lg:max-h-none bg-slate-900/95 lg:bg-slate-900/90 backdrop-blur-md border-t lg:border border-slate-700/50 lg:rounded-xl flex flex-col z-50 overflow-hidden rounded-t-2xl"
+            className="fixed lg:absolute bottom-0 lg:top-4 left-0 lg:left-4 lg:bottom-4 w-full lg:w-72 max-h-[60vh] lg:max-h-none bg-[#0c1322]/95 backdrop-blur-xl lg:rounded-2xl flex flex-col z-50 overflow-hidden rounded-t-2xl"
           >
-            <div className="p-4 border-b border-slate-700/40">
-              <button onClick={() => setSelectedNode(null)} className="absolute top-3 right-3 p-1.5 text-slate-400 hover:text-white bg-slate-800 rounded-md transition-colors">
+            <div className="p-4 border-b border-white/[0.05]">
+              <button onClick={() => setSelectedNode(null)} className="absolute top-3 right-3 p-1.5 text-slate-400 hover:text-white bg-white/[0.06] rounded-lg transition-colors">
                 <X size={14} />
               </button>
               <h2 className="text-base font-bold text-white pr-8">{selectedNode.name}</h2>
@@ -170,17 +170,17 @@ const MapPage = () => {
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {selectedNode.isHardware && (
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-500/15 text-sky-400 border border-sky-500/20">ESP32 Hardware</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-500/15 text-sky-400">ESP32 Hardware</span>
                   <span className="text-[10px] font-mono text-slate-500">{selectedNode.id}</span>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-slate-800/50 border border-slate-700/40 rounded-lg p-3 text-center">
+                <div className="bg-white/[0.04] rounded-xl p-3 text-center">
                   <span className="text-2xl font-bold text-white">{selectedNode.aqi}</span>
                   <p className="text-[11px] text-slate-500 mt-0.5">AQI</p>
                 </div>
-                <div className="bg-slate-800/50 border border-slate-700/40 rounded-lg p-3 text-center">
+                <div className="bg-white/[0.04] rounded-xl p-3 text-center">
                   <span className="text-2xl font-bold" style={{ color: rriColor(selectedNode.rri) }}>{selectedNode.rri}</span>
                   <p className="text-[11px] text-slate-500 mt-0.5">RRI</p>
                 </div>
@@ -194,7 +194,7 @@ const MapPage = () => {
                     { label: 'O3', value: selectedNode.nodeData.latest.o3, unit: 'ppb' },
                     { label: 'Temp', value: selectedNode.nodeData.latest.temperature, unit: '°C' },
                   ].map((s) => (
-                    <div key={s.label} className="bg-slate-800/40 border border-slate-700/30 rounded-lg px-2.5 py-2">
+                    <div key={s.label} className="bg-white/[0.03] rounded-lg px-2.5 py-2">
                       <span className="text-[10px] text-slate-500">{s.label}</span>
                       <p className="text-sm font-semibold text-white tabular-nums">{typeof s.value === 'number' ? s.value.toFixed(1) : s.value} <span className="text-[10px] text-slate-500 font-normal">{s.unit}</span></p>
                     </div>
@@ -202,13 +202,13 @@ const MapPage = () => {
                 </div>
               )}
 
-              <div className="px-3 py-2 rounded-lg text-xs font-medium" style={{ backgroundColor: `${rriColor(selectedNode.rri)}10`, color: rriColor(selectedNode.rri), border: `1px solid ${rriColor(selectedNode.rri)}25` }}>
+              <div className="px-3 py-2 rounded-xl text-xs font-medium" style={{ backgroundColor: `${rriColor(selectedNode.rri)}10`, color: rriColor(selectedNode.rri) }}>
                 {rriLabel(selectedNode.rri)} Risk
               </div>
 
               <div>
                 <p className="text-xs text-slate-500 mb-2">Recent Trend</p>
-                <div className="h-20 bg-slate-800/40 rounded-lg border border-slate-700/30 p-1.5">
+                <div className="h-20 bg-white/[0.04] rounded-xl p-1.5">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={selectedNode.nodeData?.history?.map(h => ({ val: h.aqi })) || sparkData}>
                       <defs>
@@ -236,16 +236,16 @@ const MapPage = () => {
             placeholder="Search sectors..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full lg:w-64 h-10 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 rounded-lg pl-9 pr-4 text-sm text-white focus:outline-none focus:border-sky-500/50 placeholder:text-slate-600"
+            className="w-full lg:w-64 h-10 bg-[#0c1322]/90 backdrop-blur-xl rounded-xl pl-9 pr-4 text-sm text-white focus:outline-none focus:ring-1 focus:ring-sky-500/40 placeholder:text-slate-600"
           />
         </div>
 
-        <div className="flex bg-slate-900/90 backdrop-blur-md border border-slate-700/50 rounded-lg p-0.5 shrink-0">
+        <div className="flex bg-[#0c1322]/90 backdrop-blur-xl rounded-xl p-0.5 shrink-0">
           {['aqi', 'rri'].map((m) => (
             <button
               key={m}
               onClick={() => setFilterMode(m)}
-              className={`px-3 lg:px-4 py-1.5 rounded-md text-xs font-medium uppercase transition-colors ${
+              className={`px-3 lg:px-4 py-1.5 rounded-lg text-xs font-medium uppercase transition-colors ${
                 filterMode === m ? 'bg-sky-500/15 text-sky-400' : 'text-slate-500 hover:text-slate-300'
               }`}
             >
@@ -259,23 +259,23 @@ const MapPage = () => {
       <div className={`hidden lg:flex absolute top-16 right-4 bottom-4 w-72 flex-col z-40 transition-transform duration-300 ${showAlerts ? '' : 'translate-x-[120%]'}`}>
         <button
           onClick={() => setShowAlerts(!showAlerts)}
-          className="absolute -left-10 top-0 p-2 bg-slate-900/90 border border-slate-700/50 rounded-lg text-slate-400 hover:text-white transition-colors"
+          className="absolute -left-10 top-0 p-2 bg-[#0c1322]/90 rounded-xl text-slate-400 hover:text-white transition-colors"
         >
           <Layers size={16} />
         </button>
 
-        <div className="flex-1 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 rounded-xl flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/40">
+        <div className="flex-1 bg-[#0c1322]/90 backdrop-blur-xl rounded-2xl flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05]">
             <span className="text-xs font-medium text-slate-400">Alerts</span>
             <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-2">
             {alerts?.length > 0 ? alerts.map((a, i) => (
-              <div key={i} className="bg-red-500/5 border border-red-500/15 rounded-lg p-3">
+              <div key={i} className="bg-red-500/[0.04] rounded-xl p-3">
                 <p className="text-xs text-slate-400 leading-relaxed">{a.message}</p>
               </div>
             )) : (
-              <div className="bg-emerald-500/5 border border-emerald-500/15 rounded-lg p-3">
+              <div className="bg-emerald-500/[0.04] rounded-xl p-3">
                 <p className="text-xs text-emerald-400">No active alerts. All sectors clear.</p>
               </div>
             )}
@@ -284,7 +284,7 @@ const MapPage = () => {
       </div>
 
       {/* Legend */}
-      <div className={`absolute ${selectedNode ? 'hidden lg:flex' : 'flex'} bottom-4 left-1/2 -translate-x-1/2 z-40 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 rounded-lg px-3 lg:px-4 py-2 lg:py-2.5 items-center gap-3 lg:gap-5`}>
+      <div className={`absolute ${selectedNode ? 'hidden lg:flex' : 'flex'} bottom-4 left-1/2 -translate-x-1/2 z-40 bg-[#0c1322]/90 backdrop-blur-xl rounded-xl px-3 lg:px-4 py-2 lg:py-2.5 items-center gap-3 lg:gap-5`}>
         {[
           { label: 'Safe', color: '#22c55e' },
           { label: 'Moderate', color: '#f59e0b' },

@@ -60,19 +60,19 @@ const Network = () => {
 
   if (!data?.derived) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
+      <div className="p-5 sm:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6">
         <div>
-          <div className="h-7 w-48 bg-slate-800/60 rounded-lg animate-pulse" />
-          <div className="h-4 w-72 bg-slate-800/40 rounded mt-2 animate-pulse" />
+          <div className="h-7 w-48 bg-white/[0.03] rounded-lg animate-pulse" />
+          <div className="h-4 w-72 bg-white/[0.02] rounded mt-2 animate-pulse" />
         </div>
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
           <div className="xl:col-span-8 space-y-5">
-            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-48 animate-pulse" />
-            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-64 animate-pulse" />
+            <div className="bg-white/[0.03] rounded-2xl h-48 animate-pulse" />
+            <div className="bg-white/[0.03] rounded-2xl h-64 animate-pulse" />
           </div>
           <div className="xl:col-span-4 space-y-5">
-            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-48 animate-pulse" />
-            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-64 animate-pulse" />
+            <div className="bg-white/[0.03] rounded-2xl h-48 animate-pulse" />
+            <div className="bg-white/[0.03] rounded-2xl h-64 animate-pulse" />
           </div>
         </div>
       </div>
@@ -86,7 +86,7 @@ const Network = () => {
   const espIds = new Set(Object.keys(perNode));
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
+    <div className="p-5 sm:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6">
 
       {/* Header */}
       <div>
@@ -101,7 +101,7 @@ const Network = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-red-500/5 border border-red-500/20 rounded-xl p-4 flex items-center justify-between gap-4"
+            className="bg-red-500/5 rounded-2xl p-4 flex items-center justify-between gap-4"
           >
             <div className="flex items-center gap-3">
               <AlertCircle size={18} className="text-red-400" />
@@ -120,8 +120,8 @@ const Network = () => {
         <div className="xl:col-span-8 space-y-5">
 
           {/* Architecture */}
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
-            <h3 className="text-sm font-semibold text-slate-300 mb-6">System Architecture</h3>
+          <div className="bg-white/[0.03] rounded-2xl p-6">
+            <h3 className="text-sm font-semibold text-white mb-6">System Architecture</h3>
 
             <div className="flex flex-col md:flex-row items-center justify-between gap-3">
               {[
@@ -131,7 +131,7 @@ const Network = () => {
                 { icon: Activity, name: 'Dashboard', sub: 'Visualization', color: 'text-amber-400', bg: 'bg-amber-500/10' },
               ].map((step, i, arr) => (
                 <React.Fragment key={step.name}>
-                  <div className="flex flex-col items-center bg-slate-900/50 border border-slate-700/40 rounded-xl p-5 w-full md:w-40 text-center">
+                  <div className="flex flex-col items-center bg-white/[0.04] rounded-xl p-5 w-full md:w-40 text-center">
                     <div className={`w-10 h-10 ${step.bg} rounded-lg flex items-center justify-center mb-3`}>
                       <step.icon size={20} className={step.color} />
                     </div>
@@ -147,16 +147,16 @@ const Network = () => {
           </div>
 
           {/* Nodes Table */}
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
+          <div className="bg-white/[0.03] rounded-2xl p-6">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-sm font-semibold text-slate-300">Sensor Nodes</h3>
+              <h3 className="text-sm font-semibold text-white">Sensor Nodes</h3>
               <div className="flex items-center gap-2">
                 {espIds.size > 0 && (
-                  <span className="text-xs font-medium text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded-md">
+                  <span className="text-xs font-medium text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded-lg">
                     {espIds.size} Hardware
                   </span>
                 )}
-                <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md">
+                <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg">
                   {nodes.filter((n) => isNodeOnline(n, now)).length} Online
                 </span>
               </div>
@@ -165,7 +165,7 @@ const Network = () => {
             <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
               <table className="w-full text-left min-w-[640px]">
                 <thead>
-                  <tr className="border-b border-slate-700/40 text-xs text-slate-500">
+                  <tr className="border-b border-white/[0.05] text-xs text-slate-600">
                     <th className="pb-3 pl-2 font-medium">Node ID</th>
                     <th className="pb-3 font-medium">Type</th>
                     <th className="pb-3 font-medium">Status</th>
@@ -180,7 +180,7 @@ const Network = () => {
                     const isHardware = espIds.has(node.id);
                     const nd = perNode[node.id];
                     return (
-                      <tr key={i} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+                      <tr key={i} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition-colors">
                         <td className="py-3 pl-2">
                           <div className="flex items-center gap-2">
                             <div className={`w-1.5 h-1.5 rounded-full ${isNodeOnline(node, now) ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
@@ -189,13 +189,13 @@ const Network = () => {
                         </td>
                         <td className="py-3">
                           {isHardware ? (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded text-sky-400 bg-sky-500/10 border border-sky-500/20">ESP32</span>
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded text-sky-400 bg-sky-500/10">ESP32</span>
                           ) : (
-                            <span className="text-[10px] font-medium px-2 py-0.5 rounded text-slate-500 bg-slate-700/30">SIM</span>
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded text-slate-500 bg-white/[0.03]">SIM</span>
                           )}
                         </td>
                         <td className="py-3">
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded ${isNodeOnline(node, now) ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10'}`}>
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-lg ${isNodeOnline(node, now) ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10'}`}>
                             {isNodeOnline(node, now) ? 'online' : 'offline'}
                           </span>
                         </td>
@@ -235,15 +235,15 @@ const Network = () => {
         <div className="xl:col-span-4 space-y-5">
 
           {/* System Health */}
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-slate-300 mb-4">System Health</h3>
+          <div className="bg-white/[0.03] rounded-2xl p-5">
+            <h3 className="text-sm font-semibold text-white mb-4">System Health</h3>
             <div className="space-y-3">
               {[
                 { label: 'Poll Interval', value: '10s', icon: Clock, color: 'text-sky-400' },
                 { label: 'Data Source', value: 'ESP32 Cluster', icon: Database, color: 'text-indigo-400' },
                 { label: 'Uptime', value: '99.9%', icon: ShieldCheck, color: 'text-emerald-400' },
               ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between p-3 bg-slate-900/50 border border-slate-700/30 rounded-lg">
+                <div key={item.label} className="flex items-center justify-between p-3 bg-white/[0.02] rounded-xl">
                   <div className="flex items-center gap-3">
                     <item.icon size={14} className={item.color} />
                     <span className="text-xs text-slate-400">{item.label}</span>
@@ -255,16 +255,16 @@ const Network = () => {
           </div>
 
           {/* Knowledge Base */}
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-slate-300 mb-4">Knowledge Base</h3>
+          <div className="bg-white/[0.03] rounded-2xl p-5">
+            <h3 className="text-sm font-semibold text-white mb-4">Knowledge Base</h3>
             <div className="space-y-2">
               {learningData.map((item) => {
                 const isOpen = expandedId === item.id;
                 return (
-                  <div key={item.id} className="bg-slate-900/50 border border-slate-700/30 rounded-lg overflow-hidden">
+                  <div key={item.id} className="bg-white/[0.02] rounded-xl overflow-hidden">
                     <button
                       onClick={() => setExpandedId(isOpen ? null : item.id)}
-                      className="w-full flex items-center justify-between p-3 hover:bg-slate-800/40 transition-colors"
+                      className="w-full flex items-center justify-between p-3 hover:bg-white/[0.05] transition-colors rounded-xl"
                     >
                       <span className="text-sm text-slate-300">{item.title}</span>
                       {isOpen ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
@@ -277,7 +277,7 @@ const Network = () => {
                           exit={{ height: 0, opacity: 0 }}
                           className="px-3 pb-3"
                         >
-                          <p className="text-xs text-slate-400 leading-relaxed border-t border-slate-700/40 pt-3">
+                          <p className="text-xs text-slate-400 leading-relaxed border-t border-white/[0.04] pt-3">
                             {item.content}
                           </p>
                         </motion.div>

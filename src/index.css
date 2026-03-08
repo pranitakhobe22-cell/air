@@ -2,14 +2,31 @@
 
 @layer base {
   html, body {
-    @apply bg-[#0B0F1A] text-slate-100 antialiased;
-    background-color: #0B0F1A;
+    @apply bg-[#060910] text-slate-100 antialiased;
+    background-color: #060910;
     overflow-x: hidden;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
   * {
     -webkit-tap-highlight-color: transparent;
   }
   input, select, textarea {
     font-size: 16px;
+  }
+
+  /* Refined scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.14);
   }
 }

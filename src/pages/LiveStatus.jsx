@@ -86,19 +86,19 @@ const LiveStatus = () => {
 
   if (!data?.sensors) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
+      <div className="p-5 sm:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6">
         <div>
-          <div className="h-7 w-40 bg-slate-800/60 rounded-lg animate-pulse" />
-          <div className="h-4 w-64 bg-slate-800/40 rounded mt-2 animate-pulse" />
+          <div className="h-7 w-40 bg-white/[0.03] rounded-lg animate-pulse" />
+          <div className="h-4 w-64 bg-white/[0.03] rounded mt-2 animate-pulse" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           <div className="lg:col-span-8 grid grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-32 animate-pulse" />
+              <div key={i} className="bg-white/[0.03] rounded-2xl h-32 animate-pulse" />
             ))}
           </div>
           <div className="lg:col-span-4 space-y-5">
-            <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-64 animate-pulse" />
+            <div className="bg-white/[0.03] rounded-2xl h-64 animate-pulse" />
           </div>
         </div>
       </div>
@@ -127,12 +127,12 @@ const LiveStatus = () => {
   const riskColor = activeDerived?.risk_color || '#10b981';
 
   const eventColors = {
-    alert: 'border-red-500/30 bg-red-500/5 text-red-400',
-    sync: 'border-slate-700/50 bg-slate-800/30 text-slate-400',
+    alert: 'bg-red-500/[0.04] text-red-400',
+    sync: 'bg-white/[0.02] text-slate-400',
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
+    <div className="p-5 sm:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6">
 
       {/* ── Header ──────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -143,14 +143,14 @@ const LiveStatus = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/60 border border-slate-700/40 rounded-lg">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.04] rounded-xl">
             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
             <Clock size={14} className="text-slate-500" />
             <span className="text-xs text-slate-400 tabular-nums">{secondsAgo}s ago</span>
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="p-2 bg-slate-800/60 border border-slate-700/40 rounded-lg text-slate-400 hover:text-white transition-colors"
+            className="p-2 bg-white/[0.04] rounded-xl text-slate-400 hover:bg-white/[0.05] hover:text-white transition-colors"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
@@ -159,7 +159,7 @@ const LiveStatus = () => {
 
       {/* ── Rain Banner ──────────────────────────────── */}
       {activeEnv?.rain && (
-        <div className="bg-sky-900/30 border border-sky-700/40 rounded-xl px-5 py-3 flex items-center gap-3">
+        <div className="bg-sky-500/[0.06] rounded-2xl px-5 py-3 flex items-center gap-3">
           <Droplets size={18} className="text-sky-400 shrink-0" />
           <div>
             <span className="text-sm font-medium text-sky-300">Raining is happening</span>
@@ -185,10 +185,10 @@ const LiveStatus = () => {
               return (
                 <div
                   key={tile.id}
-                  className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5 relative overflow-hidden"
+                  className="bg-white/[0.03] rounded-2xl p-5 relative overflow-hidden hover:bg-white/[0.05] transition-colors"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-medium text-slate-500">{tile.label}</span>
+                    <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">{tile.label}</span>
                     <tile.icon size={16} className="text-slate-600" />
                   </div>
                   <div className="flex items-baseline gap-2">
@@ -198,7 +198,7 @@ const LiveStatus = () => {
                     <span className="text-xs text-slate-500">{tile.unit}</span>
                   </div>
                   {/* Status bar */}
-                  <div className="mt-3 h-1 bg-slate-700/50 rounded-full overflow-hidden">
+                  <div className="mt-3 h-1 bg-white/[0.05] rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-700"
                       style={{
@@ -213,7 +213,7 @@ const LiveStatus = () => {
           </div>
 
           {/* Advisory */}
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-6">
+          <div className="bg-white/[0.03] rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-3">
               <Heart size={16} className="text-rose-400" />
               <span className="text-sm font-semibold text-slate-300">Health Advisory</span>
@@ -225,14 +225,14 @@ const LiveStatus = () => {
               </p>
               <div className="flex items-center gap-3 shrink-0">
                 <div className="text-right">
-                  <p className="text-[11px] text-slate-500">Risk Score</p>
+                  <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Risk Score</p>
                   <p className="text-2xl font-bold tabular-nums" style={{ color: riskColor }}>
                     <AnimatedNum value={activeDerived?.rri || 0} />
                   </p>
                 </div>
-                <div className="w-px h-8 bg-slate-700" />
+                <div className="w-px h-8 bg-white/[0.05]" />
                 <div className="text-right">
-                  <p className="text-[11px] text-slate-500">AQI</p>
+                  <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">AQI</p>
                   <p className="text-2xl font-bold text-white tabular-nums">
                     <AnimatedNum value={activeDerived?.aqi || 0} />
                   </p>
@@ -246,16 +246,16 @@ const LiveStatus = () => {
         <div className="lg:col-span-4 space-y-5">
 
           {/* Map */}
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-700/40">
+          <div className="bg-white/[0.03] rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.05]">
               <div className="flex items-center gap-2">
                 <MapPin size={14} className="text-sky-400" />
-                <span className="text-xs font-medium text-slate-400">Sensor Map</span>
+                <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Sensor Map</span>
               </div>
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
             </div>
             <div className="h-[240px]">
-              <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%', background: '#0f172a' }} zoomControl={false} dragging={false}>
+              <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%', background: '#060910' }} zoomControl={false} dragging={false}>
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
                 {sectors?.map((s, i) => (
                   <CircleMarker
@@ -275,9 +275,9 @@ const LiveStatus = () => {
           </div>
 
           {/* Event Feed */}
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl flex flex-col overflow-hidden min-h-[320px]">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-700/40">
-              <span className="text-xs font-medium text-slate-400">Event Log</span>
+          <div className="bg-white/[0.03] rounded-2xl flex flex-col overflow-hidden min-h-[320px]">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.05]">
+              <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Event Log</span>
               <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold rounded">LIVE</span>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-2 max-h-[360px]">
@@ -288,7 +288,7 @@ const LiveStatus = () => {
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className={`border rounded-lg p-3 ${eventColors[event.type]}`}
+                    className={`rounded-xl p-3 ${eventColors[event.type]}`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] font-semibold uppercase tracking-wide">
