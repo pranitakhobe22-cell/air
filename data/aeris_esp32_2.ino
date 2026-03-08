@@ -179,10 +179,7 @@ int g_aqi = 0, g_aqi_pm = 0, g_aqi_o3 = 0, g_aqi_co = 0, g_aqi_no2 = 0;
 float g_co_mems_v  = 0;
 float g_no2_mems_v = 0;
 
-// Last-known-good values (retain last valid non-zero reading)
-float    g_o3_lastgood  = 0;
-float    g_co_lastgood  = 0;
-float    g_no2_lastgood = 0;
+// Last-known-good for VOC only (SGP40 I2C can glitch momentarily)
 uint16_t g_voc_lastgood = 0;
 
 // =============================================
@@ -318,7 +315,9 @@ void readADC2Sensors() {
 
 float ozonePPB(float r) {
   if (r < 0.01) return 0;  // Sensor error — don't spike AQI
-  return constrain(316.2 * pow(r, -1.661), 0, 500);
+  // Cap 120 ppb — MQ-131 cross-sensitivity with humidity produces false
+  // readings above this. Real ambient O3 is 5-50 ppb in clean air.
+  return constrain(316.2 * pow(r, -1.661), 0, 120);
 }
 
 float coPPM_MQ(float r) {
@@ -333,7 +332,7 @@ float mq135CO2(float r) {
 
 // Convert CO MEMS voltage to ppm (SEN0564)
 // Requires voltage to exceed baseline by at least MIN_DELTA to avoid noise
-const float MEMS_MIN_DELTA = 0.05;  // 50mV noise floor
+const float MEMS_MIN_DELTA = 0.10;  // 100mV noise floor — ESP32 ADC2 has ~50mV jitter
 
 float coPPM_MEMS(float voltage) {
   if (!memsCalibrated) return 0;
@@ -1266,22 +1265,17 @@ void loop() {
   float co_ratio  = (MQ7_Ro   > 0.1) ? (mq7Rs_ema   / MQ7_Ro)   : 1.0;
   float co2_ratio = (MQ135_Ro > 0.1) ? (mq135Rs_ema / MQ135_Ro) : 1.0;
 
-  float o3_raw     = ozonePPB(o3_ratio);
-  if (o3_raw > 0) g_o3_lastgood = o3_raw;
-  float o3_ppb     = (o3_raw > 0) ? o3_raw : g_o3_lastgood;
+  // O3: direct from MQ-131 (always produces a value; capped at 120 ppb)
+  float o3_ppb     = ozonePPB(o3_ratio);
   float co_mq_ppm  = coPPM_MQ(co_ratio);
   float co2_ppm    = mq135CO2(co2_ratio);
   float uvIdx      = uv_ema;
 
-  // CO from MEMS sensor (ADC2 — uses cached voltage from last WiFi-pause read)
-  float co_raw = coPPM_MEMS(g_co_mems_v);
-  if (co_raw > 0) g_co_lastgood = co_raw;
-  float co_ppm = (co_raw > 0) ? co_raw : g_co_lastgood;
+  // CO from MEMS sensor — 0 means clean air (no last-known-good retention)
+  float co_ppm = coPPM_MEMS(g_co_mems_v);
 
-  // NO2 from MEMS sensor (ADC2 — uses cached voltage)
-  float no2_raw = no2PPB_MEMS(g_no2_mems_v);
-  if (no2_raw > 0) g_no2_lastgood = no2_raw;
-  float no2_ppb = (no2_raw > 0) ? no2_raw : g_no2_lastgood;
+  // NO2 from MEMS sensor — 0 means clean air (no last-known-good retention)
+  float no2_ppb = no2PPB_MEMS(g_no2_mems_v);
 
   int aqi_pm  = aqiFromPM25(pm25);
   int aqi_o3  = aqiFromO3(o3_ppb);
