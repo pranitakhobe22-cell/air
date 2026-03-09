@@ -51,8 +51,6 @@ const useLiveData = () => {
         socketRef.current = socket;
 
         socket.on('environment_update', (payload) => {
-            if (!payload?.sensors) return;
-
             hasRealData.current = true;
 
             if (fallbackTimer.current) {
@@ -60,6 +58,16 @@ const useLiveData = () => {
                 fallbackTimer.current = null;
             }
 
+            // Backend sends { timestamp, source } as notification — re-fetch latest from REST
+            if (!payload?.sensors) {
+                if (import.meta.env.DEV) {
+                    console.log('[AERIS] WebSocket notification received — refreshing from REST');
+                }
+                fetchLatest();
+                return;
+            }
+
+            // Full sensor payload (future / direct ESP push)
             updateFromFirebase({
                 nodeId: payload.nodeId || null,
                 timestamp: payload.timestamp || new Date().toISOString(),

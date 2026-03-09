@@ -105,7 +105,7 @@ const float MQ135_RL_KOHM = 10.0, MQ135_VCC = 5.0, MQ135_CLEAN_AIR_FACTOR = 3.6;
 const float SEN0564_RANGE = 1000.0;
 const float SEN0574_RANGE = 10.0;
 const float UV_SCALE      = 10.0;
-const float MEMS_NOISE    = 0.05;
+const float MEMS_NOISE    = 0.08;  // Raised to reject midday thermal ADC drift
 
 float MQ131_Ro = 0, MQ7_Ro = 0, MQ135_Ro = 0;
 float CO_MEMS_BASELINE = 0, NO2_MEMS_BASELINE = 0;
@@ -190,16 +190,17 @@ const char* pm25Tip(float v) {
 
 const char* o3Tag(float v) {
   if (v <= 54)  return "SAFE";
-  if (v <= 124) return "OK";
-  if (v <= 164) return "HIGH";
-  if (v <= 204) return "BAD";
+  if (v <= 70)  return "OK";
+  if (v <= 85)  return "HIGH";
+  if (v <= 105) return "BAD";
   return "TOXIC";
 }
 const char* o3Tip(float v) {
   if (v <= 54)  return "Normal level, no risk";
-  if (v <= 124) return "OK for most people";
-  if (v <= 164) return "Reduce outdoor exercise";
-  return "Limit time outdoors";
+  if (v <= 70)  return "OK for most people";
+  if (v <= 85)  return "Reduce outdoor exercise";
+  if (v <= 105) return "Limit time outdoors";
+  return "Avoid outdoor exposure!";
 }
 
 const char* coTag(float v) {
@@ -440,9 +441,10 @@ void readADC2Sensors() {
 // =============================================
 float mqCorrection(float t, float h) {
   if (t == 0 && h == 0) return 1.0;
-  float tc = 1.0 + 0.02 * (20.0 - t);
-  float hc = 1.0 + 0.005 * (65.0 - h);
-  return constrain(tc * hc, 0.5, 2.0);
+  // FIXED: 25C baseline (Indian climate), gentler curve to prevent midday math explosions
+  float tc = 1.0 + 0.008 * (25.0 - t);
+  float hc = 1.0 + 0.003 * (50.0 - h);
+  return constrain(tc * hc, 0.8, 1.2);  // Tight bounds — max ±20% correction
 }
 
 // =============================================
@@ -502,8 +504,9 @@ int aqiFromPM25(float v) {
 }
 
 int aqiFromO3(float v) {
-  float bp[][4] = {{0,54,0,50},{55,124,51,100},{125,164,101,150},
-    {165,204,151,200},{205,404,201,300},{405,504,301,400},{505,604,401,500}};
+  // EPA standard 8-hour O3 breakpoints (ppb), extended with 1-hour for high values
+  float bp[][4] = {{0,54,0,50},{55,70,51,100},{71,85,101,150},
+    {86,105,151,200},{106,200,201,300},{201,404,301,400},{405,604,401,500}};
   return aqiCalc(constrain(v,0,604), bp, 7);
 }
 
@@ -1001,21 +1004,19 @@ void pushToBackend() {
   http.addHeader("X-API-KEY", AERIS_API_KEY);
   http.setTimeout(10000);
 
+  // Flat JSON — matches backend controller destructuring:
+  // { node_id, pm25, co, o3, nox, voc, temperature, humidity, oxygen, pressure }
   String json = "{";
   json += "\"node_id\":\"" + String(AERIS_NODE_ID) + "\",";
-  json += "\"sensors\":{";
   json += "\"pm25\":" + String(g_pm25, 2) + ",";
   json += "\"co\":" + String(g_co, 2) + ",";
-  json += "\"o3\":" + String(g_o3 / 1000.0, 6) + ",";
-  json += "\"no2\":" + String(g_no2_ppb, 2) + ",";
-  json += "\"voc_index\":" + String(g_voc);
-  json += "},";
-  json += "\"environment\":{";
+  json += "\"o3\":" + String(g_o3, 2) + ",";           // ppb
+  json += "\"nox\":" + String(g_no2_ppb, 2) + ",";     // ppb — backend column is 'nox'
+  json += "\"voc\":" + String(g_voc) + ",";             // SGP40 VOC index
   json += "\"temperature\":" + String(g_temp, 2) + ",";
   json += "\"humidity\":" + String(g_hum, 2) + ",";
   json += "\"rain\":" + String(g_raining ? "true" : "false") + ",";
   json += "\"pm25_rain_delta\":" + String(g_pm25_rain_delta, 2);
-  json += "}";
   json += "}";
 
   int httpCode = http.POST(json);
@@ -1234,6 +1235,15 @@ void loop() {
       no2_mems_ema = applyEMA(nv, no2_mems_ema);
       g_co_mems_v  = (co_mems_ema >= 0) ? co_mems_ema : cv;
       g_no2_mems_v = (no2_mems_ema >= 0) ? no2_mems_ema : nv;
+    }
+
+    // DYNAMIC BASELINE TRACKING — adapts to thermal drift over time
+    // If current voltage drops below baseline, slowly pull baseline down
+    if (g_co_mems_v < CO_MEMS_BASELINE - 0.01) {
+      CO_MEMS_BASELINE = CO_MEMS_BASELINE * 0.999 + g_co_mems_v * 0.001;
+    }
+    if (!no2Inverted && g_no2_mems_v < NO2_MEMS_BASELINE - 0.01) {
+      NO2_MEMS_BASELINE = NO2_MEMS_BASELINE * 0.999 + g_no2_mems_v * 0.001;
     }
   }
 
