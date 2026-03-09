@@ -7,11 +7,17 @@
  *   ESP32 → POST /ingest → Zod validation → AQI/RRI calc
  *         → Firestore persistence → WebSocket broadcast
  *
- * Payload Contract:
+ * Payload Contract (nested — legacy):
  *   {
  *     node_id: string,
  *     sensors:      { pm25, co, o3, no2?, voc_index },
  *     environment:  { temperature, humidity, oxygen?, pressure? }
+ *   }
+ *
+ * Payload Contract (flat — ESP32 hardware):
+ *   {
+ *     node_id, pm25, co, o3 (ppb), nox, voc,
+ *     temperature, humidity, rain?, pm25_rain_delta?
  *   }
  */
 
@@ -50,8 +56,33 @@ const ingestPayloadSchema = z.object({
 
 const ingestData = async (req, res) => {
   try {
+    // ── Auto-detect flat JSON from ESP32 hardware ────────────────
+    // ESP32 sends: { node_id, pm25, co, o3 (ppb), nox, voc, temperature, humidity, rain, pm25_rain_delta }
+    // Controller expects nested: { node_id, sensors: {...}, environment: {...} }
+    let body = req.body;
+    if (body.node_id && !body.sensors && body.pm25 !== undefined) {
+      body = {
+        node_id: body.node_id,
+        sensors: {
+          pm25: body.pm25,
+          co: body.co,
+          o3: (body.o3 || 0) / 1000,             // ESP32 sends ppb → convert to ppm for schema
+          no2: body.nox || body.no2 || 0,         // ESP32 field is 'nox'
+          voc_index: body.voc || body.voc_index || 0,  // ESP32 field is 'voc'
+        },
+        environment: {
+          temperature: body.temperature || 0,
+          humidity: body.humidity || 0,
+          oxygen: body.oxygen,
+          pressure: body.pressure,
+          rain: body.rain,
+          pm25_rain_delta: body.pm25_rain_delta,
+        },
+      };
+    }
+
     // 1. Validate incoming ESP32 payload
-    const payload = ingestPayloadSchema.parse(req.body);
+    const payload = ingestPayloadSchema.parse(body);
 
     // 2. Normalize values (strict 2-decimal precision)
     const norm = (val) => Number(val.toFixed(2));
@@ -133,11 +164,15 @@ const ingestData = async (req, res) => {
     await container.items.create(cosmosDoc);
 
     // 8. Broadcast over WebSocket to all connected frontends
+    //    Include 'nox' alias so frontend useLiveData can pick up either field name
     const wsPayload = {
-      type: 'TELEMETRY_UPDATE',
       nodeId: payload.node_id,
       timestamp: timestampISO,
-      sensors: normalized,
+      sensors: {
+        ...normalized,
+        nox: normalized.no2,         // frontend checks nox || no2
+        voc: normalized.vocIndex,    // frontend checks vocIndex || voc || voc_index
+      },
       derived: riskMetrics,
       geo: geo ? { lat: geo.lat, lng: geo.lng, city: geo.city, region: geo.region } : null,
     };
