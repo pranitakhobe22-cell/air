@@ -7,70 +7,146 @@ import {
 import useActiveNode from '@/hooks/useActiveNode';
 import { generateAdvisory } from '@/utils/aqiEngine';
 
-// Smoke particle configs — each has unique drift, speed, size for organic feel
-const smokeParticles = [
-  { size: 6, xDrift: -8, rise: -52, dur: 2.8, delay: 0, left: 2 },
-  { size: 8, xDrift: 5, rise: -68, dur: 3.2, delay: 0.5, left: 5 },
-  { size: 5, xDrift: -12, rise: -45, dur: 2.4, delay: 1.0, left: 0 },
-  { size: 10, xDrift: 8, rise: -75, dur: 3.6, delay: 1.5, left: 3 },
-  { size: 7, xDrift: -5, rise: -58, dur: 3.0, delay: 0.8, left: 6 },
-  { size: 4, xDrift: 10, rise: -40, dur: 2.6, delay: 2.0, left: 1 },
-  { size: 9, xDrift: -7, rise: -65, dur: 3.4, delay: 0.3, left: 4 },
+// Wispy smoke clouds — large, billowing, overlapping for realism
+const smokeClouds = [
+  // Big slow wisps that billow upward
+  { w: 40, h: 28, x0: 0, xEnd: -22, rise: -110, dur: 4.0, delay: 0, originX: 8, blur: 12, peakOp: 0.22 },
+  { w: 50, h: 32, x0: 4, xEnd: 18, rise: -130, dur: 4.5, delay: 0.8, originX: 4, blur: 14, peakOp: 0.18 },
+  { w: 35, h: 24, x0: -2, xEnd: -30, rise: -95, dur: 3.6, delay: 1.6, originX: 10, blur: 10, peakOp: 0.25 },
+  // Medium drifters
+  { w: 28, h: 20, x0: 6, xEnd: 25, rise: -85, dur: 3.2, delay: 0.4, originX: 2, blur: 8, peakOp: 0.28 },
+  { w: 32, h: 22, x0: -4, xEnd: -15, rise: -100, dur: 3.8, delay: 2.0, originX: 12, blur: 11, peakOp: 0.2 },
+  { w: 45, h: 30, x0: 2, xEnd: 12, rise: -120, dur: 4.2, delay: 1.2, originX: 6, blur: 13, peakOp: 0.16 },
+  // Small fast tendrils near tip
+  { w: 16, h: 14, x0: 0, xEnd: -8, rise: -55, dur: 2.2, delay: 0.2, originX: 8, blur: 5, peakOp: 0.35 },
+  { w: 14, h: 12, x0: 4, xEnd: 10, rise: -50, dur: 2.0, delay: 1.0, originX: 4, blur: 4, peakOp: 0.3 },
+  { w: 18, h: 16, x0: -2, xEnd: -12, rise: -60, dur: 2.5, delay: 1.8, originX: 10, blur: 6, peakOp: 0.32 },
+  // Lingering haze
+  { w: 60, h: 35, x0: 0, xEnd: -10, rise: -140, dur: 5.5, delay: 0.6, originX: 6, blur: 18, peakOp: 0.1 },
+  { w: 55, h: 30, x0: 2, xEnd: 15, rise: -150, dur: 5.0, delay: 2.4, originX: 8, blur: 16, peakOp: 0.08 },
 ];
 
 const SmokingCigarette = () => (
-  <div className="relative w-20 h-28 flex items-end justify-center shrink-0">
-    {/* Smoke particles */}
-    {smokeParticles.map((p, i) => (
+  <div className="relative flex flex-col items-center shrink-0" style={{ width: 140, height: 180 }}>
+    {/* Smoke wisps — positioned above the burning tip */}
+    {smokeClouds.map((s, i) => (
       <motion.div
         key={i}
         className="absolute rounded-full"
         style={{
-          width: p.size,
-          height: p.size,
-          bottom: 68,
-          left: 28 + p.left,
-          background: 'radial-gradient(circle, rgba(148,163,184,0.35) 0%, transparent 70%)',
+          width: s.w,
+          height: s.h,
+          bottom: 100,
+          left: 70 + s.originX,
+          filter: `blur(${s.blur}px)`,
+          background: `radial-gradient(ellipse, rgba(180,190,205,${s.peakOp}) 0%, rgba(140,150,170,${s.peakOp * 0.4}) 40%, transparent 70%)`,
         }}
         animate={{
-          y: [0, p.rise * 0.4, p.rise],
-          x: [0, p.xDrift * 0.6, p.xDrift],
-          opacity: [0, 0.5, 0],
-          scale: [0.3, 1, 2],
+          y: [0, s.rise * 0.3, s.rise * 0.65, s.rise],
+          x: [s.x0, s.x0 + s.xEnd * 0.3, s.xEnd * 0.7, s.xEnd],
+          opacity: [0, s.peakOp, s.peakOp * 0.6, 0],
+          scale: [0.3, 0.8, 1.4, 2.2],
         }}
         transition={{
-          duration: p.dur,
+          duration: s.dur,
           repeat: Infinity,
-          delay: p.delay,
-          ease: 'easeOut',
+          delay: s.delay,
+          ease: [0.25, 0.1, 0.25, 1],
         }}
       />
     ))}
 
-    {/* Cigarette body */}
-    <div className="relative flex items-center">
-      {/* Filter */}
-      <div className="w-5 h-[9px] rounded-l-sm bg-gradient-to-r from-amber-700 to-amber-600" />
-      {/* Paper */}
-      <div className="w-9 h-[9px] bg-gradient-to-r from-slate-200 to-slate-100" />
-      {/* Burning tip */}
-      <div className="relative">
-        <div className="w-3 h-[9px] rounded-r-sm bg-gradient-to-r from-orange-500 to-red-600" />
-        {/* Glow */}
-        <motion.div
-          className="absolute -inset-1 rounded-full bg-orange-500/30 blur-sm"
-          animate={{ opacity: [0.4, 0.8, 0.4] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-        />
+    {/* Heat shimmer near tip */}
+    <motion.div
+      className="absolute rounded-full"
+      style={{
+        width: 20, height: 30, bottom: 88, left: 78,
+        background: 'radial-gradient(ellipse, rgba(251,191,36,0.08) 0%, transparent 70%)',
+        filter: 'blur(6px)',
+      }}
+      animate={{ opacity: [0.3, 0.6, 0.3], scaleY: [1, 1.3, 1] }}
+      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+    />
+
+    {/* Cigarette body — tilted slightly for natural look */}
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2" style={{ transform: 'translateX(-50%) rotate(-5deg)' }}>
+      <div className="relative flex items-center">
+        {/* Filter section */}
+        <div className="relative overflow-hidden rounded-l-sm" style={{ width: 36, height: 14 }}>
+          <div className="absolute inset-0 bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800" />
+          {/* Filter texture lines */}
+          <div className="absolute inset-0 opacity-20" style={{
+            backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 3px)',
+          }} />
+          {/* Cork ring */}
+          <div className="absolute right-0 top-0 bottom-0 w-[3px] bg-amber-900/30" />
+        </div>
+
+        {/* Paper section */}
+        <div className="relative overflow-hidden" style={{ width: 60, height: 14 }}>
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-100 via-white to-slate-200" />
+          {/* Paper grain */}
+          <div className="absolute inset-0 opacity-[0.06]" style={{
+            backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.1) 3px, rgba(0,0,0,0.1) 4px)',
+          }} />
+          {/* Brand ring */}
+          <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-sky-200/20" />
+          <div className="absolute left-5 top-0 bottom-0 w-[1px] bg-sky-200/10" />
+        </div>
+
+        {/* Ash section — crumbly gray */}
+        <div className="relative" style={{ width: 8, height: 14 }}>
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-300 to-slate-400 rounded-r-[1px]" />
+          <div className="absolute inset-0 opacity-30" style={{
+            backgroundImage: 'radial-gradient(circle at 30% 40%, rgba(80,80,80,0.4) 1px, transparent 1px), radial-gradient(circle at 70% 60%, rgba(60,60,60,0.3) 1px, transparent 1px)',
+          }} />
+        </div>
+
+        {/* Burning ember tip */}
+        <div className="relative" style={{ width: 6, height: 14 }}>
+          <div className="absolute inset-0 rounded-r-sm bg-gradient-to-r from-orange-600 via-red-500 to-red-700" />
+          {/* Ember glow — warm pulsing light */}
+          <motion.div
+            className="absolute -inset-2 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(251,146,60,0.5) 0%, rgba(239,68,68,0.2) 40%, transparent 70%)' }}
+            animate={{ opacity: [0.5, 1, 0.5], scale: [0.9, 1.1, 0.9] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          {/* Bright core */}
+          <motion.div
+            className="absolute top-1 left-0 w-1.5 h-3 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(255,200,50,0.6) 0%, transparent 70%)' }}
+            animate={{ opacity: [0.6, 1, 0.6] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+          />
+        </div>
       </div>
     </div>
 
-    {/* Ash fleck */}
-    <motion.div
-      className="absolute bottom-1 right-5 w-1 h-1 rounded-full bg-slate-500/40"
-      animate={{ y: [0, 12, 20], opacity: [0.6, 0.3, 0], x: [0, 3, 5] }}
-      transition={{ duration: 2.5, repeat: Infinity, delay: 1.2, ease: 'easeIn' }}
-    />
+    {/* Falling ash particles */}
+    {[0, 1, 2].map((i) => (
+      <motion.div
+        key={`ash-${i}`}
+        className="absolute rounded-full"
+        style={{
+          width: 2 + i, height: 2 + i * 0.5,
+          bottom: 24, left: 88 + i * 3,
+          backgroundColor: `rgba(120,120,120,${0.4 - i * 0.1})`,
+        }}
+        animate={{
+          y: [0, 15 + i * 5, 30 + i * 8],
+          x: [0, 4 + i * 2, 8 + i * 3],
+          opacity: [0.5, 0.25, 0],
+          rotate: [0, 45 + i * 30, 90 + i * 60],
+        }}
+        transition={{
+          duration: 2.5 + i * 0.5,
+          repeat: Infinity,
+          delay: i * 1.5 + 0.5,
+          ease: 'easeIn',
+        }}
+      />
+    ))}
   </div>
 );
 
