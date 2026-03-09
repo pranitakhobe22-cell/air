@@ -2,151 +2,77 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Heart, Shield, AlertTriangle, Activity, Thermometer,
-  Droplets, Wind, User, CheckCircle2, Cpu, Fan, Home, Info
+  Droplets, Wind, User, CheckCircle2, Cpu, Fan, Home, Info, Car
 } from 'lucide-react';
 import useActiveNode from '@/hooks/useActiveNode';
 import { generateAdvisory } from '@/utils/aqiEngine';
 
-// Wispy smoke clouds — large, billowing, overlapping for realism
-const smokeClouds = [
-  // Big slow wisps that billow upward
-  { w: 40, h: 28, x0: 0, xEnd: -22, rise: -110, dur: 4.0, delay: 0, originX: 8, blur: 12, peakOp: 0.22 },
-  { w: 50, h: 32, x0: 4, xEnd: 18, rise: -130, dur: 4.5, delay: 0.8, originX: 4, blur: 14, peakOp: 0.18 },
-  { w: 35, h: 24, x0: -2, xEnd: -30, rise: -95, dur: 3.6, delay: 1.6, originX: 10, blur: 10, peakOp: 0.25 },
-  // Medium drifters
-  { w: 28, h: 20, x0: 6, xEnd: 25, rise: -85, dur: 3.2, delay: 0.4, originX: 2, blur: 8, peakOp: 0.28 },
-  { w: 32, h: 22, x0: -4, xEnd: -15, rise: -100, dur: 3.8, delay: 2.0, originX: 12, blur: 11, peakOp: 0.2 },
-  { w: 45, h: 30, x0: 2, xEnd: 12, rise: -120, dur: 4.2, delay: 1.2, originX: 6, blur: 13, peakOp: 0.16 },
-  // Small fast tendrils near tip
-  { w: 16, h: 14, x0: 0, xEnd: -8, rise: -55, dur: 2.2, delay: 0.2, originX: 8, blur: 5, peakOp: 0.35 },
-  { w: 14, h: 12, x0: 4, xEnd: 10, rise: -50, dur: 2.0, delay: 1.0, originX: 4, blur: 4, peakOp: 0.3 },
-  { w: 18, h: 16, x0: -2, xEnd: -12, rise: -60, dur: 2.5, delay: 1.8, originX: 10, blur: 6, peakOp: 0.32 },
-  // Lingering haze
-  { w: 60, h: 35, x0: 0, xEnd: -10, rise: -140, dur: 5.5, delay: 0.6, originX: 6, blur: 18, peakOp: 0.1 },
-  { w: 55, h: 30, x0: 2, xEnd: 15, rise: -150, dur: 5.0, delay: 2.4, originX: 8, blur: 16, peakOp: 0.08 },
+// Smoke wisps config — staggered, drifting, soft-fade for organic realism
+const smokeWisps = [
+  { w: 22, h: 18, xEnd: -14, rise: -80, dur: 3.4, delay: 0, ox: 0, blur: 8, op: 0.3 },
+  { w: 30, h: 22, xEnd: 10, rise: -100, dur: 4.0, delay: 0.6, ox: 4, blur: 10, op: 0.22 },
+  { w: 18, h: 14, xEnd: -20, rise: -65, dur: 2.8, delay: 1.2, ox: -2, blur: 6, op: 0.35 },
+  { w: 36, h: 26, xEnd: 16, rise: -115, dur: 4.6, delay: 0.3, ox: 2, blur: 13, op: 0.16 },
+  { w: 14, h: 12, xEnd: -8, rise: -50, dur: 2.2, delay: 0.9, ox: 6, blur: 5, op: 0.38 },
+  { w: 26, h: 20, xEnd: 12, rise: -90, dur: 3.8, delay: 1.8, ox: -4, blur: 9, op: 0.25 },
+  { w: 42, h: 28, xEnd: -6, rise: -130, dur: 5.2, delay: 1.4, ox: 0, blur: 16, op: 0.1 },
+  { w: 20, h: 16, xEnd: 18, rise: -70, dur: 3.0, delay: 2.2, ox: 3, blur: 7, op: 0.28 },
 ];
 
-const SmokingCigarette = () => (
-  <div className="relative flex flex-col items-center shrink-0" style={{ width: 140, height: 180 }}>
-    {/* Smoke wisps — positioned above the burning tip */}
-    {smokeClouds.map((s, i) => (
+const CigaretteIcon = () => (
+  <div className="relative shrink-0" style={{ width: 160, height: 120 }}>
+    {/* Smoke */}
+    {smokeWisps.map((s, i) => (
       <motion.div
         key={i}
         className="absolute rounded-full"
         style={{
-          width: s.w,
-          height: s.h,
-          bottom: 100,
-          left: 70 + s.originX,
+          width: s.w, height: s.h,
+          bottom: 72, left: 108 + s.ox,
           filter: `blur(${s.blur}px)`,
-          background: `radial-gradient(ellipse, rgba(180,190,205,${s.peakOp}) 0%, rgba(140,150,170,${s.peakOp * 0.4}) 40%, transparent 70%)`,
+          background: `radial-gradient(ellipse, rgba(160,175,195,${s.op}) 0%, transparent 70%)`,
         }}
         animate={{
-          y: [0, s.rise * 0.3, s.rise * 0.65, s.rise],
-          x: [s.x0, s.x0 + s.xEnd * 0.3, s.xEnd * 0.7, s.xEnd],
-          opacity: [0, s.peakOp, s.peakOp * 0.6, 0],
-          scale: [0.3, 0.8, 1.4, 2.2],
+          y: [0, s.rise * 0.35, s.rise],
+          x: [0, s.xEnd * 0.5, s.xEnd],
+          opacity: [0, s.op, 0],
+          scale: [0.4, 1.2, 2.4],
         }}
-        transition={{
-          duration: s.dur,
-          repeat: Infinity,
-          delay: s.delay,
-          ease: [0.25, 0.1, 0.25, 1],
-        }}
+        transition={{ duration: s.dur, repeat: Infinity, delay: s.delay, ease: 'easeOut' }}
       />
     ))}
 
-    {/* Heat shimmer near tip */}
-    <motion.div
-      className="absolute rounded-full"
-      style={{
-        width: 20, height: 30, bottom: 88, left: 78,
-        background: 'radial-gradient(ellipse, rgba(251,191,36,0.08) 0%, transparent 70%)',
-        filter: 'blur(6px)',
-      }}
-      animate={{ opacity: [0.3, 0.6, 0.3], scaleY: [1, 1.3, 1] }}
-      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-    />
-
-    {/* Cigarette body — tilted slightly for natural look */}
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2" style={{ transform: 'translateX(-50%) rotate(-5deg)' }}>
-      <div className="relative flex items-center">
-        {/* Filter section */}
-        <div className="relative overflow-hidden rounded-l-sm" style={{ width: 36, height: 14 }}>
-          <div className="absolute inset-0 bg-gradient-to-b from-amber-600 via-amber-700 to-amber-800" />
-          {/* Filter texture lines */}
+    {/* Cigarette body — slight tilt */}
+    <div className="absolute bottom-4 left-6" style={{ transform: 'rotate(-8deg)' }}>
+      <div className="flex items-center">
+        {/* Filter */}
+        <div className="relative overflow-hidden rounded-l-sm" style={{ width: 30, height: 12 }}>
+          <div className="absolute inset-0 bg-gradient-to-b from-amber-600 to-amber-800" />
           <div className="absolute inset-0 opacity-20" style={{
-            backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 3px)',
-          }} />
-          {/* Cork ring */}
-          <div className="absolute right-0 top-0 bottom-0 w-[3px] bg-amber-900/30" />
-        </div>
-
-        {/* Paper section */}
-        <div className="relative overflow-hidden" style={{ width: 60, height: 14 }}>
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-100 via-white to-slate-200" />
-          {/* Paper grain */}
-          <div className="absolute inset-0 opacity-[0.06]" style={{
-            backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.1) 3px, rgba(0,0,0,0.1) 4px)',
-          }} />
-          {/* Brand ring */}
-          <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-sky-200/20" />
-          <div className="absolute left-5 top-0 bottom-0 w-[1px] bg-sky-200/10" />
-        </div>
-
-        {/* Ash section — crumbly gray */}
-        <div className="relative" style={{ width: 8, height: 14 }}>
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-300 to-slate-400 rounded-r-[1px]" />
-          <div className="absolute inset-0 opacity-30" style={{
-            backgroundImage: 'radial-gradient(circle at 30% 40%, rgba(80,80,80,0.4) 1px, transparent 1px), radial-gradient(circle at 70% 60%, rgba(60,60,60,0.3) 1px, transparent 1px)',
+            backgroundImage: 'repeating-linear-gradient(90deg, transparent 0 2px, rgba(0,0,0,0.12) 2px 3px)',
           }} />
         </div>
-
-        {/* Burning ember tip */}
-        <div className="relative" style={{ width: 6, height: 14 }}>
-          <div className="absolute inset-0 rounded-r-sm bg-gradient-to-r from-orange-600 via-red-500 to-red-700" />
-          {/* Ember glow — warm pulsing light */}
+        {/* Paper */}
+        <div className="relative overflow-hidden" style={{ width: 72, height: 12 }}>
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-100 to-slate-200" />
+          <div className="absolute inset-0 opacity-[0.04]" style={{
+            backgroundImage: 'repeating-linear-gradient(0deg, transparent 0 3px, rgba(0,0,0,0.08) 3px 4px)',
+          }} />
+        </div>
+        {/* Ash */}
+        <div style={{ width: 6, height: 12 }} className="bg-gradient-to-r from-slate-300 to-slate-400" />
+        {/* Ember */}
+        <div className="relative" style={{ width: 5, height: 12 }}>
+          <div className="absolute inset-0 rounded-r-sm bg-gradient-to-r from-orange-500 to-red-600" />
           <motion.div
-            className="absolute -inset-2 rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(251,146,60,0.5) 0%, rgba(239,68,68,0.2) 40%, transparent 70%)' }}
-            animate={{ opacity: [0.5, 1, 0.5], scale: [0.9, 1.1, 0.9] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          {/* Bright core */}
-          <motion.div
-            className="absolute top-1 left-0 w-1.5 h-3 rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(255,200,50,0.6) 0%, transparent 70%)' }}
-            animate={{ opacity: [0.6, 1, 0.6] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+            className="absolute -inset-1.5 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(251,146,60,0.5) 0%, transparent 70%)' }}
+            animate={{ opacity: [0.4, 0.9, 0.4] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
           />
         </div>
       </div>
     </div>
-
-    {/* Falling ash particles */}
-    {[0, 1, 2].map((i) => (
-      <motion.div
-        key={`ash-${i}`}
-        className="absolute rounded-full"
-        style={{
-          width: 2 + i, height: 2 + i * 0.5,
-          bottom: 24, left: 88 + i * 3,
-          backgroundColor: `rgba(120,120,120,${0.4 - i * 0.1})`,
-        }}
-        animate={{
-          y: [0, 15 + i * 5, 30 + i * 8],
-          x: [0, 4 + i * 2, 8 + i * 3],
-          opacity: [0.5, 0.25, 0],
-          rotate: [0, 45 + i * 30, 90 + i * 60],
-        }}
-        transition={{
-          duration: 2.5 + i * 0.5,
-          repeat: Infinity,
-          delay: i * 1.5 + 0.5,
-          ease: 'easeIn',
-        }}
-      />
-    ))}
   </div>
 );
 
@@ -185,11 +111,11 @@ const Health = () => {
   const cigWeekly = Math.round(cigPerDay * 7);
   const cigMonthly = Math.round(cigPerDay * 30);
 
-  const protectiveActions = [
-    { icon: Fan, label: 'Air Purifier', status: pm25 > 35 ? 'Turn On' : 'Not Needed', active: pm25 > 35 },
-    { icon: Shield, label: 'Mask', status: pm25 > 55 ? 'N95 Required' : pm25 > 35 ? 'Advisable' : 'Not Needed', active: pm25 > 35 },
-    { icon: Home, label: 'Stay Indoor', status: pm25 > 100 ? 'Recommended' : 'Optional', active: pm25 > 100 },
-    { icon: Wind, label: 'Ventilation', status: pm25 > 60 ? 'Keep Closed' : 'Open Windows', active: pm25 > 60, invert: true },
+  const solutions = [
+    { icon: Fan, label: 'Air Purifier', status: pm25 > 35 ? 'Turn On' : 'Turn Off', active: pm25 > 35 },
+    { icon: Car, label: 'Car Filter', status: pm25 > 25 ? 'Advisable' : 'Optional', active: pm25 > 25 },
+    { icon: Shield, label: 'N95 Mask', status: pm25 > 55 ? 'Required' : pm25 > 35 ? 'Advisable' : 'Not Needed', active: pm25 > 35 },
+    { icon: Home, label: 'Stay Indoor', status: pm25 > 100 ? 'Advisable' : 'Optional', active: pm25 > 100 },
   ];
 
   return (
@@ -276,79 +202,104 @@ const Health = () => {
             </div>
           </div>
 
-          {/* Cigarette Equivalent — Pollution Impact */}
-          <div className="bg-white/[0.03] rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-sm font-semibold text-slate-300">Pollution Impact</h3>
-              <div className="flex items-center gap-1 text-[10px] text-slate-600">
-                <Info size={10} />
-                <span>Berkeley Earth Methodology</span>
-              </div>
-            </div>
+          {/* Cigarette Equivalent — Pollution Exposure */}
+          <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(15,20,30,0.95) 0%, rgba(10,14,22,0.98) 100%)' }}>
 
-            <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
-              {/* Animated cigarette */}
-              <SmokingCigarette />
+            {/* Top section: Number + Cigarette + Weekly/Monthly */}
+            <div className="p-6 pb-5">
+              <div className="flex flex-col md:flex-row items-center gap-5 md:gap-0">
 
-              {/* Daily count */}
-              <div className="text-center sm:text-left">
-                <div className="flex items-baseline gap-2">
-                  <motion.span
-                    key={cigPerDay}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className={`text-5xl font-extrabold tabular-nums ${cigPerDay >= 5 ? 'text-red-400' : cigPerDay >= 2 ? 'text-amber-400' : cigPerDay > 0 ? 'text-orange-400' : 'text-emerald-400'}`}
-                  >
-                    {cigPerDay}
-                  </motion.span>
-                  <span className="text-sm text-slate-500 leading-tight">Cigarettes<br/>per day</span>
-                </div>
-                <p className="text-xs text-slate-500 mt-3 max-w-xs leading-relaxed">
-                  Breathing this air is equivalent to smoking{' '}
-                  <span className="text-slate-300 font-medium">{cigPerDay} cigarette{cigPerDay !== 1 ? 's' : ''}</span>{' '}
-                  daily based on current PM2.5 levels.
-                </p>
-              </div>
-
-              {/* Weekly / Monthly */}
-              <div className="flex sm:flex-col gap-6 sm:gap-4 sm:ml-auto">
-                <div className="text-center">
-                  <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Weekly</p>
-                  <p className={`text-2xl font-bold tabular-nums ${cigWeekly >= 35 ? 'text-red-400' : 'text-amber-400'}`}>{cigWeekly}</p>
-                  <p className="text-[10px] text-slate-600">cigarettes</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Monthly</p>
-                  <p className={`text-2xl font-bold tabular-nums ${cigMonthly >= 100 ? 'text-red-400' : 'text-amber-400'}`}>{cigMonthly}</p>
-                  <p className="text-[10px] text-slate-600">cigarettes</p>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-[10px] text-slate-600 italic mt-5">
-              This estimate uses the average PM2.5 concentration ({pm25.toFixed(1)} µg/m³) assuming continuous 24-hour exposure. 1 cigarette ≈ 22 µg/m³ PM2.5.
-            </p>
-
-            {/* Protective Actions */}
-            <div className="mt-5 pt-5 border-t border-white/[0.05]">
-              <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-3">Protective Actions</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {protectiveActions.map((a) => (
-                  <div
-                    key={a.label}
-                    className={`p-4 rounded-xl transition-colors ${
-                      a.active
-                        ? a.invert ? 'bg-rose-500/[0.06]' : 'bg-sky-500/[0.06]'
-                        : 'bg-white/[0.02]'
-                    }`}
-                  >
-                    <a.icon size={18} className={`mb-2.5 ${a.active ? (a.invert ? 'text-rose-400' : 'text-sky-400') : 'text-slate-600'}`} />
-                    <p className="text-xs font-medium text-slate-300">{a.label}</p>
-                    <p className={`text-[11px] mt-0.5 ${a.active ? (a.invert ? 'text-rose-400' : 'text-sky-400') : 'text-slate-500'}`}>
-                      {a.status}
+                {/* Left: Big number + label */}
+                <div className="flex items-center gap-5 md:flex-1">
+                  <div>
+                    <motion.div
+                      key={cigPerDay}
+                      initial={{ scale: 0.85, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                      className="flex items-baseline gap-1"
+                    >
+                      <span className={`text-6xl sm:text-7xl font-extrabold tabular-nums tracking-tight ${cigPerDay >= 5 ? 'text-red-400' : cigPerDay >= 2 ? 'text-amber-400' : cigPerDay > 0 ? 'text-orange-400' : 'text-emerald-400'}`}>
+                        {cigPerDay}
+                      </span>
+                    </motion.div>
+                    <p className={`text-sm font-semibold mt-1 ${cigPerDay >= 5 ? 'text-red-400/80' : cigPerDay >= 2 ? 'text-amber-400/80' : cigPerDay > 0 ? 'text-orange-400/80' : 'text-emerald-400/80'}`}>
+                      Cigarettes<br/>per day
                     </p>
                   </div>
-                ))}
+
+                  {/* Cigarette animation */}
+                  <CigaretteIcon />
+                </div>
+
+                {/* Right: Weekly / Monthly stats */}
+                <div className="flex md:flex-col gap-8 md:gap-5 md:items-end">
+                  <div className="text-center md:text-right">
+                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">Weekly</p>
+                    <p className={`text-3xl font-bold tabular-nums mt-0.5 ${cigWeekly >= 35 ? 'text-red-400' : 'text-amber-400'}`}>{cigWeekly}</p>
+                    <p className="text-[10px] text-slate-600">Cigarettes</p>
+                  </div>
+                  <div className="text-center md:text-right">
+                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">Monthly</p>
+                    <p className={`text-3xl font-bold tabular-nums mt-0.5 ${cigMonthly >= 100 ? 'text-red-400' : 'text-amber-400'}`}>{cigMonthly}</p>
+                    <p className="text-[10px] text-slate-600">Cigarettes</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Description callout */}
+            <div className="px-6 pb-4">
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Breathing the air in this location is as harmful as smoking{' '}
+                <span className="text-white font-semibold">{cigPerDay} cigarette{cigPerDay !== 1 ? 's' : ''}</span> a day.
+              </p>
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-[10px] text-slate-600 italic leading-relaxed max-w-md">
+                  This cigarette-equivalent estimate is based on the average PM2.5 concentration ({pm25.toFixed(1)} µg/m³) over the last 24 hours, assuming continuous exposure during that time.
+                </p>
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-600 shrink-0 ml-4">
+                  <span>Source:</span>
+                  <span className="text-slate-400 font-medium">Berkeley Earth</span>
+                  <Info size={10} className="text-slate-600" />
+                </div>
+              </div>
+            </div>
+
+            {/* Solutions section */}
+            <div className="px-6 pt-4 pb-6 border-t border-white/[0.04]">
+              <h4 className="text-sm font-semibold text-slate-300 mb-4">Solutions for Current AQI</h4>
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Solution cards */}
+                <div className="flex gap-2.5 flex-1 overflow-x-auto pb-1">
+                  {solutions.map((s, i) => (
+                    <button
+                      key={s.label}
+                      className={`flex-1 min-w-[100px] flex flex-col items-center gap-2 p-4 rounded-2xl transition-all ${
+                        s.active
+                          ? 'bg-sky-500/[0.06] ring-1 ring-sky-500/20'
+                          : 'bg-white/[0.02] hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${s.active ? 'bg-sky-500/10' : 'bg-white/[0.03]'}`}>
+                        <s.icon size={20} className={s.active ? 'text-sky-400' : 'text-slate-500'} strokeWidth={1.5} />
+                      </div>
+                      <span className={`text-xs font-medium ${s.active ? 'text-white' : 'text-slate-400'}`}>{s.label}</span>
+                      <span className={`text-[10px] ${s.active ? 'text-sky-400' : 'text-slate-600'}`}>{s.status}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Context description */}
+                <div className="sm:w-56 sm:pl-4 sm:border-l sm:border-white/[0.04] flex flex-col justify-center">
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {pm25 > 55
+                      ? 'Air quality is poor. Use an N95 mask outdoors and run air purifiers indoors.'
+                      : pm25 > 35
+                      ? 'As per the current AQI, wearing a mask outdoors and using air filtration is advisable.'
+                      : 'Air quality is within safe limits. Normal activities can continue.'}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
