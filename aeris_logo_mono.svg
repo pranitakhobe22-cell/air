@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 120" width="460" height="120">
+
+  <!-- ░░ White Background ░░ -->
+  <rect width="460" height="120" fill="#FFFFFF"/>
+
+  <!-- Outer halo ring -->
+  <circle cx="52" cy="60" r="34"
+          fill="none" stroke="#1A1A1A" stroke-width="0.8" opacity="0.08"/>
+
+  <!-- Main circle -->
+  <circle cx="52" cy="60" r="26"
+          fill="none" stroke="#1A1A1A" stroke-width="1.9"/>
+
+  <!-- Arch: airflow -->
+  <path d="M 19,60 Q 52,22 85,60"
+        fill="none" stroke="#1A1A1A"
+        stroke-width="2.7" stroke-linecap="round"/>
+
+  <!-- Pulse ring -->
+  <circle cx="52" cy="60" r="7.5"
+          fill="none" stroke="#1A1A1A" stroke-width="1.1" opacity="0.22"/>
+
+  <!-- Core dot -->
+  <circle cx="52" cy="60" r="3.8" fill="#1A1A1A"/>
+
+  <!-- Divider -->
+  <line x1="102" y1="22" x2="102" y2="98"
+        stroke="#C0C0C0" stroke-width="1"/>
+
+  <!-- AERIS wordmark -->
+  <text x="118" y="78"
+        font-family="'Helvetica Neue', Arial, sans-serif"
+        font-size="56"
+        font-weight="700"
+        letter-spacing="11"
+        fill="#1A1A1A">AERIS</text>
+
+  <!-- Tagline -->
+  <text x="120" y="98"
+        font-family="'Helvetica Neue', Arial, sans-serif"
+        font-size="9.5"
+        font-weight="400"
+        letter-spacing="5.5"
+        fill="#707070">AIR QUALITY MONITORING</text>
+</svg>

@@ -1,28 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Network as NetIcon, Server, Database, Activity, Wifi,
   Cpu, Clock, ChevronDown, ChevronUp, AlertCircle, ShieldCheck
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
-
-const ONLINE_THRESHOLD_MS = 60000; // 60s — node is offline if no data for this long
-
-const getTimeAgo = (timestamp, now) => {
-  if (!timestamp) return 'Never';
-  const diffSec = Math.floor((now - new Date(timestamp).getTime()) / 1000);
-  if (diffSec < 0) return 'Just now';
-  if (diffSec < 10) return 'Just now';
-  if (diffSec < 60) return `${diffSec}s ago`;
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
-  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
-  return `${Math.floor(diffSec / 86400)}d ago`;
-};
-
-const isNodeOnline = (node, now) => {
-  if (!node.lastPing) return false;
-  return (now - new Date(node.lastPing).getTime()) < ONLINE_THRESHOLD_MS;
-};
 
 const learningData = [
   {
@@ -50,29 +32,22 @@ const learningData = [
 const Network = () => {
   const data = useAerisStore((s) => s.data);
   const [expandedId, setExpandedId] = useState(null);
-  const [now, setNow] = useState(Date.now());
-
-  // Re-render every 5s to keep "time ago" and online/offline status fresh
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   if (!data?.derived) {
     return (
-      <div className="p-5 sm:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6">
+      <div className="p-6 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-8">
         <div>
-          <div className="h-7 w-48 bg-white/[0.03] rounded-lg animate-pulse" />
-          <div className="h-4 w-72 bg-white/[0.02] rounded mt-2 animate-pulse" />
+          <div className="h-7 w-48 glass-card rounded-lg animate-pulse" />
+          <div className="h-4 w-72 glass-card rounded mt-2 animate-pulse" />
         </div>
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
           <div className="xl:col-span-8 space-y-5">
-            <div className="bg-white/[0.03] rounded-2xl h-48 animate-pulse" />
-            <div className="bg-white/[0.03] rounded-2xl h-64 animate-pulse" />
+            <div className="glass-card rounded-xl h-48 animate-pulse" />
+            <div className="glass-card rounded-xl h-64 animate-pulse" />
           </div>
           <div className="xl:col-span-4 space-y-5">
-            <div className="bg-white/[0.03] rounded-2xl h-48 animate-pulse" />
-            <div className="bg-white/[0.03] rounded-2xl h-64 animate-pulse" />
+            <div className="glass-card rounded-xl h-48 animate-pulse" />
+            <div className="glass-card rounded-xl h-64 animate-pulse" />
           </div>
         </div>
       </div>
@@ -86,12 +61,12 @@ const Network = () => {
   const espIds = new Set(Object.keys(perNode));
 
   return (
-    <div className="p-5 sm:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6">
+    <div className="p-6 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-8">
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">System Network</h1>
-        <p className="text-sm text-slate-500 mt-0.5">IoT fleet status, architecture, and knowledge base.</p>
+        <h1 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">System Network</h1>
+        <p className="text-sm text-(--color-text-secondary) opacity-60 mt-0.5">IoT fleet status, architecture, and knowledge base.</p>
       </div>
 
       {/* Alert Banner */}
@@ -101,13 +76,13 @@ const Network = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-red-500/5 rounded-2xl p-4 flex items-center justify-between gap-4"
+            className="bg-red-500/5 border border-red-500/20 rounded-xl p-6 flex items-center justify-between gap-8"
           >
             <div className="flex items-center gap-3">
               <AlertCircle size={18} className="text-red-400" />
               <div>
                 <p className="text-sm font-semibold text-red-400">High Risk Detected</p>
-                <p className="text-xs text-slate-400">Sensors indicate elevated pollution levels in monitored sectors.</p>
+                <p className="text-xs text-(--color-text-secondary)">Sensors indicate elevated pollution levels in monitored sectors.</p>
               </div>
             </div>
           </motion.div>
@@ -120,8 +95,8 @@ const Network = () => {
         <div className="xl:col-span-8 space-y-5">
 
           {/* Architecture */}
-          <div className="bg-white/[0.03] rounded-2xl p-6">
-            <h3 className="text-sm font-semibold text-white mb-6">System Architecture</h3>
+          <div className="glass-card rounded-xl p-6">
+            <h3 className="text-sm font-semibold text-(--color-text-primary) mb-6">System Architecture</h3>
 
             <div className="flex flex-col md:flex-row items-center justify-between gap-3">
               {[
@@ -131,15 +106,15 @@ const Network = () => {
                 { icon: Activity, name: 'Dashboard', sub: 'Visualization', color: 'text-amber-400', bg: 'bg-amber-500/10' },
               ].map((step, i, arr) => (
                 <React.Fragment key={step.name}>
-                  <div className="flex flex-col items-center bg-white/[0.04] rounded-xl p-5 w-full md:w-40 text-center">
-                    <div className={`w-10 h-10 ${step.bg} rounded-lg flex items-center justify-center mb-3`}>
-                      <step.icon size={20} className={step.color} />
+                  <div className="flex flex-col items-center glass-card border-white/10 rounded-2xl p-6 w-full md:w-44 text-center backdrop-blur-md shadow-lg transition-all hover:translate-y-[-2px]">
+                    <div className={`w-12 h-12 ${step.bg} rounded-xl flex items-center justify-center mb-4 shadow-inner`}>
+                      <step.icon size={22} className={step.color} />
                     </div>
-                    <span className="text-sm font-semibold text-white">{step.name}</span>
-                    <span className="text-[11px] text-slate-500 mt-0.5">{step.sub}</span>
+                    <span className="text-sm font-bold text-(--color-text-primary)">{step.name}</span>
+                    <span className="text-[11px] text-(--color-text-secondary) opacity-60 mt-1">{step.sub}</span>
                   </div>
                   {i < arr.length - 1 && (
-                    <div className="hidden md:block text-slate-600 text-lg">&rarr;</div>
+                    <div className="hidden md:block text-(--color-text-secondary) opacity-40 text-lg">&rarr;</div>
                   )}
                 </React.Fragment>
               ))}
@@ -147,25 +122,25 @@ const Network = () => {
           </div>
 
           {/* Nodes Table */}
-          <div className="bg-white/[0.03] rounded-2xl p-6">
+          <div className="glass-card rounded-xl p-6">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-sm font-semibold text-white">Sensor Nodes</h3>
+              <h3 className="text-sm font-semibold text-(--color-text-primary)">Sensor Nodes</h3>
               <div className="flex items-center gap-2">
                 {espIds.size > 0 && (
-                  <span className="text-xs font-medium text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded-lg">
+                  <span className="text-xs font-medium text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded-md">
                     {espIds.size} Hardware
                   </span>
                 )}
-                <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg">
-                  {nodes.filter((n) => isNodeOnline(n, now)).length} Online
+                <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md">
+                  {nodes.filter((n) => n.status === 'active').length} Active
                 </span>
               </div>
             </div>
 
-            <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 glass-scrollbar">
               <table className="w-full text-left min-w-[640px]">
                 <thead>
-                  <tr className="border-b border-white/[0.05] text-xs text-slate-600">
+                  <tr className="border-b border-(--color-card-border) text-xs text-(--color-text-secondary) opacity-60">
                     <th className="pb-3 pl-2 font-medium">Node ID</th>
                     <th className="pb-3 font-medium">Type</th>
                     <th className="pb-3 font-medium">Status</th>
@@ -180,31 +155,31 @@ const Network = () => {
                     const isHardware = espIds.has(node.id);
                     const nd = perNode[node.id];
                     return (
-                      <tr key={i} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition-colors">
+                      <tr key={i} className="border-b border-(--color-card-border)/50 last:border-0 hover:bg-white/5 transition-colors">
                         <td className="py-3 pl-2">
                           <div className="flex items-center gap-2">
-                            <div className={`w-1.5 h-1.5 rounded-full ${isNodeOnline(node, now) ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-                            <span className="font-mono text-slate-300">{node.id}</span>
+                            <div className={`w-1.5 h-1.5 rounded-full ${node.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                            <span className="font-mono text-(--color-text-secondary)">{node.id}</span>
                           </div>
                         </td>
                         <td className="py-3">
                           {isHardware ? (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded text-sky-400 bg-sky-500/10">ESP32</span>
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded text-sky-400 bg-sky-500/10 border border-sky-500/20">ESP32</span>
                           ) : (
-                            <span className="text-[10px] font-medium px-2 py-0.5 rounded text-slate-500 bg-white/[0.03]">SIM</span>
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded text-(--color-text-secondary) bg-white/10">SIM</span>
                           )}
                         </td>
                         <td className="py-3">
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-lg ${isNodeOnline(node, now) ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10'}`}>
-                            {isNodeOnline(node, now) ? 'online' : 'offline'}
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded ${node.status === 'active' ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10'}`}>
+                            {node.status}
                           </span>
                         </td>
-                        <td className="py-3 text-slate-400 truncate max-w-[150px]">{node.location_name || 'Assigned'}</td>
+                        <td className="py-3 text-(--color-text-secondary) truncate max-w-[150px]">{node.location_name || 'Assigned'}</td>
                         <td className="py-3 text-center">
                           {nd ? (
-                            <span className="text-sm font-semibold tabular-nums text-white">{nd.latest.aqi}</span>
+                            <span className="text-sm font-semibold tabular-nums text-(--color-text-primary)">{nd.latest.aqi}</span>
                           ) : (
-                            <span className="text-xs text-slate-600">--</span>
+                            <span className="text-xs text-(--color-text-secondary) opacity-40">--</span>
                           )}
                         </td>
                         <td className="py-3 text-center">
@@ -215,11 +190,9 @@ const Network = () => {
                           )}
                         </td>
                         <td className="py-3 pr-2 text-right">
-                          <div className="flex items-center justify-end gap-1.5 text-slate-400">
+                          <div className="flex items-center justify-end gap-1.5 text-(--color-text-secondary)">
                             <Clock size={12} />
-                            <span className={`text-xs ${isNodeOnline(node, now) ? 'text-emerald-400' : 'text-slate-500'}`}>
-                              {getTimeAgo(node.lastPing, now)}
-                            </span>
+                            <span className="text-xs">{node.lastPing ? new Date(node.lastPing).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Just now'}</span>
                           </div>
                         </td>
                       </tr>
@@ -235,39 +208,41 @@ const Network = () => {
         <div className="xl:col-span-4 space-y-5">
 
           {/* System Health */}
-          <div className="bg-white/[0.03] rounded-2xl p-5">
-            <h3 className="text-sm font-semibold text-white mb-4">System Health</h3>
+          <div className="glass-card rounded-xl p-6">
+            <h3 className="text-sm font-semibold text-(--color-text-primary) mb-4">System Health</h3>
             <div className="space-y-3">
               {[
                 { label: 'Poll Interval', value: '10s', icon: Clock, color: 'text-sky-400' },
                 { label: 'Data Source', value: 'ESP32 Cluster', icon: Database, color: 'text-indigo-400' },
                 { label: 'Uptime', value: '99.9%', icon: ShieldCheck, color: 'text-emerald-400' },
               ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between p-3 bg-white/[0.02] rounded-xl">
+                <div key={item.label} className="flex items-center justify-between p-3.5 bg-white/3 border border-white/10 rounded-xl backdrop-blur-sm transition-all hover:bg-white/5 shadow-inner">
                   <div className="flex items-center gap-3">
-                    <item.icon size={14} className={item.color} />
-                    <span className="text-xs text-slate-400">{item.label}</span>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5">
+                      <item.icon size={15} className={item.color} />
+                    </div>
+                    <span className="text-xs text-(--color-text-secondary) font-medium">{item.label}</span>
                   </div>
-                  <span className="text-xs font-semibold text-white">{item.value}</span>
+                  <span className="text-xs font-bold text-(--color-text-primary) tabular-nums">{item.value}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Knowledge Base */}
-          <div className="bg-white/[0.03] rounded-2xl p-5">
-            <h3 className="text-sm font-semibold text-white mb-4">Knowledge Base</h3>
+          <div className="glass-card rounded-xl p-6">
+            <h3 className="text-sm font-semibold text-(--color-text-primary) mb-4">Knowledge Base</h3>
             <div className="space-y-2">
               {learningData.map((item) => {
                 const isOpen = expandedId === item.id;
                 return (
-                  <div key={item.id} className="bg-white/[0.02] rounded-xl overflow-hidden">
+                  <div key={item.id} className="bg-white/2 border border-white/10 rounded-xl overflow-hidden backdrop-blur-sm transition-all hover:border-white/20">
                     <button
                       onClick={() => setExpandedId(isOpen ? null : item.id)}
-                      className="w-full flex items-center justify-between p-3 hover:bg-white/[0.05] transition-colors rounded-xl"
+                      className="w-full flex items-center justify-between p-4 transition-colors"
                     >
-                      <span className="text-sm text-slate-300">{item.title}</span>
-                      {isOpen ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
+                      <span className="text-sm text-(--color-text-secondary) font-medium">{item.title}</span>
+                      {isOpen ? <ChevronUp size={14} className="text-(--color-accent)" /> : <ChevronDown size={14} className="text-(--color-text-secondary) opacity-60" />}
                     </button>
                     <AnimatePresence>
                       {isOpen && (
@@ -277,7 +252,7 @@ const Network = () => {
                           exit={{ height: 0, opacity: 0 }}
                           className="px-3 pb-3"
                         >
-                          <p className="text-xs text-slate-400 leading-relaxed border-t border-white/[0.04] pt-3">
+                          <p className="text-xs text-(--color-text-secondary) leading-relaxed border-t border-(--color-card-border) pt-3">
                             {item.content}
                           </p>
                         </motion.div>

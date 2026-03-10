@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 120" width="460" height="120">
+  <defs>
+    <!-- Arch gradient: sky-teal → ocean-blue → sky-teal -->
+    <linearGradient id="archGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#48CAE4;stop-opacity:0.55"/>
+      <stop offset="50%"  style="stop-color:#0096C7;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#48CAE4;stop-opacity:0.55"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ░░ Background ░░ -->
+  <rect width="460" height="120" fill="#F6F9FB"/>
+
+  <!-- ════════════════════════════════
+       ICON  —  Sensor Sphere + Airflow
+       Geometry:
+         · Circle  cx=52 cy=60 r=26
+         · Arch peaks at (52,41) — inside the upper half of the circle
+         · Arch endpoints (19,60) and (85,60) pierce the circle ±7 px
+           beyond its left/right edges, creating the "air passes through"
+           sensor effect. The arch + circle diameter also subtly forms
+           the letter A (hidden brand initial).
+       ════════════════════════════════ -->
+
+  <!-- Outer halo ring (depth cue, very faint) -->
+  <circle cx="52" cy="60" r="34"
+          fill="none" stroke="#0077B6" stroke-width="0.8" opacity="0.10"/>
+
+  <!-- Main circle: the monitoring sensor boundary -->
+  <circle cx="52" cy="60" r="26"
+          fill="none" stroke="#0077B6" stroke-width="1.9"/>
+
+  <!-- Arch: airflow path through sensor -->
+  <path d="M 19,60 Q 52,22 85,60"
+        fill="none" stroke="url(#archGrad)"
+        stroke-width="2.7" stroke-linecap="round"/>
+
+  <!-- Pulse ring around core -->
+  <circle cx="52" cy="60" r="7.5"
+          fill="none" stroke="#0096C7" stroke-width="1.1" opacity="0.25"/>
+
+  <!-- Core dot: measurement centre -->
+  <circle cx="52" cy="60" r="3.8" fill="#0077B6"/>
+
+  <!-- ════════════════════════════════
+       VERTICAL DIVIDER
+       ════════════════════════════════ -->
+  <line x1="102" y1="22" x2="102" y2="98"
+        stroke="#C8D8E8" stroke-width="1"/>
+
+  <!-- ════════════════════════════════
+       WORDMARK  —  AERIS
+       ════════════════════════════════ -->
+  <text x="118" y="78"
+        font-family="'Helvetica Neue', Arial, sans-serif"
+        font-size="56"
+        font-weight="700"
+        letter-spacing="11"
+        fill="#0E2F4F">AERIS</text>
+
+  <!-- ════════════════════════════════
+       TAGLINE
+       ════════════════════════════════ -->
+  <text x="120" y="98"
+        font-family="'Helvetica Neue', Arial, sans-serif"
+        font-size="9.5"
+        font-weight="400"
+        letter-spacing="5.5"
+        fill="#6B93B8">AIR QUALITY MONITORING</text>
+</svg>

@@ -45,7 +45,7 @@ const POLLUTANTS = {
 const ChartTooltip = ({ active, payload }) => {
   if (active && payload?.[0]) {
     return (
-      <div className="bg-[#0c1322] rounded-xl shadow-xl shadow-black/40 px-3 py-1.5 text-xs">
+      <div className="bg-(--color-bg-main) border border-(--color-card-border) px-3 py-1.5 rounded-lg text-xs">
         <span className="font-semibold" style={{ color: payload[0].stroke }}>
           {Number(payload[0].value).toFixed(1)}
         </span>
@@ -79,12 +79,12 @@ const Pollutants = () => {
   };
 
   return (
-    <div className="p-5 sm:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6">
+    <div className="p-6 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-8">
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Pollutant Analysis</h1>
-        <p className="text-sm text-slate-500 mt-0.5">
+        <h1 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">Pollutant Analysis</h1>
+        <p className="text-sm text-(--color-text-secondary) opacity-60 mt-0.5">
           {active.isNodeView ? `${active.nodeName} — ` : ''}Individual pollutant readings, thresholds, and health impacts.
         </p>
       </div>
@@ -92,7 +92,7 @@ const Pollutants = () => {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
 
         {/* Pollutant Cards */}
-        <div className="xl:col-span-9 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="xl:col-span-9 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {Object.entries(POLLUTANTS).map(([key, config]) => {
             const sensorKey = key === 'no2' ? 'nox' : key === 'voc' ? 'voc_index' : key;
             const histKey = key === 'no2' ? 'nox' : key === 'voc' ? 'voc_index' : key;
@@ -110,11 +110,11 @@ const Pollutants = () => {
             return (
               <div
                 key={key}
-                className="bg-white/[0.03] rounded-2xl p-5 flex flex-col hover:bg-white/[0.05] transition-colors"
+                className="glass-card rounded-xl p-6 flex flex-col"
               >
                 {/* Top */}
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">{config.label}</span>
+                  <span className="text-xs font-medium text-(--color-text-secondary) opacity-60">{config.label}</span>
                   {getTrend(histKey, value)}
                 </div>
                 <div className="flex items-center gap-2 mb-3">
@@ -125,18 +125,18 @@ const Pollutants = () => {
 
                 {/* Value */}
                 <div className="flex items-baseline gap-2 mb-4">
-                  <span className="text-3xl font-bold text-white tabular-nums">{Number(value).toFixed(1)}</span>
-                  <span className="text-xs text-slate-500">{config.unit}</span>
+                  <span className="text-3xl font-bold text-(--color-text-primary) tabular-nums">{Number(value).toFixed(1)}</span>
+                  <span className="text-xs text-(--color-text-secondary) opacity-60">{config.unit}</span>
                 </div>
 
                 {/* Progress bar */}
-                <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden mb-1">
+                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-1">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{ width: `${fill}%`, backgroundColor: statusColor }}
                   />
                 </div>
-                <div className="flex justify-between text-[10px] text-slate-600 mb-4">
+                <div className="flex justify-between text-[10px] text-(--color-text-secondary) opacity-40 mb-4">
                   <span>0</span>
                   <span>Safe {config.safe}</span>
                   <span>Danger {config.danger}</span>
@@ -154,15 +154,15 @@ const Pollutants = () => {
                           </linearGradient>
                         </defs>
                         <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.2)', strokeWidth: 1 }} />
-                        <Area type="linear" dataKey="value" stroke={config.color} strokeWidth={1.5} fill={`url(#grad-${key})`} dot={false} activeDot={{ r: 3, stroke: '#060910', strokeWidth: 2 }} isAnimationActive={false} />
+                        <Area type="linear" dataKey="value" stroke={config.color} strokeWidth={1.5} fill={`url(#grad-${key})`} isAnimationActive={false} />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
                 )}
 
                 {/* Description */}
-                <div className="mt-auto pt-3 border-t border-white/[0.05] space-y-1.5">
-                  <p className="text-xs text-slate-400 leading-relaxed">{config.desc}</p>
+                <div className="mt-auto pt-3 border-t border-(--color-card-border) space-y-1.5">
+                  <p className="text-xs text-(--color-text-secondary) leading-relaxed">{config.desc}</p>
                   <p className="text-xs font-medium" style={{ color: config.color }}>{config.impact}</p>
                 </div>
               </div>
@@ -172,8 +172,8 @@ const Pollutants = () => {
 
         {/* Right: Environment */}
         <div className="xl:col-span-3">
-          <div className="bg-white/[0.03] rounded-2xl p-5 space-y-4 sticky top-6">
-            <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-4">Environment</h3>
+          <div className="glass-card rounded-xl p-6 space-y-8 sticky top-6">
+            <h3 className="text-sm font-semibold text-(--color-text-primary) mb-4">Environment</h3>
 
             {[
               { label: 'Temperature', value: `${Number(environment?.temperature || 0).toFixed(1)} °C`, icon: Thermometer, color: 'text-rose-400' },
@@ -181,18 +181,20 @@ const Pollutants = () => {
               { label: 'Pressure', value: `${Math.floor(environment?.pressure || 0)} hPa`, icon: Gauge, color: 'text-indigo-400' },
               { label: 'Oxygen', value: `${Number(environment?.oxygen || 0).toFixed(1)}%`, icon: Wind, color: 'text-emerald-400' },
             ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between p-3 bg-white/[0.02] rounded-xl">
+              <div key={item.label} className="flex items-center justify-between p-3.5 bg-white/3 border border-white/10 rounded-xl backdrop-blur-sm shadow-inner">
                 <div className="flex items-center gap-3">
-                  <item.icon size={16} className={item.color} />
-                  <span className="text-xs text-slate-400">{item.label}</span>
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-white/5`}>
+                    <item.icon size={15} className={item.color} />
+                  </div>
+                  <span className="text-xs text-(--color-text-secondary) font-medium">{item.label}</span>
                 </div>
-                <span className="text-sm font-semibold text-white">{item.value}</span>
+                <span className="text-sm font-bold text-(--color-text-primary) tabular-nums">{item.value}</span>
               </div>
             ))}
 
-            <div className="flex items-center gap-2 pt-3 border-t border-white/[0.05]">
+            <div className="flex items-center gap-2 pt-3 border-t border-(--color-card-border)">
               <Activity size={12} className="text-emerald-400" />
-              <span className="text-[11px] text-slate-500">Sensors synced</span>
+              <span className="text-[11px] text-(--color-text-secondary) opacity-60">Sensors synced</span>
             </div>
           </div>
         </div>

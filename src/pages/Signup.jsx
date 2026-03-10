@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, ArrowRight, Eye, EyeOff, UserPlus } from 'lucide-react';
@@ -31,53 +31,66 @@ const Signup = () => {
     }
   };
 
+  useEffect(() => {
+    document.body.classList.add("dashboard-bg");
+    return () => document.body.classList.remove("dashboard-bg");
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[#060910] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.04),transparent_50%)]" />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Overlay */}
+      <div className="absolute inset-0 bg-slate-900/10 backdrop-blur-[2px]" />
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="relative w-full max-w-md"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="relative w-full max-w-md z-10"
       >
-        <div className="bg-white/[0.03] backdrop-blur-xl rounded-3xl p-10 shadow-2xl shadow-black/20">
+        <div className="glass-card p-10 shadow-2xl border border-white/40">
           {/* Logo */}
           <div className="flex flex-col items-center mb-10">
-            <div className="w-14 h-14 bg-linear-to-br from-sky-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg mb-4">
-              <UserPlus className="w-7 h-7 text-white" />
-            </div>
-            <h1 className="text-2xl font-black tracking-tight bg-linear-to-r from-white to-slate-400 bg-clip-text text-transparent">AERIS</h1>
-            <p className="text-xs text-slate-500 mt-2 text-center">Request clearance for live environmental intelligence</p>
+            <Link to="/">
+              <img src="/logo.png" alt="AERIS Logo" className="h-24 w-auto object-contain mb-2 hover:scale-105 transition-transform" />
+            </Link>
+            <p className="text-xs text-slate-500 mt-2 text-center font-medium uppercase tracking-widest opacity-70">New Clearance Request</p>
           </div>
 
           {error && (
-            <div className="bg-red-500/[0.06] rounded-xl p-3 mb-6 text-sm text-red-400 text-center">{error}</div>
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 mb-6 text-sm text-rose-600 text-center font-medium"
+            >
+              {error}
+            </motion.div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Full Name</label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Full Name</label>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Jane Doe"
                 required
-                className="w-full px-4 py-3.5 bg-white/[0.04] rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500/40 transition-colors"
+                className="w-full px-4 py-3.5 bg-white/40 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-(--color-primary) focus:ring-4 focus:ring-(--color-primary)/10 transition-all"
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Secure Email</label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Secure Email</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="operator@aeris.io"
                 required
-                className="w-full px-4 py-3.5 bg-white/[0.04] rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500/40 transition-colors"
+                className="w-full px-4 py-3.5 bg-white/40 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-(--color-primary) focus:ring-4 focus:ring-(--color-primary)/10 transition-all"
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Passphrase</label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Passphrase</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -85,38 +98,44 @@ const Signup = () => {
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   placeholder="••••••••"
                   required
-                  className="w-full px-4 py-3.5 bg-white/[0.04] rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500/40 transition-colors pr-12"
+                  className="w-full px-4 py-3.5 bg-white/40 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-(--color-primary) focus:ring-4 focus:ring-(--color-primary)/10 transition-all pr-12"
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors">
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)} 
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-(--color-primary) transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Confirm Passphrase</label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Confirm Passphrase</label>
               <input
                 type="password"
                 value={form.confirm}
                 onChange={(e) => setForm({ ...form, confirm: e.target.value })}
                 placeholder="••••••••"
                 required
-                className="w-full px-4 py-3.5 bg-white/[0.04] rounded-xl text-sm placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-sky-500/40 transition-colors"
+                className="w-full px-4 py-3.5 bg-white/40 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-(--color-primary) focus:ring-4 focus:ring-(--color-primary)/10 transition-all"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-linear-to-r from-sky-500 to-blue-600 rounded-xl text-sm font-bold uppercase tracking-widest text-white hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center space-x-2"
+              className="w-full py-4 bg-linear-to-r from-(--color-primary) to-(--color-secondary) rounded-xl text-xs font-black uppercase tracking-widest text-white hover:opacity-90 shadow-lg shadow-(--color-primary)/20 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-3"
             >
-              <span>{loading ? 'CREATING CLEARANCE...' : 'REQUEST ACCESS'}</span>
+              <span>{loading ? 'Requesting...' : 'Create Account'}</span>
               {!loading && <ArrowRight size={16} />}
             </button>
           </form>
 
-          <p className="text-center text-xs text-slate-500 mt-8">
-            Already have clearance? <Link to="/login" className="text-sky-400 font-bold hover:underline">Initialize Uplink</Link>
-          </p>
+          <div className="mt-8 pt-8 border-t border-slate-200/50 text-center">
+            <p className="text-sm text-slate-500">
+              Already have clearance? <Link to="/login" className="text-(--color-primary) font-bold hover:underline">Initialize Uplink</Link>
+            </p>
+          </div>
         </div>
       </motion.div>
     </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Radio, Wind, Network, MapPin, Shield, Heart,
-  TrendingUp, User, Radiation, LogOut, WifiOff, Menu, X, RefreshCw, ServerOff, Clock
+  TrendingUp, User, Radiation, LogOut, WifiOff, Menu, X
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
 import useAuthStore from '@/store/useAuthStore';
@@ -25,43 +25,19 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const data = useAerisStore((s) => s.data);
-  const loading = useAerisStore((s) => s.loading);
-  const storeError = useAerisStore((s) => s.error);
-  const isStale = useAerisStore((s) => s.isStale);
-  const cachedAt = useAerisStore((s) => s.cachedAt);
-  const fetchLatest = useAerisStore((s) => s.fetchLatest);
   const user = useAuthStore((s) => s.user);
   const selectedNode = useNodeStore((s) => s.selectedNode);
   const setSelectedNode = useNodeStore((s) => s.setSelectedNode);
   const detectLocation = useNodeStore((s) => s.detectLocation);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [retrying, setRetrying] = useState(false);
-  const [now, setNow] = useState(Date.now());
-
-  // Backend is unreachable AND no cached data at all
-  const backendOffline = !loading && !data && !!storeError;
-
-  // Update "time ago" every 30s for the stale banner
-  useEffect(() => {
-    if (!isStale) return;
-    const id = setInterval(() => setNow(Date.now()), 30000);
-    return () => clearInterval(id);
-  }, [isStale]);
-
-  const staleLabel = cachedAt ? (() => {
-    const diffMin = Math.floor((now - cachedAt) / 60000);
-    if (diffMin < 1) return 'just now';
-    if (diffMin < 60) return `${diffMin}m ago`;
-    const diffHr = Math.floor(diffMin / 60);
-    if (diffHr < 24) return `${diffHr}h ago`;
-    return `${Math.floor(diffHr / 24)}d ago`;
-  })() : null;
 
   const perNode = data?.perNode || {};
   const espNodeIds = Object.keys(perNode);
 
   useEffect(() => { detectLocation(); }, [detectLocation]);
+
+  // Close sidebar on route change (mobile)
   useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
 
   useEffect(() => {
@@ -74,6 +50,20 @@ const AppLayout = () => {
       window.removeEventListener('offline', goOffline);
     };
   }, []);
+  useEffect(() => {
+    document.body.classList.add("dashboard-bg");
+    // Apply saved theme preference
+    const savedTheme = localStorage.getItem('aeris-theme');
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+    return () => {
+      document.body.classList.remove("dashboard-bg");
+      document.body.classList.remove("dark-mode");
+    };
+  }, []);
 
   const userInitials = user?.name
     ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -83,21 +73,18 @@ const AppLayout = () => {
   const riskColor = data?.derived?.risk_color || '#10b981';
 
   return (
-    <div className="min-h-screen bg-[#060910] text-slate-100 font-sans">
+    <div className="min-h-screen text-slate-100 font-sans">
 
       {/* Mobile Top Bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-[#080d16]/90 backdrop-blur-2xl border-b border-white/[0.06] flex items-center justify-between px-4 z-[60]">
-        <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 text-slate-400 hover:text-white transition-colors">
-          <Menu size={20} />
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 glass-sidebar border-b border-(--color-card-border) flex items-center justify-between px-4 z-60">
+        <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 text-(--color-text-secondary) hover:text-(--color-text-primary) transition-colors">
+          <Menu size={22} />
         </button>
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-gradient-to-br from-sky-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg shadow-sky-500/20">
-            <Shield className="w-3.5 h-3.5 text-white" />
-          </div>
-          <span className="text-sm font-bold text-white tracking-tight">AERIS</span>
+        <div className="flex items-center gap-2 py-1">
+          <img src="/logo.png" alt="AERIS Logo" className="h-12 w-auto object-contain scale-110 origin-left" />
         </div>
         <div className="flex items-center gap-2">
-          <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-rose-500'}`} />
+          <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
           <span className="text-sm font-bold tabular-nums" style={{ color: riskColor }}>{rri}</span>
         </div>
       </div>
@@ -105,53 +92,47 @@ const AppLayout = () => {
       {/* Overlay */}
       {sidebarOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[70]"
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-70"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside className={`
-        fixed top-0 left-0 h-screen w-[260px] bg-[#080d16]/95 backdrop-blur-2xl border-r border-white/[0.06] flex flex-col z-[80]
-        transition-transform duration-300 ease-out
+        fixed top-0 left-0 h-screen w-64 glass-sidebar flex flex-col z-80
+        transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0
       `}>
 
         {/* Brand */}
-        <div className="px-5 h-16 flex items-center justify-between shrink-0">
+        <div className="px-5 py-4 flex items-center justify-between border-b border-(--color-card-border)">
           <div
-            className="flex items-center gap-3 cursor-pointer"
+            className="flex items-center cursor-pointer px-1 w-full justify-center"
             onClick={() => navigate('/')}
           >
-            <div className="w-9 h-9 bg-gradient-to-br from-sky-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-sky-500/20">
-              <Shield className="w-4.5 h-4.5 text-white" />
-            </div>
-            <div>
-              <span className="text-[15px] font-bold tracking-tight text-white block leading-tight">AERIS</span>
-              <span className="text-[10px] text-slate-500 font-medium tracking-wide">AIR INTELLIGENCE</span>
-            </div>
+            <img src="/logo.png" alt="AERIS Logo" className="h-20 w-auto object-contain scale-125 transform" />
           </div>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1.5 text-slate-500 hover:text-white transition-colors rounded-lg hover:bg-white/5">
-            <X size={16} />
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1 text-(--color-text-secondary) hover:text-(--color-text-primary) transition-colors">
+            <X size={18} />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-2 px-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 py-3 px-3 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 ${
+                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-sky-500/[0.12] text-sky-400 shadow-sm shadow-sky-500/10'
-                    : 'text-slate-500 hover:text-slate-200 hover:bg-white/[0.04]'
+                    ? 'bg-(--color-primary) text-white'
+                    : 'text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-white/10'
                 }`
               }
             >
-              <item.icon size={17} strokeWidth={isOnline ? 1.8 : 1.5} />
+              <item.icon size={18} />
               <span>{item.label}</span>
             </NavLink>
           ))}
@@ -159,12 +140,12 @@ const AppLayout = () => {
 
         {/* Node Selector */}
         {espNodeIds.length > 0 && (
-          <div className="px-4 py-3 mx-3 mb-2 bg-white/[0.03] rounded-xl">
-            <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-2">Active Sensor</p>
+          <div className="px-3 py-3 border-t border-(--color-card-border)">
+            <p className="text-[10px] font-semibold text-(--color-text-secondary) opacity-60 uppercase tracking-wider px-1 mb-2">Sensor Node</p>
             <select
               value={selectedNode}
               onChange={(e) => setSelectedNode(e.target.value)}
-              className="w-full h-9 px-3 bg-white/[0.05] rounded-lg text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500/40 cursor-pointer appearance-none border-0"
+              className="w-full h-9 px-3 bg-white/5 border border-(--color-card-border) rounded-lg text-xs text-(--color-text-secondary) focus:outline-none focus:border-[color-mix(in_srgb,var(--color-primary)_50%,transparent)] cursor-pointer appearance-none"
             >
               <option value="auto">Nearest (Auto)</option>
               <option value="all">All Stations</option>
@@ -176,33 +157,33 @@ const AppLayout = () => {
         )}
 
         {/* Footer */}
-        <div className="p-4 space-y-3 shrink-0">
+        <div className="p-4 border-t border-(--color-card-border) space-y-3">
           <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
-              <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-rose-500'}`} />
-              <span className="text-[11px] text-slate-600">{isOnline ? 'Connected' : 'Offline'}</span>
-            </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-slate-600 uppercase tracking-wide">RRI</span>
+              <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+              <span className="text-[11px] text-(--color-text-secondary)">{isOnline ? 'Connected' : 'Offline'}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-[11px] text-(--color-text-secondary) opacity-60">RRI</span>
               <span className="text-sm font-bold tabular-nums" style={{ color: riskColor }}>{rri}</span>
             </div>
           </div>
 
           {user && (
-            <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03]">
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-(--color-card-border)">
               <NavLink to="/profile" className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm shadow-sky-500/20">
+                <div className="w-8 h-8 rounded-lg bg-linear-to-br from-(--color-primary) to-(--color-secondary) flex items-center justify-center text-xs font-bold text-white shrink-0">
                   {userInitials}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[13px] font-medium text-slate-200 truncate">{user.name}</div>
-                  <div className="text-[11px] text-slate-600 truncate">{user.email}</div>
+                  <div className="text-xs font-semibold text-(--color-text-primary) truncate">{user.name}</div>
+                  <div className="text-[11px] text-(--color-text-secondary) truncate opacity-60">{user.email}</div>
                 </div>
               </NavLink>
               <button
                 onClick={() => { useAuthStore.getState().clearUser(); logout(); }}
                 title="Log out"
-                className="p-1.5 rounded-lg text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0"
+                className="p-1.5 rounded-md text-(--color-text-secondary) hover:text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0"
               >
                 <LogOut size={14} />
               </button>
@@ -212,66 +193,14 @@ const AppLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="lg:ml-[260px] min-h-screen pt-14 lg:pt-0">
-        {/* Browser offline banner */}
-        {!isOnline && !backendOffline && !isStale && (
-          <div className="bg-rose-500/8 border-b border-rose-500/15 px-4 py-2.5 flex items-center justify-center gap-2">
+      <main className="lg:ml-64 min-h-screen pt-14 lg:pt-0">
+        {!isOnline && (
+          <div className="bg-rose-500/10 border-b border-rose-500/20 px-4 py-2 flex items-center justify-center gap-2">
             <WifiOff size={14} className="text-rose-400" />
             <span className="text-xs font-medium text-rose-400">You are offline. Showing last known data.</span>
           </div>
         )}
-
-        {/* Stale cached data banner */}
-        {isStale && (
-          <div className="bg-amber-500/[0.06] px-4 py-2.5 flex items-center justify-center gap-3">
-            <div className="flex items-center gap-2">
-              <Clock size={13} className="text-amber-400" />
-              <span className="text-xs font-medium text-amber-400">
-                Server offline — showing cached data{staleLabel ? ` from ${staleLabel}` : ''}
-              </span>
-            </div>
-            <button
-              onClick={async () => {
-                setRetrying(true);
-                await fetchLatest();
-                setRetrying(false);
-              }}
-              disabled={retrying}
-              className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-400 rounded-lg text-[11px] font-semibold hover:bg-amber-500/15 transition-colors disabled:opacity-50"
-            >
-              <RefreshCw size={11} className={retrying ? 'animate-spin' : ''} />
-              <span>{retrying ? 'Retrying...' : 'Retry'}</span>
-            </button>
-          </div>
-        )}
-
-        {/* No data at all — full offline screen */}
-        {backendOffline ? (
-          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] lg:min-h-screen px-6 text-center">
-            <div className="w-16 h-16 bg-white/[0.03] rounded-2xl flex items-center justify-center mb-6">
-              <ServerOff size={28} className="text-slate-500" />
-            </div>
-            <h2 className="text-xl font-bold text-white mb-2">Server Unreachable</h2>
-            <p className="text-sm text-slate-500 max-w-sm mb-8 leading-relaxed">
-              Unable to connect to the AERIS backend. The server may be starting up or temporarily unavailable.
-            </p>
-            <button
-              onClick={async () => {
-                setRetrying(true);
-                await fetchLatest();
-                setRetrying(false);
-              }}
-              disabled={retrying}
-              className="flex items-center gap-2 px-6 py-3 bg-sky-500/10 text-sky-400 rounded-xl text-sm font-semibold hover:bg-sky-500/15 transition-colors disabled:opacity-50"
-            >
-              <RefreshCw size={15} className={retrying ? 'animate-spin' : ''} />
-              <span>{retrying ? 'Connecting...' : 'Retry Connection'}</span>
-            </button>
-            <p className="text-[11px] text-slate-600 mt-4">Auto-retry via WebSocket is active in the background.</p>
-          </div>
-        ) : (
-          <Outlet />
-        )}
+        <Outlet />
       </main>
     </div>
   );

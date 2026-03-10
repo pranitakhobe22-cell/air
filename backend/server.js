@@ -41,7 +41,7 @@ const apiRoutes = require('./src/routes/api');
 const app = express();
 app.set('trust proxy', true); // Railway reverse proxy — needed for real client IP
 const server = http.createServer(app);
-const PORT = process.env.PORT || process.env.MAIN_PORT || 3000;
+const PORT = process.env.MAIN_PORT || process.env.PORT || 3000;
 
 // ── WebSocket ────────────────────────────────────────────────────
 initWebSocket(server);
@@ -162,10 +162,17 @@ const start = async () => {
     // Init SQLite (for locations / nodes / alerts - lightweight fallback data)
     await initDb();
 
-    // Init Cosmos DB (primary data store)
+    // Init Cosmos DB (primary data store) — with timeout so server still starts
     if (isConfigured()) {
-      await initCosmos();
-      console.log('✅ [Cosmos] All containers ready');
+      try {
+        await Promise.race([
+          initCosmos(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Cosmos DB connection timed out after 10s')), 10000))
+        ]);
+        console.log('✅ [Cosmos] All containers ready');
+      } catch (cosmosErr) {
+        console.warn('⚠️  [Cosmos] Init failed:', cosmosErr.message, '— continuing without Cosmos');
+      }
     } else {
       console.warn('⚠️  [Cosmos] Not configured — set COSMOS_CONNECTION_STRING');
     }

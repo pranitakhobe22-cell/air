@@ -38,7 +38,7 @@ const AnimatedNum = ({ value, decimals = 0 }) => {
 const sensorStatus = (id, val) => {
   const thresholds = {
     pm25: [12, 35, 55, 150],
-    pm10: [54, 154, 254, 354],
+   
     co: [4.4, 9.4, 12.4, 15.4],
     o3: [54, 70, 85, 105],
     nox: [53, 100, 360, 649],
@@ -47,7 +47,7 @@ const sensorStatus = (id, val) => {
     hum: [30, 60, 80, 95],
   };
   const t = thresholds[id];
-  if (!t) return '#94a3b8';
+  if (!t) return 'var(--color-text-secondary)';
   if (val <= t[0]) return '#22c55e';
   if (val <= t[1]) return '#eab308';
   if (val <= t[2]) return '#f97316';
@@ -86,19 +86,19 @@ const LiveStatus = () => {
 
   if (!data?.sensors) {
     return (
-      <div className="p-5 sm:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6">
+      <div className="p-6 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-8">
         <div>
-          <div className="h-7 w-40 bg-white/[0.03] rounded-lg animate-pulse" />
-          <div className="h-4 w-64 bg-white/[0.03] rounded mt-2 animate-pulse" />
+          <div className="h-7 w-40 glass-card rounded-lg animate-pulse" />
+          <div className="h-4 w-64 glass-card rounded mt-2 animate-pulse" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div className="lg:col-span-8 grid grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-8 grid grid-cols-2 lg:grid-cols-3 gap-8">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-white/[0.03] rounded-2xl h-32 animate-pulse" />
+              <div key={i} className="glass-card rounded-xl h-32 animate-pulse" />
             ))}
           </div>
           <div className="lg:col-span-4 space-y-5">
-            <div className="bg-white/[0.03] rounded-2xl h-64 animate-pulse" />
+            <div className="glass-card rounded-xl h-64 animate-pulse" />
           </div>
         </div>
       </div>
@@ -114,6 +114,7 @@ const LiveStatus = () => {
 
   const sensorTiles = [
     { id: 'pm25', label: 'PM2.5', value: activeSensors.pm25, unit: 'µg/m³', icon: Activity, decimals: 1, max: 150 },
+   
     { id: 'o3', label: 'Ozone', value: activeSensors.o3, unit: 'ppb', icon: Wind, decimals: 1, max: 120 },
     { id: 'co', label: 'CO', value: activeSensors.co, unit: 'ppm', icon: Gauge, decimals: 2, max: 15 },
     { id: 'nox', label: 'NOx', value: activeSensors.nox, unit: 'ppb', icon: Activity, decimals: 0, max: 360 },
@@ -127,30 +128,30 @@ const LiveStatus = () => {
   const riskColor = activeDerived?.risk_color || '#10b981';
 
   const eventColors = {
-    alert: 'bg-red-500/[0.04] text-red-400',
-    sync: 'bg-white/[0.02] text-slate-400',
+    alert: 'border-red-500/30 bg-red-500/5 text-red-400',
+    sync: 'border-slate-700/50 bg-slate-800/30 text-slate-400',
   };
 
   return (
-    <div className="p-5 sm:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6">
+    <div className="p-6 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-8">
 
       {/* ── Header ──────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Live Status</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h1 className="text-xl sm:text-2xl font-bold text-(--color-text-primary) tracking-tight">Live Status</h1>
+          <p className="text-sm text-(--color-text-secondary) opacity-60 mt-0.5">
             Real-time sensor readings &middot; {active.nodeName || meta?.location || 'Local Station'}
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.04] rounded-xl">
+          <div className="flex items-center gap-2 px-3 py-1.5 glass-card rounded-lg">
             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-            <Clock size={14} className="text-slate-500" />
-            <span className="text-xs text-slate-400 tabular-nums">{secondsAgo}s ago</span>
+            <Clock size={14} className="text-(--color-text-secondary) opacity-60" />
+            <span className="text-xs text-(--color-text-secondary) tabular-nums">{secondsAgo}s ago</span>
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="p-2 bg-white/[0.04] rounded-xl text-slate-400 hover:bg-white/[0.05] hover:text-white transition-colors"
+            className="p-2 glass-button rounded-lg transition-all"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
@@ -159,7 +160,7 @@ const LiveStatus = () => {
 
       {/* ── Rain Banner ──────────────────────────────── */}
       {activeEnv?.rain && (
-        <div className="bg-sky-500/[0.06] rounded-2xl px-5 py-3 flex items-center gap-3">
+        <div className="bg-sky-900/30 border border-sky-700/40 rounded-xl px-5 py-3 flex items-center gap-3">
           <Droplets size={18} className="text-sky-400 shrink-0" />
           <div>
             <span className="text-sm font-medium text-sky-300">Raining is happening</span>
@@ -179,26 +180,26 @@ const LiveStatus = () => {
         <div className="lg:col-span-8 space-y-5">
 
           {/* Sensor grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8">
             {sensorTiles.map((tile) => {
               const color = sensorStatus(tile.id, tile.value);
               return (
                 <div
                   key={tile.id}
-                  className="bg-white/[0.03] rounded-2xl p-5 relative overflow-hidden hover:bg-white/[0.05] transition-colors"
+                  className="glass-card rounded-xl p-6 relative overflow-hidden"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">{tile.label}</span>
-                    <tile.icon size={16} className="text-slate-600" />
+                    <span className="text-xs font-medium text-(--color-text-secondary) opacity-60">{tile.label}</span>
+                    <tile.icon size={16} className="text-(--color-text-secondary) opacity-40" />
                   </div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-white tabular-nums">
+                    <span className="text-3xl font-bold text-(--color-text-primary) tabular-nums">
                       <AnimatedNum value={tile.value} decimals={tile.decimals} />
                     </span>
-                    <span className="text-xs text-slate-500">{tile.unit}</span>
+                    <span className="text-xs text-(--color-text-secondary) opacity-60">{tile.unit}</span>
                   </div>
                   {/* Status bar */}
-                  <div className="mt-3 h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                  <div className="mt-3 h-1 bg-white/10 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-700"
                       style={{
@@ -213,27 +214,27 @@ const LiveStatus = () => {
           </div>
 
           {/* Advisory */}
-          <div className="bg-white/[0.03] rounded-2xl p-6">
+          <div className="glass-card rounded-xl p-6">
             <div className="flex items-center gap-2 mb-3">
               <Heart size={16} className="text-rose-400" />
-              <span className="text-sm font-semibold text-slate-300">Health Advisory</span>
+              <span className="text-sm font-semibold text-(--color-text-primary)">Health Advisory</span>
             </div>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <p className="text-sm text-slate-400 leading-relaxed max-w-xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+              <p className="text-sm text-(--color-text-secondary) leading-relaxed max-w-xl">
                 {activeDerived?.air_quality_text || 'Current air quality conditions are being monitored.'}
-                {' '}Dominant pollutant: <span className="text-slate-300 font-medium">{activeDerived?.dominant || 'PM2.5'}</span>.
+                {' '}Dominant pollutant: <span className="text-(--color-text-primary) font-medium">{activeDerived?.dominant || 'PM2.5'}</span>.
               </p>
               <div className="flex items-center gap-3 shrink-0">
                 <div className="text-right">
-                  <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Risk Score</p>
+                  <p className="text-[11px] text-(--color-text-secondary) opacity-60">Risk Score</p>
                   <p className="text-2xl font-bold tabular-nums" style={{ color: riskColor }}>
                     <AnimatedNum value={activeDerived?.rri || 0} />
                   </p>
                 </div>
-                <div className="w-px h-8 bg-white/[0.05]" />
+                <div className="w-px h-8 bg-card-border" />
                 <div className="text-right">
-                  <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">AQI</p>
-                  <p className="text-2xl font-bold text-white tabular-nums">
+                  <p className="text-[11px] text-(--color-text-secondary) opacity-60">AQI</p>
+                  <p className="text-2xl font-bold text-(--color-text-primary) tabular-nums">
                     <AnimatedNum value={activeDerived?.aqi || 0} />
                   </p>
                 </div>
@@ -246,16 +247,16 @@ const LiveStatus = () => {
         <div className="lg:col-span-4 space-y-5">
 
           {/* Map */}
-          <div className="bg-white/[0.03] rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.05]">
+          <div className="glass-card rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-(--color-card-border)">
               <div className="flex items-center gap-2">
-                <MapPin size={14} className="text-sky-400" />
-                <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Sensor Map</span>
+                <MapPin size={14} className="text-(--color-accent)" />
+                <span className="text-xs font-medium text-(--color-text-secondary)">Sensor Map</span>
               </div>
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
             </div>
             <div className="h-[240px]">
-              <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%', background: '#060910' }} zoomControl={false} dragging={false}>
+              <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%', background: 'var(--color-bg-main)' }} zoomControl={false} dragging={false}>
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
                 {sectors?.map((s, i) => (
                   <CircleMarker
@@ -275,12 +276,12 @@ const LiveStatus = () => {
           </div>
 
           {/* Event Feed */}
-          <div className="bg-white/[0.03] rounded-2xl flex flex-col overflow-hidden min-h-[320px]">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.05]">
-              <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Event Log</span>
+          <div className="glass-card rounded-xl flex flex-col overflow-hidden min-h-[320px]">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-(--color-card-border)">
+              <span className="text-xs font-medium text-(--color-text-secondary)">Event Log</span>
               <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold rounded">LIVE</span>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-2 max-h-[360px]">
+            <div className="flex-1 overflow-y-auto p-6 space-y-2 max-h-[360px] glass-scrollbar">
               <AnimatePresence mode="popLayout">
                 {eventLog.map((event, i) => (
                   <motion.div
@@ -288,7 +289,7 @@ const LiveStatus = () => {
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className={`rounded-xl p-3 ${eventColors[event.type]}`}
+                    className={`border rounded-lg p-3 ${eventColors[event.type]}`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] font-semibold uppercase tracking-wide">
@@ -301,7 +302,7 @@ const LiveStatus = () => {
                 ))}
               </AnimatePresence>
               {eventLog.length === 0 && (
-                <p className="text-xs text-slate-600 text-center py-8">Waiting for events...</p>
+                <p className="text-xs text-(--color-text-secondary) opacity-40 text-center py-8">Waiting for events...</p>
               )}
             </div>
           </div>

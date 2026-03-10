@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-  Shield, Wind, Activity, ArrowRight, MapPin, Heart,
-  Cpu, Cloud, LayoutDashboard, Brain, Check
-} from 'lucide-react';
+import { Shield, Wind, Activity, ArrowRight, Eye, Heart, Cloud, ActivitySquare, LayoutDashboard, ShieldCheck, Github, Twitter, MapPin } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
 
+// Keep helpers to not break any external/internal expectations
 const getAqiColor = (aqi) => {
   if (aqi <= 50) return '#22c55e';
   if (aqi <= 100) return '#eab308';
@@ -25,8 +23,9 @@ const getAqiLabel = (aqi) => {
 
 const Landing = () => {
   const navigate = useNavigate();
+  
+  // Untouched state logic
   const data = useAerisStore((s) => s.data);
-
   const aqi = data?.derived?.aqi || 0;
   const rri = data?.derived?.rri || 0;
   const riskColor = data?.derived?.risk_color || '#10b981';
@@ -37,278 +36,194 @@ const Landing = () => {
   const multiplier = hasAsthma ? 1.35 : 1.0;
 
   return (
-    <div className="min-h-screen bg-[#060910] text-slate-100 font-sans overflow-x-hidden">
-
-      {/* Navbar */}
-      <nav className="flex items-center justify-between px-5 sm:px-8 md:px-12 py-5 max-w-7xl mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-sky-500/20">
-            <Shield className="text-white w-5 h-5" />
-          </div>
-          <span className="text-lg font-bold tracking-tight text-white">AERIS</span>
+    <div className="min-h-screen text-slate-100 font-sans bg-slate-900 overflow-x-hidden">
+      {/* ── Navbar ─────────────────────────────────────── */}
+      <nav className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-5 max-w-7xl mx-auto w-full">
+        <div className="flex items-center">
+          <span className="text-xl font-extrabold tracking-tight text-white drop-shadow-md">AERIS</span>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/login')} className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors rounded-lg">
+        <div className="flex items-center gap-6">
+          <button onClick={() => navigate('/login')} className="text-sm font-semibold text-slate-200 hover:text-white transition-colors drop-shadow-md">
             Log in
           </button>
-          <button onClick={() => navigate('/signup')} className="px-5 py-2.5 bg-sky-500 hover:bg-sky-400 rounded-xl text-sm font-semibold text-white transition-all shadow-lg shadow-sky-500/25 hover:shadow-sky-500/40">
+          <button onClick={() => navigate('/signup')} className="px-6 py-2.5 bg-sky-500 hover:bg-sky-400 rounded-full text-sm font-bold text-white shadow-lg shadow-sky-500/30 transition-all hover:scale-105">
             Get Started
           </button>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="max-w-7xl mx-auto px-5 sm:px-8 md:px-12 pt-12 sm:pt-20 pb-20 sm:pb-32">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/[0.05] rounded-full mb-6">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-              <span className="text-xs font-medium text-slate-400">Live monitoring active</span>
+      {/* ── 1. Hero Section ────────────────────────────── */}
+      <section className="relative min-h-[90vh] flex items-center justify-center px-4 pt-20">
+        <div className="absolute inset-0 z-0">
+          <img src="/hero-bg.jpg" alt="Mountain valley" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-linear-to-b from-slate-900/40 via-slate-900/60 to-slate-900" />
+        </div>
+        
+        <div className="relative z-10 max-w-4xl mx-auto text-center">
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full mb-6 border border-white/20">
+              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+              <span className="text-sm font-medium text-white">Live Environmental Intelligence</span>
             </div>
-
-            <h1 className="text-4xl sm:text-5xl md:text-[3.5rem] lg:text-6xl font-extrabold leading-[1.08] tracking-tight mb-6">
-              Air quality,{' '}
-              <span className="bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">personalized</span>
-              <br />to your health.
+            
+            <h1 className="font-extrabold tracking-tight text-white drop-shadow-xl mb-6 leading-tight flex flex-col items-center">
+              <span className="text-7xl md:text-8xl lg:text-9xl text-transparent bg-clip-text bg-linear-to-r from-(--color-primary) to-(--color-secondary) tracking-wide pb-2">AERIS</span>
+              <span className="text-4xl md:text-5xl lg:text-6xl mt-4">The Smartest Way <br/> to Check Your Space</span>
             </h1>
-
-            <p className="text-lg text-slate-400 max-w-lg leading-relaxed mb-8">
-              AERIS combines real-time sensor data with your health profile to deliver a personal respiratory risk score — not just a generic AQI number.
+            
+            <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed font-light drop-shadow-md">
+              Real-time air quality tracking, pollution data visualization, and personalized health risks. Understand what you breathe, before you step outside.
             </p>
-
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => navigate('/signup')}
-                className="flex items-center gap-2 px-7 py-3.5 bg-sky-500 hover:bg-sky-400 rounded-xl font-semibold text-white transition-all shadow-lg shadow-sky-500/25 hover:shadow-sky-500/40 hover:-translate-y-0.5"
-              >
-                Start Monitoring <ArrowRight className="w-4 h-4" />
+            
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button onClick={() => navigate('/dashboard')} className="w-full sm:w-auto px-8 py-4 bg-sky-500 hover:bg-sky-400 text-white rounded-full font-bold text-lg shadow-xl shadow-sky-500/20 transition-all hover:scale-105 flex items-center justify-center gap-2">
+                <LayoutDashboard className="w-5 h-5" /> View Dashboard
               </button>
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="px-7 py-3.5 bg-white/[0.06] hover:bg-white/[0.1] rounded-xl font-semibold text-slate-300 transition-all"
-              >
-                Try Demo
+              <button onClick={() => navigate('/signup')} className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white rounded-full font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2">
+                Get Started <ArrowRight className="w-5 h-5" />
               </button>
-            </div>
-          </motion.div>
-
-          {/* Live data cards */}
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }} className="space-y-4">
-            <div className="p-6 bg-white/[0.04] rounded-2xl flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${aqiColor}12` }}>
-                  <Wind className="w-6 h-6" style={{ color: aqiColor }} />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-slate-500 mb-0.5">Air Quality Index</p>
-                  <p className="text-sm font-semibold" style={{ color: aqiColor }}>{getAqiLabel(aqi)}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-4xl font-extrabold text-white tabular-nums">{aqi}</span>
-                <p className="text-[11px] text-slate-600 mt-0.5">AQI</p>
-              </div>
-            </div>
-
-            <div className="p-6 bg-white/[0.04] rounded-2xl flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${riskColor}12` }}>
-                  <Activity className="w-6 h-6" style={{ color: riskColor }} />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-slate-500 mb-0.5">Respiratory Risk Index</p>
-                  <p className="text-sm font-semibold" style={{ color: riskColor }}>
-                    {rri <= 40 ? 'Low' : rri <= 70 ? 'Moderate' : 'High'}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-4xl font-extrabold text-white tabular-nums">{rri}</span>
-                <p className="text-[11px] text-slate-600 mt-0.5">RRI</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: 'Sensors', value: nodeCount || 3 },
-                { label: 'Pollutants', value: 5 },
-                { label: 'Update', value: '10s' },
-              ].map((s) => (
-                <div key={s.label} className="p-4 bg-white/[0.03] rounded-xl text-center">
-                  <div className="text-xl font-bold text-white">{s.value}</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">{s.label}</div>
-                </div>
-              ))}
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="max-w-7xl mx-auto px-5 sm:px-8 md:px-12 py-16 sm:py-24 border-t border-white/[0.05]">
+      {/* ── 2. Features Section ────────────────────────── */}
+      <section className="py-24 px-6 max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">What makes AERIS different</h2>
-          <p className="text-slate-500 max-w-xl mx-auto text-lg">Real hardware, real-time data, and personalized risk analysis — not just another weather widget.</p>
+          <h2 className="text-sm font-bold text-sky-400 tracking-widest uppercase mb-2">Core Capabilities</h2>
+          <h3 className="text-3xl md:text-4xl font-extrabold text-white">Actionable Air Quality Insights</h3>
         </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { icon: Wind, name: 'Real-Time Sensors', desc: 'ESP32-based nodes capture PM2.5, O3, CO, NO2, VOCs and environmental data every 10 seconds.' },
-            { icon: MapPin, name: 'Hyperlocal Coverage', desc: 'Sector-level mapping shows air quality variations across your neighborhood, not just your city.' },
-            { icon: Shield, name: 'Personal Risk Score', desc: 'Your RRI factors in age, respiratory conditions, and activity level for a truly personal assessment.' },
-            { icon: Brain, name: 'Trend Forecasting', desc: 'Track air quality patterns and get 6-hour forecasts to plan outdoor activities safely.' },
-            { icon: Heart, name: 'Health Guidance', desc: 'Receive actionable recommendations based on your health profile and current conditions.' },
-            { icon: Cloud, name: 'Sensor Network', desc: 'Distributed IoT mesh across residential and industrial zones for comprehensive coverage.' },
-          ].map((f, i) => (
-            <motion.div
-              key={f.name}
-              initial={{ opacity: 0, y: 16 }}
+            { icon: Wind, title: 'Real-time AQI Monitoring', desc: 'Continuous tracking of PM2.5, PM10, and overarching Air Quality Index with immediate alerts.' },
+            { icon: Activity, title: 'Data Visualization', desc: 'Clear, intuitive graphs and spatial mapping of local and regional pollutant concentrations.' },
+            { icon: Heart, title: 'Personal Exposure Risk', desc: 'Custom Health Risk Indices computed from your personal profiles and current environmental metrics.' },
+            { icon: Cloud, title: 'Environmental Insights', desc: 'Predictive forecasting and trend analysis to help you plan outdoor activities safely.' }
+          ].map((feature, i) => (
+            <motion.div 
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.07, ease: [0.25, 0.1, 0.25, 1] }}
-              className="group p-6 bg-white/[0.03] rounded-2xl hover:bg-white/[0.06] transition-all duration-300"
+              transition={{ delay: i * 0.1 }}
+              className="bg-slate-800/50 backdrop-blur-lg border border-slate-700/50 p-8 rounded-2xl hover:bg-slate-800 transition-colors group"
             >
-              <div className="w-11 h-11 bg-sky-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                <f.icon size={20} className="text-sky-400" />
+              <div className="w-14 h-14 bg-slate-700/50 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform group-hover:bg-sky-500/20">
+                <feature.icon className="w-7 h-7 text-sky-400" />
               </div>
-              <h3 className="text-[15px] font-semibold text-white mb-2">{f.name}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">{f.desc}</p>
+              <h4 className="text-xl font-bold text-white mb-3">{feature.title}</h4>
+              <p className="text-slate-400 font-light leading-relaxed">{feature.desc}</p>
             </motion.div>
           ))}
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="max-w-7xl mx-auto px-5 sm:px-8 md:px-12 py-16 sm:py-24 border-t border-white/[0.05]">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">How it works</h2>
-          <p className="text-slate-500 text-lg">From sensor to screen in under 10 seconds.</p>
-        </div>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { icon: Cpu, step: '01', name: 'Sensor Capture', desc: 'ESP32 nodes read atmospheric data from calibrated gas and particulate sensors.' },
-            { icon: Cloud, step: '02', name: 'Cloud Ingestion', desc: 'Readings are validated, processed, and stored with sub-second latency.' },
-            { icon: Brain, step: '03', name: 'Risk Computation', desc: 'AQI is calculated per EPA standards, then personalized into your RRI.' },
-            { icon: LayoutDashboard, step: '04', name: 'Live Dashboard', desc: 'Real-time visualization with alerts, trends, and health recommendations.' },
-          ].map((s, i) => (
-            <motion.div
-              key={s.step}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, ease: [0.25, 0.1, 0.25, 1] }}
-              className="p-6 bg-white/[0.03] rounded-2xl text-center"
-            >
-              <div className="text-[11px] font-bold text-sky-400/60 tracking-widest mb-4">{s.step}</div>
-              <div className="w-12 h-12 mx-auto bg-white/[0.05] rounded-xl flex items-center justify-center mb-4">
-                <s.icon size={22} className="text-slate-300" />
-              </div>
-              <h4 className="font-semibold text-white mb-2">{s.name}</h4>
-              <p className="text-sm text-slate-500 leading-relaxed">{s.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Personalization Demo */}
-      <section className="max-w-7xl mx-auto px-5 sm:px-8 md:px-12 py-16 sm:py-24 border-t border-white/[0.05]">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-5">Not all lungs are equal</h2>
-            <p className="text-lg text-slate-400 leading-relaxed mb-8">
-              A standard AQI of 50 means different things for a healthy adult vs. someone with asthma. AERIS applies a personal risk multiplier based on your health profile.
+      {/* ── 3. Platform Overview ───────────────────────── */}
+      <section className="py-24 bg-slate-900 border-y border-slate-800 relative overflow-hidden">
+        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/3 w-96 h-96 bg-sky-500/10 blur-[100px] rounded-full" />
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6 leading-tight">
+              More than just data. <br/>
+              <span className="text-slate-400">Meaningful protection.</span>
+            </h2>
+            <p className="text-lg text-slate-300 font-light leading-relaxed mb-8">
+              AERIS uses highly accurate IoT sensors distributed across the region to stream environmental parameters instantly. We take complex meteorological and pollutant data and translate it into a single, understandable platform. 
+              <br/><br/>
+              The system adjusts its guidance based on the unique health profiles you provide, making recommendations truly customized to your respiratory situation.
             </p>
-            <ul className="space-y-3.5">
-              {[
-                'EPA-standard AQI as baseline',
-                'Age and cardiovascular health weighting',
-                'Respiratory condition adjustments',
-                'Activity level factored in',
-              ].map((item, i) => (
-                <li key={i} className="flex items-center gap-3 text-[15px] text-slate-300">
-                  <div className="w-5 h-5 rounded-full bg-sky-500/10 flex items-center justify-center shrink-0">
-                    <Check size={12} className="text-sky-400" />
+            
+            <ul className="space-y-4 mb-8">
+              {['End-to-end encryption for health data', 'Hyper-local node data via Map View', 'Personal modifiers adjusting base AQI dynamically'].map((text, i) => (
+                <li key={i} className="flex items-center gap-3 text-slate-300 font-medium">
+                  <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
                   </div>
-                  <span>{item}</span>
+                  {text}
                 </li>
               ))}
             </ul>
-          </div>
-
-          <div className="bg-white/[0.04] rounded-2xl p-7">
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-6">Try it: toggle condition</p>
-
-            <div className="flex rounded-xl overflow-hidden bg-white/[0.04] mb-6">
-              <button
-                onClick={() => setHasAsthma(false)}
-                className={`flex-1 py-3 text-sm font-semibold transition-all ${!hasAsthma ? 'bg-sky-500/15 text-sky-400' : 'text-slate-500 hover:text-slate-300'}`}
-              >
-                Healthy
-              </button>
-              <button
-                onClick={() => setHasAsthma(true)}
-                className={`flex-1 py-3 text-sm font-semibold transition-all ${hasAsthma ? 'bg-red-500/12 text-red-400' : 'text-slate-500 hover:text-slate-300'}`}
-              >
-                Asthma
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between gap-4 p-5 bg-[#060910] rounded-xl mb-5">
-              <div className="text-center">
-                <p className="text-[11px] text-slate-600 mb-1.5">Base AQI</p>
-                <p className="text-2xl font-bold text-white">50</p>
-              </div>
-              <span className="text-slate-700 font-bold text-lg">&times;</span>
-              <div className="text-center">
-                <p className="text-[11px] text-slate-600 mb-1.5">Multiplier</p>
-                <p className="text-2xl font-bold text-sky-400">{multiplier.toFixed(2)}</p>
-              </div>
-              <span className="text-slate-700 font-bold text-lg">=</span>
-              <div className="text-center">
-                <p className="text-[11px] text-slate-600 mb-1.5">Your RRI</p>
-                <p className={`text-2xl font-bold ${hasAsthma ? 'text-red-400' : 'text-emerald-400'}`}>
-                  {Math.round(50 * multiplier)}
-                </p>
-              </div>
-            </div>
-
-            <p className="text-sm text-slate-400 leading-relaxed">
-              {hasAsthma
-                ? 'With asthma, an AQI of 50 translates to a personal risk score of 68. Moderate caution is advised for outdoor activities.'
-                : 'With no conditions, an AQI of 50 poses minimal respiratory risk. All activities are safe.'
-              }
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="max-w-7xl mx-auto px-5 sm:px-8 md:px-12 py-16 sm:py-24 border-t border-white/[0.05]">
-        <div className="text-center max-w-2xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-5">Start protecting your lungs today</h2>
-          <p className="text-slate-500 text-lg mb-8">Create a free account to set up your health profile and get personalized air quality insights.</p>
-          <button
-            onClick={() => navigate('/signup')}
-            className="inline-flex items-center gap-2 px-8 py-4 bg-sky-500 hover:bg-sky-400 rounded-xl font-semibold text-white transition-all shadow-lg shadow-sky-500/25 hover:shadow-sky-500/40 hover:-translate-y-0.5"
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="rounded-3xl p-8 bg-linear-to-br from-slate-800 to-slate-800/50 border border-slate-700 shadow-2xl relative"
           >
-            Create Free Account <ArrowRight className="w-4 h-4" />
-          </button>
+             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 mix-blend-overlay rounded-3xl" />
+             
+             {/* Abstract visual representation */}
+             <div className="grid grid-cols-2 gap-4 relative z-10">
+                <div className="p-6 bg-slate-900 rounded-2xl border border-slate-700">
+                  <Activity className="w-8 h-8 text-rose-400 mb-4" />
+                  <div className="text-2xl font-black text-white">42 µg/m³</div>
+                  <div className="text-sm text-slate-400 mt-1">PM2.5 Level</div>
+                </div>
+                <div className="p-6 bg-slate-900 rounded-2xl border border-slate-700 translate-y-6">
+                  <MapPin className="w-8 h-8 text-sky-400 mb-4" />
+                  <div className="text-2xl font-black text-white">6</div>
+                  <div className="text-sm text-slate-400 mt-1">Active Nodes</div>
+                </div>
+                <div className="p-6 bg-slate-900 rounded-2xl border border-slate-700 -translate-y-6">
+                  <Heart className="w-8 h-8 text-emerald-400 mb-4" />
+                  <div className="text-2xl font-black text-white">Low</div>
+                  <div className="text-sm text-slate-400 mt-1">Risk Profile</div>
+                </div>
+                <div className="p-6 bg-slate-900 rounded-2xl border border-slate-700 flex flex-col justify-center items-center text-center">
+                   <div className="w-16 h-16 rounded-full border-4 border-sky-500 flex items-center justify-center mb-3">
+                      <span className="text-xl font-bold text-white">50</span>
+                   </div>
+                   <div className="text-sm font-bold text-sky-400">AQI</div>
+                </div>
+             </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/[0.05] py-10 px-5 sm:px-8 md:px-12">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-gradient-to-br from-sky-400 to-indigo-500 rounded-lg flex items-center justify-center">
-              <Shield className="text-white w-3.5 h-3.5" />
-            </div>
-            <span className="font-bold text-sm text-slate-500">AERIS</span>
+      {/* ── 4. Call to Action ──────────────────────────── */}
+      <section className="py-24 relative px-6">
+        <div className="max-w-5xl mx-auto bg-linear-to-r from-sky-600 to-blue-700 rounded-3xl p-10 md:p-16 text-center shadow-2xl shadow-sky-900/40 relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-3xl rounded-full" />
+           <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/20 blur-3xl rounded-full" />
+           
+           <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6 relative z-10">Ready to monitor your environment?</h2>
+           <p className="text-sky-100 text-lg md:text-xl font-light mb-10 max-w-2xl mx-auto relative z-10">
+             Join AERIS today and start leveraging cutting-edge sensor arrays to understand exactly what you and your family are breathing.
+           </p>
+           
+           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative z-10">
+            <button onClick={() => navigate('/signup')} className="w-full sm:w-auto px-8 py-4 bg-white text-blue-600 hover:bg-slate-100 rounded-full font-bold text-lg shadow-xl shadow-black/10 transition-transform hover:scale-105">
+              Create Free Account
+            </button>
+            <button onClick={() => navigate('/pollutants')} className="w-full sm:w-auto px-8 py-4 bg-transparent border-2 border-white/30 text-white hover:bg-white/10 rounded-full font-bold text-lg transition-all">
+              Explore Data
+            </button>
+           </div>
+        </div>
+      </section>
+
+      {/* ── 5. Footer ──────────────────────────────────── */}
+      <footer className="bg-slate-950 py-12 px-6 border-t border-slate-800">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center">
+            <span className="text-xl font-extrabold tracking-tight text-white">AERIS</span>
           </div>
-          <p className="text-xs text-slate-600">
-            {nodeCount || 3} sensors active &middot; Real-time environmental monitoring
-          </p>
+          
+          <div className="flex gap-8 text-sm font-medium text-slate-400">
+            <button onClick={() => navigate('/dashboard')} className="hover:text-white transition-colors">Dashboard</button>
+            <button onClick={() => navigate('/map')} className="hover:text-white transition-colors">Map</button>
+            <button onClick={() => navigate('/profile')} className="hover:text-white transition-colors">Profile</button>
+          </div>
+          
+          <div className="text-sm font-light text-slate-500">
+            &copy; {new Date().getFullYear()} AERIS Intelligence. All rights reserved.
+          </div>
         </div>
       </footer>
     </div>

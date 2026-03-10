@@ -119,12 +119,12 @@ const Health = () => {
   ];
 
   return (
-    <div className="p-5 sm:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6">
+    <div className="p-6 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-5 sm:space-y-6">
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Health Center</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h1 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">Health Center</h1>
+          <p className="text-sm text-(--color-text-secondary) mt-0.5">
             {active.isNodeView ? `${active.nodeName} — ` : ''}Health guidance and recommendations based on current conditions.
           </p>
         </div>
@@ -139,8 +139,8 @@ const Health = () => {
         <div className="xl:col-span-8 space-y-5">
 
           {/* Guidance cards — now using AI advisory data */}
-          <div className="bg-white/[0.03] rounded-2xl p-6">
-            <h3 className="text-sm font-semibold text-slate-300 mb-5">Current Guidance</h3>
+          <div className="glass-card p-6">
+            <h3 className="text-sm font-semibold text-(--color-text-primary) mb-5">Current Guidance</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               {[
                 {
@@ -148,33 +148,33 @@ const Health = () => {
                   value: advisory?.maskType || 'Not needed',
                   icon: Shield,
                   color: advisory?.maskType?.includes('N95') ? 'text-amber-400' : advisory?.maskType?.includes('Surgical') ? 'text-yellow-400' : 'text-emerald-400',
-                  bg: advisory?.maskType?.includes('N95') ? 'bg-amber-500/[0.06]' : 'bg-white/[0.02]',
+                  bg: advisory?.maskType?.includes('N95') ? 'bg-amber-500/[0.06]' : 'bg-white/10',
                 },
                 {
                   label: 'Outdoor Limit',
                   value: advisory?.outdoorLimit || 'Unlimited',
                   icon: Thermometer,
                   color: 'text-sky-400',
-                  bg: 'bg-white/[0.02]',
+                  bg: 'bg-white/10',
                 },
                 {
                   label: 'Daily Intake',
                   value: `${advisory?.hydrationOz || 84} oz water`,
                   icon: Droplets,
                   color: 'text-blue-400',
-                  bg: 'bg-white/[0.02]',
+                  bg: 'bg-white/10',
                 },
                 {
                   label: 'Breathing',
                   value: rri >= 40 ? 'Shallow, indoor' : '4-7-8 Deep rhythm',
                   icon: Wind,
                   color: 'text-purple-400',
-                  bg: 'bg-white/[0.02]',
+                  bg: 'bg-white/10',
                 },
               ].map((g) => (
                 <div key={g.label} className={`p-5 rounded-xl ${g.bg}`}>
                   <g.icon size={18} className={`${g.color} mb-3`} />
-                  <p className="text-xs text-slate-500 mb-1">{g.label}</p>
+                  <p className="text-xs text-(--color-text-secondary) mb-1">{g.label}</p>
                   <p className={`text-sm font-semibold ${g.color}`}>{g.value}</p>
                 </div>
               ))}
@@ -182,7 +182,7 @@ const Health = () => {
 
             {/* Dynamic warnings from advisory engine */}
             {advisory?.warnings?.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-white/[0.05] space-y-2">
+              <div className="mt-4 pt-4 border-t border-(--color-card-border) space-y-2">
                 {advisory.warnings.map((w, i) => (
                   <div key={i} className="flex items-center gap-2 text-sm text-amber-400">
                     <AlertTriangle size={14} className="shrink-0" />
@@ -192,7 +192,7 @@ const Health = () => {
               </div>
             )}
 
-            <div className="mt-4 pt-4 border-t border-white/[0.05] flex items-center gap-2 text-sm text-slate-400">
+            <div className="mt-4 pt-4 border-t border-(--color-card-border) flex items-center gap-2 text-sm text-slate-400">
               <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
               <span>
                 {rri < 40
@@ -203,7 +203,7 @@ const Health = () => {
           </div>
 
           {/* Cigarette Equivalent — Pollution Exposure */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(15,20,30,0.95) 0%, rgba(10,14,22,0.98) 100%)' }}>
+          <div className="glass-card overflow-hidden">
 
             {/* Top section: Number + Cigarette + Weekly/Monthly */}
             <div className="p-6 pb-5">
@@ -267,8 +267,8 @@ const Health = () => {
             </div>
 
             {/* Solutions section */}
-            <div className="px-6 pt-4 pb-6 border-t border-white/[0.04]">
-              <h4 className="text-sm font-semibold text-slate-300 mb-4">Solutions for Current AQI</h4>
+            <div className="px-6 pt-4 pb-6 border-t border-(--color-card-border)">
+              <h4 className="text-sm font-semibold text-(--color-text-primary) mb-4">Solutions for Current AQI</h4>
               <div className="flex flex-col sm:flex-row gap-3">
                 {/* Solution cards */}
                 <div className="flex gap-2.5 flex-1 overflow-x-auto pb-1">
@@ -278,10 +278,10 @@ const Health = () => {
                       className={`flex-1 min-w-[100px] flex flex-col items-center gap-2 p-4 rounded-2xl transition-all ${
                         s.active
                           ? 'bg-sky-500/[0.06] ring-1 ring-sky-500/20'
-                          : 'bg-white/[0.02] hover:bg-white/[0.04]'
+                          : 'bg-white/10 hover:bg-white/10'
                       }`}
                     >
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${s.active ? 'bg-sky-500/10' : 'bg-white/[0.03]'}`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${s.active ? 'bg-sky-500/10' : 'bg-white/10'}`}>
                         <s.icon size={20} className={s.active ? 'text-sky-400' : 'text-slate-500'} strokeWidth={1.5} />
                       </div>
                       <span className={`text-xs font-medium ${s.active ? 'text-white' : 'text-slate-400'}`}>{s.label}</span>
@@ -305,9 +305,9 @@ const Health = () => {
           </div>
 
           {/* Sensitive Group Tabs */}
-          <div className="bg-white/[0.03] rounded-2xl p-6">
+          <div className="glass-card p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3">
-              <h3 className="text-sm font-semibold text-slate-300">Sensitive Groups</h3>
+              <h3 className="text-sm font-semibold text-(--color-text-primary)">Sensitive Groups</h3>
               <div className="flex flex-wrap gap-1.5">
                 {sensitiveTabs.map((tab) => (
                   <button
@@ -316,7 +316,7 @@ const Health = () => {
                     className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${
                       activeTab.id === tab.id
                         ? 'bg-sky-500/[0.12] text-sky-400'
-                        : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.04]'
+                        : 'text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-white/10'
                     }`}
                   >
                     {tab.label}
@@ -333,7 +333,7 @@ const Health = () => {
                 exit={{ opacity: 0, y: -8 }}
                 className="grid grid-cols-1 md:grid-cols-2 gap-4"
               >
-                <div className={`p-5 rounded-xl ${advisory?.isDanger ? 'bg-red-500/[0.04]' : 'bg-white/[0.02]'}`}>
+                <div className={`p-5 rounded-xl ${advisory?.isDanger ? 'bg-red-500/[0.04]' : 'bg-white/10'}`}>
                   <div className="flex items-center gap-2 mb-3">
                     {advisory?.isDanger ? <AlertTriangle size={16} className="text-red-400" /> : <CheckCircle2 size={16} className="text-emerald-400" />}
                     <span className={`text-sm font-semibold ${advisory?.isDanger ? 'text-red-400' : 'text-emerald-400'}`}>
@@ -349,19 +349,19 @@ const Health = () => {
                 </div>
 
                 {/* Dynamic per-group recommendations from AI engine */}
-                <div className="p-5 rounded-xl bg-white/[0.02]">
-                  <p className="text-xs text-slate-500 mb-3">Recommendations</p>
+                <div className="p-5 rounded-xl bg-white/10">
+                  <p className="text-xs text-(--color-text-secondary) mb-3">Recommendations</p>
                   <ul className="space-y-2.5">
                     {(advisory?.recommendations || []).slice(0, 4).map((rec, i) => (
                       <li key={i} className="flex items-start gap-2">
                         <span className="w-1 h-1 bg-sky-400 rounded-full mt-1.5 shrink-0" />
-                        <span className="text-sm text-slate-300">{rec}</span>
+                        <span className="text-sm text-(--color-text-primary)">{rec}</span>
                       </li>
                     ))}
                     {(!advisory?.recommendations || advisory.recommendations.length === 0) && (
                       <li className="flex items-start gap-2">
                         <span className="w-1 h-1 bg-sky-400 rounded-full mt-1.5 shrink-0" />
-                        <span className="text-sm text-slate-300">No specific concerns for current conditions.</span>
+                        <span className="text-sm text-(--color-text-primary)">No specific concerns for current conditions.</span>
                       </li>
                     )}
                   </ul>
@@ -375,12 +375,12 @@ const Health = () => {
         <div className="xl:col-span-4 space-y-5">
 
           {/* Emergency */}
-          <div className="bg-red-500/[0.04] rounded-2xl p-5">
+          <div className="glass-card bg-red-500/5 p-5">
             <div className="flex items-center gap-2 mb-4">
               <Heart size={16} className="text-red-400" />
               <h3 className="text-sm font-semibold text-red-400">Emergency Signs</h3>
             </div>
-            <p className="text-xs text-slate-400 mb-4">Seek immediate medical help if experiencing:</p>
+            <p className="text-xs text-(--color-text-secondary) mb-4">Seek immediate medical help if experiencing:</p>
             <div className="space-y-2">
               {[
                 'Severe shortness of breath',
@@ -389,40 +389,40 @@ const Health = () => {
                 'Blue lips or fingertips',
                 'Uncontrollable coughing',
               ].map((s) => (
-                <div key={s} className="flex items-center gap-2 p-2.5 rounded-xl bg-red-500/[0.03]">
+                <div key={s} className="flex items-center gap-2 p-2.5 rounded-xl bg-red-500/5">
                   <AlertTriangle size={12} className="text-red-400 shrink-0" />
-                  <span className="text-sm text-slate-300">{s}</span>
+                  <span className="text-sm text-(--color-text-primary)">{s}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* WHO Standards */}
-          <div className="bg-white/[0.03] rounded-2xl p-5">
-            <h3 className="text-sm font-semibold text-slate-300 mb-3">WHO Guidelines</h3>
-            <p className="text-sm text-slate-400 leading-relaxed mb-4">
+          <div className="glass-card p-5">
+            <h3 className="text-sm font-semibold text-(--color-text-primary) mb-3">WHO Guidelines</h3>
+            <p className="text-sm text-(--color-text-secondary) leading-relaxed mb-4">
               WHO recommends annual PM2.5 averages below 5 µg/m³ and 24-hour exposures below 15 µg/m³.
             </p>
-            <div className="p-3 bg-white/[0.02] rounded-xl space-y-2">
+            <div className="p-3 bg-white/10 rounded-xl space-y-2">
               <div className="flex justify-between">
-                <span className="text-xs text-slate-400">Current PM2.5</span>
+                <span className="text-xs text-(--color-text-secondary)">Current PM2.5</span>
                 <span className={`text-xs font-semibold ${pm25 > 15 ? 'text-rose-400' : 'text-emerald-400'}`}>{pm25} µg/m³</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-xs text-slate-400">WHO 24hr Limit</span>
+                <span className="text-xs text-(--color-text-secondary)">WHO 24hr Limit</span>
                 <span className="text-xs font-semibold text-emerald-400">15 µg/m³</span>
               </div>
-              <div className="h-1 bg-white/[0.04] rounded-full overflow-hidden mt-1">
+              <div className="h-1 bg-white/10 rounded-full overflow-hidden mt-1">
                 <div
                   className="h-full bg-gradient-to-r from-emerald-400 to-rose-500 rounded-full"
                   style={{ width: `${Math.min((pm25 / 15) * 100, 100)}%` }}
                 />
               </div>
               <div className="flex justify-between">
-                <span className="text-xs text-slate-400">India NAAQS 24hr</span>
+                <span className="text-xs text-(--color-text-secondary)">India NAAQS 24hr</span>
                 <span className="text-xs font-semibold text-sky-400">60 µg/m³</span>
               </div>
-              <div className="h-1 bg-white/[0.04] rounded-full overflow-hidden mt-1">
+              <div className="h-1 bg-white/10 rounded-full overflow-hidden mt-1">
                 <div
                   className="h-full bg-gradient-to-r from-emerald-400 to-sky-400 rounded-full"
                   style={{ width: `${Math.min((pm25 / 60) * 100, 100)}%` }}
