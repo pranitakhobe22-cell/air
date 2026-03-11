@@ -33,7 +33,7 @@ const sensorSchema = z.object({
   pm25: z.number().min(0).max(500, 'PM2.5 must be 0–500 µg/m³'),
   co: z.number().min(0).max(100, 'CO must be 0–100 ppm'),
   o3: z.number().min(0).max(1, 'O3 must be 0–1 ppm'),
-  no2: z.number().min(0).max(2000, 'NO2 must be 0–2000 ppb').optional(),
+  no2: z.number().min(0).max(10000, 'NO2 must be 0–10000 ppb').optional(),
   voc_index: z.number().min(0).max(500, 'VOC index must be 0–500'),
 });
 
@@ -197,7 +197,7 @@ const ingestData = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Invalid sensor payload',
-        errors: error.errors.map(e => ({
+        errors: (error.issues || error.errors || []).map(e => ({
           field: e.path.join('.'),
           message: e.message,
         })),
