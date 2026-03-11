@@ -1,5 +1,5 @@
 // =============================================
-//  AERIS Air Quality System — v4
+//  AERIS Air Quality System — v5 (Professional Signal Pipeline)
 //  7-min boot: Warmup → Stabilize → Reading → LIVE
 // =============================================
 //
@@ -103,37 +103,127 @@ const float MQ135_RL_KOHM = 10.0, MQ135_VCC = 5.0, MQ135_CLEAN_AIR_FACTOR = 3.6;
 const float SEN0564_RANGE = 1000.0;
 const float SEN0574_RANGE = 10.0;
 const float UV_SCALE      = 10.0;
-const float MEMS_NOISE    = 0.18;  // Raised to reject midday thermal ADC drift
+const float DUST_CLEAN_VOLTAGE = 0.5;  // Proven calibration — matches government AQI readings
+const float CO_MEMS_CLEAN_VOLTAGE  = 0.1;   // SEN0564 clean-air baseline (MQ-7 handles low CO anyway)
+const float NO2_MEMS_CLEAN_VOLTAGE = 0.4;   // SEN0574 clean-air baseline (adjust if readings too high/low)
+const float MEMS_NOISE    = 0.02;  // Rejects ESP32 ADC noise floor (~10-20mV)
 
 float MQ131_Ro = 0, MQ7_Ro = 0, MQ135_Ro = 0;
-float CO_MEMS_BASELINE = 0, NO2_MEMS_BASELINE = 0;
 bool  no2Inverted = false;
 
 // =============================================
-//  SMOOTHING (EMA)
+//  PROFESSIONAL SIGNAL PIPELINE
 // =============================================
-const float EMA_ALPHA = 0.2;
+//
+//  Each sensor value passes through 4 stages:
+//    1. Spike rejection   — slope-limited, rejects electrical noise
+//    2. EMA               — exponential moving average smoothing
+//    3. Temporal median    — 3-sample median kills oscillation
+//    4. Display stabilizer — rate-limited output for OLED/web
+//
+//  BaselineTracker learns sensor zero-points during warmup,
+//  then drifts DOWNWARD only during operation (never masks pollution).
 
-float pm25_ema    = -1;
-float mq131Rs_ema = -1;
-float mq7Rs_ema   = -1;
-float mq135Rs_ema = -1;
-float uv_ema      = -1;
-float co_mems_ema = -1;
-float no2_mems_ema = -1;
+struct SensorPipeline {
+  float spikeMax;         // max allowed jump per cycle
+  float alpha;            // EMA smoothing factor
+  float dispStep;         // max display change per cycle
+  float prev;             // last accepted raw (for spike check)
+  float ema;              // EMA accumulator
+  float med[5];           // 5-sample temporal median ring
+  uint8_t midx;           // ring write index
+  float dval;             // rate-limited display output
+  bool  primed;           // true after first valid reading
 
-float applyEMA(float val, float prev) {
-  if (prev < 0) return val;
-  return EMA_ALPHA * val + (1.0 - EMA_ALPHA) * prev;
-}
+  void init(float spike, float a, float dstep) {
+    spikeMax = spike; alpha = a; dispStep = dstep;
+    prev = 0; ema = 0; dval = 0; midx = 0; primed = false;
+    for (int i = 0; i < 5; i++) med[i] = 0;
+  }
 
-float stabilize(float current, float previous, float maxStep) {
-  if (previous == 0) return current * 0.8;
-  float diff = current - previous;
-  if (diff > maxStep) diff = maxStep;
-  if (diff < -maxStep) diff = -maxStep;
-  return previous + diff;
-}
+  float feed(float raw) {
+    // Stage 1: Spike rejection
+    if (primed && fabsf(raw - prev) > spikeMax) return dval;
+    prev = raw;
+
+    // Stage 2: EMA
+    if (!primed) {
+      ema = raw; dval = raw; primed = true;
+      for (int i = 0; i < 5; i++) med[i] = raw;  // prime all slots
+    }
+    else { ema = alpha * raw + (1.0f - alpha) * ema; }
+
+    // Stage 3: Temporal median of 5
+    med[midx % 5] = ema;
+    midx++;
+    float tmp[5];
+    for (int i = 0; i < 5; i++) tmp[i] = med[i];
+    for (int i = 1; i < 5; i++) {
+      float key = tmp[i]; int j = i - 1;
+      while (j >= 0 && tmp[j] > key) { tmp[j+1] = tmp[j]; j--; }
+      tmp[j+1] = key;
+    }
+    float m = tmp[2];  // true median
+
+    // Stage 4: Display stabilizer
+    float d = m - dval;
+    if (d >  dispStep) d =  dispStep;
+    if (d < -dispStep) d = -dispStep;
+    dval += d;
+    return dval;
+  }
+};
+
+struct BaselineTracker {
+  float baseline;         // current learned value
+  float wsum;             // warmup accumulator
+  int   wcount;           // warmup sample count
+  bool  locked;           // true after warmup lock
+  float driftAlpha;       // slow drift rate (~0.001)
+
+  void init(float fallback, float drift) {
+    baseline = fallback; wsum = 0; wcount = 0;
+    locked = false; driftAlpha = drift;
+  }
+
+  void addSample(float v) {
+    if (locked) return;
+    wsum += v; wcount++;
+  }
+
+  void lock() {
+    if (wcount > 0) baseline = wsum / wcount;
+    locked = true;
+  }
+
+  void drift(float v) {
+    if (!locked) return;
+    // Only drift DOWN (toward cleaner baseline), never up
+    if (v < baseline)
+      baseline = driftAlpha * v + (1.0f - driftAlpha) * baseline;
+  }
+};
+
+// ---- Pipeline instances ----
+//                     spikeMax  alpha  dispStep
+SensorPipeline pip_pm25;   // 15      0.08    3
+SensorPipeline pip_o3;     //  8      0.08    2
+SensorPipeline pip_co;     //  1      0.08    0.2
+SensorPipeline pip_no2;    // 30      0.08    8
+SensorPipeline pip_co2;    // 80      0.08   20
+SensorPipeline pip_uv;     //  1.5    0.10    0.5
+SensorPipeline pip_temp;   //  2      0.10    0.2
+SensorPipeline pip_hum;    //  5      0.10    0.5
+SensorPipeline pip_aqi;    // 25      0.10    5
+
+// ---- Baseline trackers ----
+BaselineTracker bl_dust, bl_co_mems, bl_no2_mems;
+
+// ---- MQ resistance EMA (intermediate values, not displayed) ----
+float mq131Rs_s = -1, mq7Rs_s = -1, mq135Rs_s = -1;
+
+// ---- Raw voltage storage ----
+float raw_dust_v = 0;
 
 // =============================================
 //  TIMING — 7-min boot sequence
@@ -346,10 +436,10 @@ float readV_ADC1(int pin, int n) {
   float buf[50];
   for (int i = 0; i < n; i++) {
     buf[i] = esp_adc_cal_raw_to_voltage(analogRead(pin), &adc1_chars) / 1000.0;
-    delayMicroseconds(200);
+    delayMicroseconds(500);   // longer settle — ADC mux needs time
   }
   sortFloats(buf, n);
-  int lo = n / 5, hi = n - lo;
+  int lo = n / 4, hi = n - lo;  // 25% trim each side (was 20%)
   float s = 0;
   for (int i = lo; i < hi; i++) s += buf[i];
   return s / (hi - lo);
@@ -360,10 +450,10 @@ float readV_ADC2(int pin, int n) {
   float buf[50];
   for (int i = 0; i < n; i++) {
     buf[i] = esp_adc_cal_raw_to_voltage(analogRead(pin), &adc2_chars) / 1000.0;
-    delayMicroseconds(200);
+    delayMicroseconds(500);   // longer settle — ADC2 noisier than ADC1
   }
   sortFloats(buf, n);
-  int lo = n / 5, hi = n - lo;
+  int lo = n / 4, hi = n - lo;  // 25% trim each side (was 20%)
   float s = 0;
   for (int i = lo; i < hi; i++) s += buf[i];
   return s / (hi - lo);
@@ -374,8 +464,8 @@ float readV_ADC2(int pin, int n) {
 // =============================================
 
 float readDustPM25() {
-  float buf[10];
-  for (int i = 0; i < 10; i++) {
+  float buf[20];
+  for (int i = 0; i < 20; i++) {
     digitalWrite(DUST_LED_PIN, LOW);
     delayMicroseconds(280);
     buf[i] = esp_adc_cal_raw_to_voltage(analogRead(DUST_ANALOG_PIN), &adc1_chars) / 1000.0;
@@ -383,17 +473,13 @@ float readDustPM25() {
     digitalWrite(DUST_LED_PIN, HIGH);
     delayMicroseconds(9680);
   }
-  sortFloats(buf, 10);
+  sortFloats(buf, 20);
   float s = 0;
-  for (int i = 2; i < 8; i++) s += buf[i];
-  float v = s / 6.0;
-  static float cleanBase = -1;
-  if (cleanBase < 0) cleanBase = v;
-  else cleanBase = cleanBase * 0.995 + v * 0.005;
-  float pm = (v - cleanBase) * 160.0;
-  if (pm < 0) pm = 0;
-  if (pm > 500) pm = 500;
-  return pm;
+  for (int i = 5; i < 15; i++) s += buf[i];  // keep middle 10 of 20
+  float v = s / 10.0;
+  raw_dust_v = v;  // expose for baseline tracker
+  float pm = (v - bl_dust.baseline) * 200.0;
+  return max(pm, 0.0f);
 }
 
 float readMQResistance(int pin, float rl, float vcc) {
@@ -447,10 +533,8 @@ void readADC2Sensors() {
     if (WiFi.status() == WL_CONNECTED) applyGoogleDNS();
   }
 
-  co_mems_ema  = applyEMA(co_v, co_mems_ema);
-  no2_mems_ema = applyEMA(no2_v, no2_mems_ema);
-  g_co_mems_v  = (co_mems_ema >= 0) ? co_mems_ema : co_v;
-  g_no2_mems_v = (no2_mems_ema >= 0) ? no2_mems_ema : no2_v;
+  g_co_mems_v  = co_v;
+  g_no2_mems_v = no2_v;
 }
 
 // =============================================
@@ -484,26 +568,25 @@ float mq135CO2(float r) {
 }
 
 float coPPM_MEMS(float v) {
-  if (CO_MEMS_BASELINE >= 3.2) return 0;
-  float d = v - CO_MEMS_BASELINE;
+  float base = bl_co_mems.baseline;
+  if (base >= 3.2) return 0;
+  float d = v - base;
   if (d < MEMS_NOISE) return 0;
-  return constrain(d / (3.3 - CO_MEMS_BASELINE) * SEN0564_RANGE, 0, 50);
+  return constrain(d / (3.3 - base) * SEN0564_RANGE, 0, 50);
 }
 
 float no2PPB_MEMS(float v) {
+  float base = bl_no2_mems.baseline;
   float d, rng;
   if (no2Inverted) {
-    d = NO2_MEMS_BASELINE - v;
-    rng = NO2_MEMS_BASELINE;
+    d = base - v;
+    rng = base;
   } else {
-    d = v - NO2_MEMS_BASELINE;
-    rng = 3.3 - NO2_MEMS_BASELINE;
+    d = v - base;
+    rng = 3.3 - base;
   }
   if (d < MEMS_NOISE || rng < 0.1) return 0;
-  float val = (d / rng) * 200.0;
-  if (val < 0) val = 0;
-  if (val > 1000) val = 1000;
-  return val;
+  return constrain(d / rng * SEN0574_RANGE, 0, 5) * 1000.0;
 }
 
 // =============================================
@@ -1085,15 +1168,40 @@ void setup() {
   }
   sortFloats(co_b, 100);
   sortFloats(no2_b, 100);
-  CO_MEMS_BASELINE  = co_b[50];
-  NO2_MEMS_BASELINE = no2_b[50];
-  no2Inverted = (NO2_MEMS_BASELINE > 2.5);
-  g_co_mems_v  = CO_MEMS_BASELINE;
-  g_no2_mems_v = NO2_MEMS_BASELINE;
+  float co_boot  = co_b[50];
+  float no2_boot = no2_b[50];
+  Serial.print("  CO  boot voltage: "); Serial.print(co_boot, 3); Serial.println(" V");
+  Serial.print("  NO2 boot voltage: "); Serial.print(no2_boot, 3); Serial.println(" V");
 
-  Serial.print("  CO  baseline: "); Serial.print(CO_MEMS_BASELINE, 3); Serial.println(" V");
-  Serial.print("  NO2 baseline: "); Serial.print(NO2_MEMS_BASELINE, 3);
-  Serial.println(no2Inverted ? " V (INVERTED)" : " V");
+  // Initialize baseline trackers with boot readings
+  // If boot voltage is near/below expected clean-air, use boot value (sensor at clean baseline)
+  // Otherwise use fallback clean-air constant (sensor is seeing pollution)
+  bl_dust.init(DUST_CLEAN_VOLTAGE, 0.001);
+  bl_co_mems.init(
+    (co_boot <= CO_MEMS_CLEAN_VOLTAGE + 0.05) ? co_boot : CO_MEMS_CLEAN_VOLTAGE,
+    0.001);
+  bl_no2_mems.init(
+    (no2_boot <= NO2_MEMS_CLEAN_VOLTAGE + 0.1) ? no2_boot : NO2_MEMS_CLEAN_VOLTAGE,
+    0.001);
+  no2Inverted = false;
+  g_co_mems_v  = co_boot;
+  g_no2_mems_v = no2_boot;
+
+  Serial.print("  CO  baseline: "); Serial.print(bl_co_mems.baseline, 3); Serial.println(" V (learned)");
+  Serial.print("  NO2 baseline: "); Serial.print(bl_no2_mems.baseline, 3); Serial.println(" V (learned)");
+  Serial.print("  Dust baseline: "); Serial.print(bl_dust.baseline, 3); Serial.println(" V (default)");
+
+  // Initialize sensor pipelines — TIGHTENED to kill spikes
+  //              spikeMax  alpha  dispStep
+  pip_pm25.init(  15.0,     0.08,  3.0);   // was 50/0.2/5
+  pip_o3.init(     8.0,     0.08,  2.0);   // was 20/0.2/3
+  pip_co.init(     1.0,     0.08,  0.2);   // was  3/0.2/0.3
+  pip_no2.init(   30.0,     0.08,  8.0);   // was 80/0.2/20
+  pip_co2.init(   80.0,     0.08, 20.0);   // was 200/0.2/30
+  pip_uv.init(     1.5,     0.10,  0.5);   // was  3/0.2/1
+  pip_temp.init(   2.0,     0.10,  0.2);   // was  5/0.2/0.3
+  pip_hum.init(    5.0,     0.10,  0.5);   // was 10/0.2/1
+  pip_aqi.init(   25.0,     0.10,  5.0);   // was 50/0.3/8
 
   // I2C
   Wire.begin(21, 22);
@@ -1203,18 +1311,17 @@ void loop() {
 
   // ---- Read ADC1 sensors (always work) ----
   float pm_raw = readDustPM25();
-  if (pm25_ema > 0 && abs(pm_raw - pm25_ema) > 120) pm_raw = pm25_ema;
-  pm25_ema = applyEMA(pm_raw, pm25_ema);
 
   float rs131 = readMQResistance(MQ131_PIN, MQ131_RL_KOHM, MQ131_VCC);
-  mq131Rs_ema = applyEMA(rs131, mq131Rs_ema);
-  float rs7 = readMQResistance(MQ7_PIN, MQ7_RL_KOHM, MQ7_VCC);
-  mq7Rs_ema = applyEMA(rs7, mq7Rs_ema);
+  float rs7   = readMQResistance(MQ7_PIN,   MQ7_RL_KOHM,   MQ7_VCC);
   float rs135 = readMQResistance(MQ135_PIN, MQ135_RL_KOHM, MQ135_VCC);
-  mq135Rs_ema = applyEMA(rs135, mq135Rs_ema);
+
+  // Heavy EMA for MQ resistance — MQ Rs is HYPERBOLIC in voltage, small ADC noise = huge Rs swings
+  if (mq131Rs_s < 0) mq131Rs_s = rs131; else mq131Rs_s = 0.05f * rs131 + 0.95f * mq131Rs_s;
+  if (mq7Rs_s   < 0) mq7Rs_s   = rs7;   else mq7Rs_s   = 0.05f * rs7   + 0.95f * mq7Rs_s;
+  if (mq135Rs_s < 0) mq135Rs_s = rs135;  else mq135Rs_s = 0.05f * rs135 + 0.95f * mq135Rs_s;
 
   float uv_raw = readUVIndex();
-  uv_ema = applyEMA(uv_raw, uv_ema);
 
   // ---- Read I2C sensors ----
   float temperature = 0, humidity = 0;
@@ -1234,28 +1341,20 @@ void loop() {
     else vocIndex = g_voc_lastgood;
   }
 
-  // ---- Read MEMS via WiFi pause (even during warmup) ----
-  if (now - lastADC2Read >= ADC2_INTERVAL) {
+  // ---- Read MEMS via WiFi pause (faster during warmup for better baselines) ----
+  unsigned long adc2_int = warmedUp ? ADC2_INTERVAL : 30000;
+  if (now - lastADC2Read >= adc2_int) {
     lastADC2Read = now;
     if (wifiConnected) {
       readADC2Sensors();
     } else {
-      float cv = readV_ADC2(CO_MEMS_PIN, 30);
-      float nv = readV_ADC2(NO2_MEMS_PIN, 30);
-      co_mems_ema  = applyEMA(cv, co_mems_ema);
-      no2_mems_ema = applyEMA(nv, no2_mems_ema);
-      g_co_mems_v  = (co_mems_ema >= 0) ? co_mems_ema : cv;
-      g_no2_mems_v = (no2_mems_ema >= 0) ? no2_mems_ema : nv;
+      g_co_mems_v  = readV_ADC2(CO_MEMS_PIN, 30);
+      g_no2_mems_v = readV_ADC2(NO2_MEMS_PIN, 30);
     }
 
-    // DYNAMIC BASELINE TRACKING — adapts to thermal drift over time
-    // If current voltage drops below baseline, slowly pull baseline down
-    if (g_co_mems_v < CO_MEMS_BASELINE - 0.01) {
-      CO_MEMS_BASELINE = CO_MEMS_BASELINE * 0.9995 + g_co_mems_v * 0.0005;
-    }
-    if (!no2Inverted && g_no2_mems_v < NO2_MEMS_BASELINE - 0.01) {
-      NO2_MEMS_BASELINE = NO2_MEMS_BASELINE * 0.9995 + g_no2_mems_v * 0.0005;
-    }
+    // Feed baseline trackers with raw MEMS voltages
+    bl_co_mems.addSample(g_co_mems_v);
+    bl_no2_mems.addSample(g_no2_mems_v);
   }
 
   // ---- Rain Detection (debounced) ----
@@ -1266,18 +1365,27 @@ void loop() {
   g_raining = (g_rain_count >= RAIN_DEBOUNCE_COUNT);
 
   if (g_raining && !wasRaining) {
-    g_pm25_before_rain = pm25_ema >= 0 ? pm25_ema : 0;
+    g_pm25_before_rain = pip_pm25.primed ? pip_pm25.dval : 0;
     g_pm25_rain_delta = 0;
   }
   if (g_raining && g_pm25_before_rain > 0) {
-    float currentPM = pm25_ema >= 0 ? pm25_ema : 0;
+    float currentPM = pip_pm25.primed ? pip_pm25.dval : 0;
     g_pm25_rain_delta = g_pm25_before_rain - currentPM;
     if (g_pm25_rain_delta < 0) g_pm25_rain_delta = 0;
   }
 
-  // Update basic globals (always, for web)
-  g_pm25 = pm25_ema; g_uv = uv_ema;
-  g_temp = temperature; g_hum = humidity; g_voc = vocIndex;
+  // Feed PM2.5, UV, temp, humidity through pipelines
+  pip_pm25.feed(pm_raw);
+  pip_uv.feed(uv_raw);
+  pip_temp.feed(temperature);
+  pip_hum.feed(humidity);
+
+  // Feed dust baseline tracker during warmup
+  if (!warmedUp) bl_dust.addSample(raw_dust_v);
+
+  // Update basic globals — dval is the FULLY FILTERED output (all 4 pipeline stages)
+  g_pm25 = pip_pm25.dval; g_uv = pip_uv.dval;
+  g_temp = pip_temp.dval; g_hum = pip_hum.dval; g_voc = vocIndex;
 
   // ================================================================
   //  PHASE 1: WARMUP (0-3 min) — MQ heaters warming
@@ -1336,9 +1444,17 @@ void loop() {
     if (MQ7_Ro   < 0.1) MQ7_Ro   = 1.0;
     if (MQ135_Ro < 0.1) MQ135_Ro = 1.0;
 
-    mq131Rs_ema = r1;
-    mq7Rs_ema   = r7;
-    mq135Rs_ema = r3;
+    mq131Rs_s = r1;
+    mq7Rs_s   = r7;
+    mq135Rs_s = r3;
+
+    // Lock baselines at end of warmup
+    bl_dust.lock();
+    bl_co_mems.lock();
+    bl_no2_mems.lock();
+    Serial.print("  Dust baseline locked: "); Serial.print(bl_dust.baseline, 3); Serial.println(" V");
+    Serial.print("  CO MEMS baseline locked: "); Serial.print(bl_co_mems.baseline, 3); Serial.println(" V");
+    Serial.print("  NO2 MEMS baseline locked: "); Serial.print(bl_no2_mems.baseline, 3); Serial.println(" V");
 
     Serial.println("=========================================");
     Serial.println("  Ro CALIBRATED — entering stabilization");
@@ -1354,26 +1470,45 @@ void loop() {
   // ---- Calculate gas values (Phase 2+ onwards) ----
   float corr = mqCorrection(temperature, humidity);
 
-  float o3_ratio  = (MQ131_Ro > 0.1) ? (mq131Rs_ema * corr / MQ131_Ro) : 0.0;
-  float co_ratio  = (MQ7_Ro   > 0.1) ? (mq7Rs_ema   * corr / MQ7_Ro)   : 0.0;
-  float co2_ratio = (MQ135_Ro > 0.1) ? (mq135Rs_ema * corr / MQ135_Ro) : 0.0;
+  float o3_ratio  = (MQ131_Ro > 0.1) ? (mq131Rs_s * corr / MQ131_Ro) : 0.0;
+  float co_ratio  = (MQ7_Ro   > 0.1) ? (mq7Rs_s   * corr / MQ7_Ro)   : 0.0;
+  float co2_ratio = (MQ135_Ro > 0.1) ? (mq135Rs_s * corr / MQ135_Ro) : 0.0;
 
-  float o3_ppb    = ozonePPB(o3_ratio);
+  float o3_raw    = ozonePPB(o3_ratio);
   float co_mq_ppm = coPPM_MQ(co_ratio);
-  float co2_ppm   = mq135CO2(co2_ratio);
+  float co2_raw   = mq135CO2(co2_ratio);
   float co_mems   = coPPM_MEMS(g_co_mems_v);
-  float no2_ppb   = no2PPB_MEMS(g_no2_mems_v);
-  float co_best   = (co_mems > 0) ? co_mems : co_mq_ppm;
+  float no2_raw   = no2PPB_MEMS(g_no2_mems_v);
+  float co_raw    = (co_mems > 0.3) ? co_mems : co_mq_ppm;  // hysteresis — prevents flip-flop at zero boundary
+
+  // Slow baseline drift during LIVE operation (downward only)
+  if (isLive) {
+    bl_dust.drift(raw_dust_v);
+    bl_co_mems.drift(g_co_mems_v);
+    bl_no2_mems.drift(g_no2_mems_v);
+  }
+
+  // Feed gas values through pipelines (spike+EMA+median+display all in one)
+  pip_o3.feed(o3_raw);
+  pip_co.feed(co_raw);
+  pip_no2.feed(no2_raw);
+  pip_co2.feed(co2_raw);
+
+  // Use pipeline dval for globals — fully filtered through all 4 stages
+  float o3_ppb  = pip_o3.dval;
+  float co_best = pip_co.dval;
+  float no2_ppb = pip_no2.dval;
+  float co2_ppm = pip_co2.dval;
 
   int aqi_pm  = aqiFromPM25(g_pm25);
   int aqi_o3  = aqiFromO3(o3_ppb);
   int aqi_co  = aqiFromCO(co_best);
   int aqi_no2 = aqiFromNO2(no2_ppb);
   int totalAQI = max(max(aqi_pm, aqi_o3), max(aqi_co, aqi_no2));
-  static float aqiSmooth = -1;
-  if (aqiSmooth < 0.0f) aqiSmooth = totalAQI;
-  else aqiSmooth = 0.3f * totalAQI + 0.7f * aqiSmooth;
-  totalAQI = (int)(aqiSmooth + 0.5f);
+
+  // AQI through pipeline for smooth display
+  pip_aqi.feed((float)totalAQI);
+  totalAQI = (int)(pip_aqi.dval + 0.5f);
 
   // Update globals (for web — but web shows warmup screen until live)
   g_o3 = o3_ppb; g_co = co_best; g_co_mq = co_mq_ppm;
@@ -1384,9 +1519,9 @@ void loop() {
   if (isnan(g_no2_ppb) || g_no2_ppb < 0) g_no2_ppb = 0;
   if (isnan(g_co2) || g_co2 < 0) g_co2 = 400;
   if (isnan(g_uv) || g_uv < 0) g_uv = 0;
-  if (g_pm25 < 2) g_pm25 = 0;
-  if (g_no2_ppb < 10) g_no2_ppb = 0;
-  if (g_co < 0.2) g_co = 0;
+  if (g_pm25 < 1) g_pm25 = 0;
+  if (g_no2_ppb < 5) g_no2_ppb = 0;
+  if (g_co < 0.1) g_co = 0;
   if (no2_ppb > 1500) { no2_ppb = 1500; g_no2_ppb = 1500; }
   if (g_pm25 > 500) g_pm25 = 500;
   g_aqi = totalAQI; g_aqi_pm = aqi_pm; g_aqi_o3 = aqi_o3;
@@ -1542,16 +1677,16 @@ void loop() {
     pushToBackend();
   }
 
-  // Update stabilized display values
-  disp_pm25 = stabilize(g_pm25, disp_pm25, 5);
-  disp_o3   = stabilize(g_o3, disp_o3, 5);
-  disp_co   = stabilize(g_co, disp_co, 0.3);
-  disp_no2  = stabilize(g_no2_ppb, disp_no2, 40);
-  disp_co2  = stabilize(g_co2, disp_co2, 50);
-  disp_uv   = stabilize(g_uv, disp_uv, 1);
-  disp_temp = stabilize(g_temp, disp_temp, 0.5);
-  disp_hum  = stabilize(g_hum, disp_hum, 2);
-  disp_aqi  = (int)stabilize(g_aqi, disp_aqi, 10);
+  // Display values come from pipeline (spike+EMA+median+rate-limited)
+  disp_pm25 = pip_pm25.dval;
+  disp_o3   = pip_o3.dval;
+  disp_co   = pip_co.dval;
+  disp_no2  = pip_no2.dval;
+  disp_co2  = pip_co2.dval;
+  disp_uv   = pip_uv.dval;
+  disp_temp = pip_temp.dval;
+  disp_hum  = pip_hum.dval;
+  disp_aqi  = (int)pip_aqi.dval;
 
   // ---- Display every 30 sec ----
   if (now - lastDisplayUpdate < DISPLAY_INTERVAL) return;
