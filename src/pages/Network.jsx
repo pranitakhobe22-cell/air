@@ -96,7 +96,7 @@ const Network = () => {
 
           {/* Architecture */}
           <div className="glass-card rounded-xl p-6">
-            <h3 className="text-sm font-semibold text-(--color-text-primary) mb-6">System Architecture</h3>
+            <h3 className="text-base font-semibold text-(--color-text-primary) mb-6">System Architecture</h3>
 
             <div className="flex flex-col md:flex-row items-center justify-between gap-3">
               {[
@@ -124,7 +124,7 @@ const Network = () => {
           {/* Nodes Table */}
           <div className="glass-card rounded-xl p-6">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-sm font-semibold text-(--color-text-primary)">Sensor Nodes</h3>
+              <h3 className="text-base font-semibold text-(--color-text-primary)">Sensor Nodes</h3>
               <div className="flex items-center gap-2">
                 {espIds.size > 0 && (
                   <span className="text-xs font-medium text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded-md">
@@ -164,9 +164,9 @@ const Network = () => {
                         </td>
                         <td className="py-3">
                           {isHardware ? (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded text-sky-400 bg-sky-500/10 border border-sky-500/20">ESP32</span>
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded text-sky-400 bg-sky-500/10 border border-sky-500/20">ESP32</span>
                           ) : (
-                            <span className="text-[10px] font-medium px-2 py-0.5 rounded text-(--color-text-secondary) subtle-surface">SIM</span>
+                            <span className="text-xs font-medium px-2 py-0.5 rounded text-(--color-text-secondary) subtle-surface">SIM</span>
                           )}
                         </td>
                         <td className="py-3">
@@ -209,7 +209,7 @@ const Network = () => {
 
           {/* System Health */}
           <div className="glass-card rounded-xl p-6">
-            <h3 className="text-sm font-semibold text-(--color-text-primary) mb-4">System Health</h3>
+            <h3 className="text-base font-semibold text-(--color-text-primary) mb-4">System Health</h3>
             <div className="space-y-3">
               {[
                 { label: 'Poll Interval', value: '10s', icon: Clock, color: 'text-sky-400' },
@@ -231,7 +231,7 @@ const Network = () => {
 
           {/* Knowledge Base */}
           <div className="glass-card rounded-xl p-6">
-            <h3 className="text-sm font-semibold text-(--color-text-primary) mb-4">Knowledge Base</h3>
+            <h3 className="text-base font-semibold text-(--color-text-primary) mb-4">Knowledge Base</h3>
             <div className="space-y-2">
               {learningData.map((item) => {
                 const isOpen = expandedId === item.id;

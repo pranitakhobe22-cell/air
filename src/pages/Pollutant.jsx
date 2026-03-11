@@ -136,7 +136,7 @@ const Pollutants = () => {
                     style={{ width: `${fill}%`, backgroundColor: statusColor }}
                   />
                 </div>
-                <div className="flex justify-between text-[10px] text-(--color-text-secondary) opacity-40 mb-4">
+                <div className="flex justify-between text-xs text-(--color-text-secondary) opacity-40 mb-4">
                   <span>0</span>
                   <span>Safe {config.safe}</span>
                   <span>Danger {config.danger}</span>
@@ -173,7 +173,7 @@ const Pollutants = () => {
         {/* Right: Environment */}
         <div className="xl:col-span-3">
           <div className="glass-card rounded-xl p-6 space-y-8 sticky top-6">
-            <h3 className="text-sm font-semibold text-(--color-text-primary) mb-4">Environment</h3>
+            <h3 className="text-base font-semibold text-(--color-text-primary) mb-4">Environment</h3>
 
             {[
               { label: 'Temperature', value: `${Number(environment?.temperature || 0).toFixed(1)} °C`, icon: Thermometer, color: 'text-rose-400' },

@@ -220,7 +220,7 @@ const LiveStatus = () => {
           <div className="glass-card rounded-xl p-6">
             <div className="flex items-center gap-2 mb-3">
               <Heart size={16} className="text-rose-400" />
-              <span className="text-sm font-semibold text-(--color-text-primary)">Health Advisory</span>
+              <span className="text-base font-semibold text-(--color-text-primary)">Health Advisory</span>
             </div>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
               <p className="text-sm text-(--color-text-secondary) leading-relaxed max-w-xl">
@@ -282,7 +282,7 @@ const LiveStatus = () => {
           <div className="glass-card rounded-xl flex flex-col overflow-hidden min-h-[320px]">
             <div className="flex items-center justify-between px-5 py-3 border-b border-(--color-card-border)">
               <span className="text-xs font-medium text-(--color-text-secondary)">Event Log</span>
-              <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold rounded">LIVE</span>
+              <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-xs font-semibold rounded">LIVE</span>
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-2 max-h-[360px] glass-scrollbar">
               <AnimatePresence mode="popLayout">
@@ -295,10 +295,10 @@ const LiveStatus = () => {
                     className={`border rounded-lg p-3 ${eventColors[event.type]}`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-semibold uppercase tracking-wide">
+                      <span className="text-xs font-semibold uppercase tracking-wide">
                         {event.type === 'alert' ? 'Alert' : 'Update'}
                       </span>
-                      <span className="text-[10px] font-mono opacity-60">{event.time}</span>
+                      <span className="text-xs font-mono opacity-60">{event.time}</span>
                     </div>
                     <p className="text-xs leading-relaxed">{event.message}</p>
                   </motion.div>

@@ -67,8 +67,8 @@ const Landing = () => {
             </div>
             
             <h1 className="font-extrabold tracking-tight text-white drop-shadow-xl mb-6 leading-tight flex flex-col items-center">
-              <span className="text-7xl md:text-8xl lg:text-9xl text-transparent bg-clip-text bg-linear-to-r from-(--color-primary) to-(--color-secondary) tracking-wide pb-2">AERIS</span>
-              <span className="text-4xl md:text-5xl lg:text-6xl mt-4">The Smartest Way <br/> to Check Your Space</span>
+              <span className="text-5xl md:text-6xl text-transparent bg-clip-text bg-linear-to-r from-(--color-primary) to-(--color-secondary) tracking-wide pb-2">AERIS</span>
+              <span className="text-xl md:text-2xl lg:text-3xl mt-4">The Smartest Way <br/> to Check Your Space</span>
             </h1>
             
             <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed font-light drop-shadow-md">
@@ -76,10 +76,10 @@ const Landing = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button onClick={() => navigate('/dashboard')} className="w-full sm:w-auto px-8 py-4 bg-sky-500 hover:bg-sky-400 text-white rounded-full font-bold text-lg shadow-xl shadow-sky-500/20 transition-all hover:scale-105 flex items-center justify-center gap-2">
+              <button onClick={() => navigate('/dashboard')} className="w-full sm:w-auto px-8 py-4 bg-sky-500 hover:bg-sky-400 text-white rounded-full font-semibold text-sm shadow-xl shadow-sky-500/20 transition-all hover:scale-105 flex items-center justify-center gap-2">
                 <LayoutDashboard className="w-5 h-5" /> View Dashboard
               </button>
-              <button onClick={() => navigate('/signup')} className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white rounded-full font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2">
+              <button onClick={() => navigate('/signup')} className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white rounded-full font-semibold text-sm transition-all hover:scale-105 flex items-center justify-center gap-2">
                 Get Started <ArrowRight className="w-5 h-5" />
               </button>
             </div>
@@ -91,7 +91,7 @@ const Landing = () => {
       <section className="py-24 px-6 max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16">
           <h2 className="text-sm font-bold text-sky-400 tracking-widest uppercase mb-2">Core Capabilities</h2>
-          <h3 className="text-3xl md:text-4xl font-extrabold text-white">Actionable Air Quality Insights</h3>
+          <h3 className="text-xl md:text-2xl font-bold text-white">Actionable Air Quality Insights</h3>
         </div>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -112,7 +112,7 @@ const Landing = () => {
               <div className="w-14 h-14 bg-slate-700/50 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform group-hover:bg-sky-500/20">
                 <feature.icon className="w-7 h-7 text-sky-400" />
               </div>
-              <h4 className="text-xl font-bold text-white mb-3">{feature.title}</h4>
+              <h4 className="text-base font-semibold text-white mb-3">{feature.title}</h4>
               <p className="text-slate-400 font-light leading-relaxed">{feature.desc}</p>
             </motion.div>
           ))}
@@ -128,7 +128,7 @@ const Landing = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6 leading-tight">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 leading-tight">
               More than just data. <br/>
               <span className="text-slate-400">Meaningful protection.</span>
             </h2>
@@ -162,17 +162,17 @@ const Landing = () => {
              <div className="grid grid-cols-2 gap-4 relative z-10">
                 <div className="p-6 bg-slate-900 rounded-2xl border border-slate-700">
                   <Activity className="w-8 h-8 text-rose-400 mb-4" />
-                  <div className="text-2xl font-black text-white">42 µg/m³</div>
+                  <div className="text-xl font-bold text-white">42 µg/m³</div>
                   <div className="text-sm text-slate-400 mt-1">PM2.5 Level</div>
                 </div>
                 <div className="p-6 bg-slate-900 rounded-2xl border border-slate-700 translate-y-6">
                   <MapPin className="w-8 h-8 text-sky-400 mb-4" />
-                  <div className="text-2xl font-black text-white">6</div>
+                  <div className="text-xl font-bold text-white">6</div>
                   <div className="text-sm text-slate-400 mt-1">Active Nodes</div>
                 </div>
                 <div className="p-6 bg-slate-900 rounded-2xl border border-slate-700 -translate-y-6">
                   <Heart className="w-8 h-8 text-emerald-400 mb-4" />
-                  <div className="text-2xl font-black text-white">Low</div>
+                  <div className="text-xl font-bold text-white">Low</div>
                   <div className="text-sm text-slate-400 mt-1">Risk Profile</div>
                 </div>
                 <div className="p-6 bg-slate-900 rounded-2xl border border-slate-700 flex flex-col justify-center items-center text-center">
@@ -192,16 +192,16 @@ const Landing = () => {
            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-3xl rounded-full" />
            <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/20 blur-3xl rounded-full" />
            
-           <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6 relative z-10">Ready to monitor your environment?</h2>
+           <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 relative z-10">Ready to monitor your environment?</h2>
            <p className="text-sky-100 text-lg md:text-xl font-light mb-10 max-w-2xl mx-auto relative z-10">
              Join AERIS today and start leveraging cutting-edge sensor arrays to understand exactly what you and your family are breathing.
            </p>
            
            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative z-10">
-            <button onClick={() => navigate('/signup')} className="w-full sm:w-auto px-8 py-4 bg-white text-blue-600 hover:bg-slate-100 rounded-full font-bold text-lg shadow-xl shadow-black/10 transition-transform hover:scale-105">
+            <button onClick={() => navigate('/signup')} className="w-full sm:w-auto px-8 py-4 bg-white text-blue-600 hover:bg-slate-100 rounded-full font-semibold text-sm shadow-xl shadow-black/10 transition-transform hover:scale-105">
               Create Free Account
             </button>
-            <button onClick={() => navigate('/pollutants')} className="w-full sm:w-auto px-8 py-4 bg-transparent border-2 border-white/30 text-white hover:bg-white/10 rounded-full font-bold text-lg transition-all">
+            <button onClick={() => navigate('/pollutants')} className="w-full sm:w-auto px-8 py-4 bg-transparent border-2 border-white/30 text-white hover:bg-white/10 rounded-full font-semibold text-sm transition-all">
               Explore Data
             </button>
            </div>

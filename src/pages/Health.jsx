@@ -128,7 +128,7 @@ const Health = () => {
             {active.isNodeView ? `${active.nodeName} — ` : ''}Health guidance and recommendations based on current conditions.
           </p>
         </div>
-        <span className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 rounded-xl text-[10px] font-semibold text-purple-400 self-start sm:self-auto">
+        <span className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 rounded-xl text-xs font-semibold text-purple-400 self-start sm:self-auto">
           <Cpu size={10} /> Multi-Factor Advisory
         </span>
       </div>
@@ -140,7 +140,7 @@ const Health = () => {
 
           {/* Guidance cards — now using AI advisory data */}
           <div className="glass-card p-6">
-            <h3 className="text-sm font-semibold text-(--color-text-primary) mb-5">Current Guidance</h3>
+            <h3 className="text-base font-semibold text-(--color-text-primary) mb-5">Current Guidance</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               {[
                 {
@@ -235,14 +235,14 @@ const Health = () => {
                 {/* Right: Weekly / Monthly stats */}
                 <div className="flex md:flex-col gap-8 md:gap-5 md:items-end">
                   <div className="text-center md:text-right">
-                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">Weekly</p>
+                    <p className="text-xs text-slate-500 font-medium uppercase tracking-widest">Weekly</p>
                     <p className={`text-3xl font-bold tabular-nums mt-0.5 ${cigWeekly >= 35 ? 'text-red-400' : 'text-amber-400'}`}>{cigWeekly}</p>
-                    <p className="text-[10px] text-slate-600">Cigarettes</p>
+                    <p className="text-xs text-slate-600">Cigarettes</p>
                   </div>
                   <div className="text-center md:text-right">
-                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">Monthly</p>
+                    <p className="text-xs text-slate-500 font-medium uppercase tracking-widest">Monthly</p>
                     <p className={`text-3xl font-bold tabular-nums mt-0.5 ${cigMonthly >= 100 ? 'text-red-400' : 'text-amber-400'}`}>{cigMonthly}</p>
-                    <p className="text-[10px] text-slate-600">Cigarettes</p>
+                    <p className="text-xs text-slate-600">Cigarettes</p>
                   </div>
                 </div>
               </div>
@@ -255,10 +255,10 @@ const Health = () => {
                 <span className="text-white font-semibold">{cigPerDay} cigarette{cigPerDay !== 1 ? 's' : ''}</span> a day.
               </p>
               <div className="flex items-center justify-between mt-3">
-                <p className="text-[10px] text-slate-600 italic leading-relaxed max-w-md">
+                <p className="text-xs text-slate-600 italic leading-relaxed max-w-md">
                   This cigarette-equivalent estimate is based on the average PM2.5 concentration ({pm25.toFixed(1)} µg/m³) over the last 24 hours, assuming continuous exposure during that time.
                 </p>
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-600 shrink-0 ml-4">
+                <div className="flex items-center gap-1.5 text-xs text-slate-600 shrink-0 ml-4">
                   <span>Source:</span>
                   <span className="text-slate-400 font-medium">Berkeley Earth</span>
                   <Info size={10} className="text-slate-600" />
@@ -268,7 +268,7 @@ const Health = () => {
 
             {/* Solutions section */}
             <div className="px-6 pt-4 pb-6 border-t border-(--color-card-border)">
-              <h4 className="text-sm font-semibold text-(--color-text-primary) mb-4">Solutions for Current AQI</h4>
+              <h4 className="text-base font-semibold text-(--color-text-primary) mb-4">Solutions for Current AQI</h4>
               <div className="flex flex-col sm:flex-row gap-3">
                 {/* Solution cards */}
                 <div className="flex gap-2.5 flex-1 overflow-x-auto pb-1">
@@ -285,7 +285,7 @@ const Health = () => {
                         <s.icon size={20} className={s.active ? 'text-sky-400' : 'text-slate-500'} strokeWidth={1.5} />
                       </div>
                       <span className={`text-xs font-medium ${s.active ? 'text-white' : 'text-slate-400'}`}>{s.label}</span>
-                      <span className={`text-[10px] ${s.active ? 'text-sky-400' : 'text-slate-600'}`}>{s.status}</span>
+                      <span className={`text-xs ${s.active ? 'text-sky-400' : 'text-slate-600'}`}>{s.status}</span>
                     </button>
                   ))}
                 </div>
@@ -307,7 +307,7 @@ const Health = () => {
           {/* Sensitive Group Tabs */}
           <div className="glass-card p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3">
-              <h3 className="text-sm font-semibold text-(--color-text-primary)">Sensitive Groups</h3>
+              <h3 className="text-base font-semibold text-(--color-text-primary)">Sensitive Groups</h3>
               <div className="flex flex-wrap gap-1.5">
                 {sensitiveTabs.map((tab) => (
                   <button
@@ -378,7 +378,7 @@ const Health = () => {
           <div className="glass-card bg-red-500/5 p-5">
             <div className="flex items-center gap-2 mb-4">
               <Heart size={16} className="text-red-400" />
-              <h3 className="text-sm font-semibold text-red-400">Emergency Signs</h3>
+              <h3 className="text-base font-semibold text-red-400">Emergency Signs</h3>
             </div>
             <p className="text-xs text-(--color-text-secondary) mb-4">Seek immediate medical help if experiencing:</p>
             <div className="space-y-2">
@@ -399,7 +399,7 @@ const Health = () => {
 
           {/* WHO Standards */}
           <div className="glass-card p-5">
-            <h3 className="text-sm font-semibold text-(--color-text-primary) mb-3">WHO Guidelines</h3>
+            <h3 className="text-base font-semibold text-(--color-text-primary) mb-3">WHO Guidelines</h3>
             <p className="text-sm text-(--color-text-secondary) leading-relaxed mb-4">
               WHO recommends annual PM2.5 averages below 5 µg/m³ and 24-hour exposures below 15 µg/m³.
             </p>

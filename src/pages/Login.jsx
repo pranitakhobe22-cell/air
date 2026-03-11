@@ -66,7 +66,7 @@ const Login = () => {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Secure Email</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Secure Email</label>
               <input
                 type="email"
                 value={email}
@@ -77,7 +77,7 @@ const Login = () => {
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Passphrase</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Passphrase</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}

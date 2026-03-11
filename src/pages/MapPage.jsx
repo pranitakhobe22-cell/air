@@ -133,7 +133,7 @@ const MapPage = () => {
                 <Popup className="custom-popup" closeButton={false}>
                   <div className="map-panel p-2.5 rounded-xl min-w-[140px]">
                     <div className="flex items-center gap-1.5 mb-1">
-                      {m.isHardware && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400">ESP32</span>}
+                      {m.isHardware && <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400">ESP32</span>}
                       <p className="text-xs text-(--color-text-secondary)">{m.name}</p>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -141,7 +141,7 @@ const MapPage = () => {
                       <span className="font-medium" style={{ color }}>RRI {m.rri}</span>
                     </div>
                     {m.nodeData && (
-                      <div className="flex gap-3 mt-1.5 pt-1.5 border-t border-(--color-card-border) text-[10px] text-(--color-text-secondary)">
+                      <div className="flex gap-3 mt-1.5 pt-1.5 border-t border-(--color-card-border) text-xs text-(--color-text-secondary)">
                         <span>PM2.5: {m.nodeData.latest.pm25}</span>
                         <span>CO: {m.nodeData.latest.co}</span>
                       </div>
@@ -178,8 +178,8 @@ const MapPage = () => {
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {selectedNode.isHardware && (
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-500/15 text-sky-400">ESP32 Hardware</span>
-                  <span className="text-[10px] font-mono text-(--color-text-secondary)">{selectedNode.id}</span>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded bg-sky-500/15 text-sky-400">ESP32 Hardware</span>
+                  <span className="text-xs font-mono text-(--color-text-secondary)">{selectedNode.id}</span>
                 </div>
               )}
 
@@ -203,8 +203,8 @@ const MapPage = () => {
                     { label: 'Temp', value: selectedNode.nodeData.latest.temperature, unit: '°C' },
                   ].map((s) => (
                     <div key={s.label} className={`${subtleBg} rounded-lg px-2.5 py-2`}>
-                      <span className="text-[10px] text-(--color-text-secondary)">{s.label}</span>
-                      <p className="text-sm font-semibold text-(--color-text-primary) tabular-nums">{typeof s.value === 'number' ? s.value.toFixed(1) : s.value} <span className="text-[10px] text-(--color-text-secondary) font-normal">{s.unit}</span></p>
+                      <span className="text-xs text-(--color-text-secondary)">{s.label}</span>
+                      <p className="text-sm font-semibold text-(--color-text-primary) tabular-nums">{typeof s.value === 'number' ? s.value.toFixed(1) : s.value} <span className="text-[11px] text-(--color-text-secondary) font-normal">{s.unit}</span></p>
                     </div>
                   ))}
                 </div>

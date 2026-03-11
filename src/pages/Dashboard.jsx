@@ -76,7 +76,7 @@ const MetricCard = ({ label, value, unit, icon: Icon, color, sparkData = [], dec
     </div>
     <div className="flex items-baseline gap-1.5 mb-2 sm:mb-3">
       <span className="text-xl sm:text-2xl font-bold text-(--color-text-primary) tabular-nums"><AnimatedNumber value={value} decimals={decimals} /></span>
-      <span className="text-[10px] sm:text-[11px] text-(--color-text-secondary) opacity-60">{unit}</span>
+      <span className="text-[11px] sm:text-xs text-(--color-text-secondary) opacity-60">{unit}</span>
     </div>
     {sparkData.length > 1 && (
       <div className="h-8 -mx-1 mt-auto">
@@ -107,7 +107,7 @@ const StationRow = ({ name, aqi, status }) => {
       </div>
       <div className="flex items-center gap-2">
         <span className="text-sm font-semibold tabular-nums" style={{ color: band.color }}>{aqi}</span>
-        <span className="text-[10px] text-(--color-text-secondary) uppercase">{band.label.split(' ')[0]}</span>
+        <span className="text-xs text-(--color-text-secondary) uppercase">{band.label.split(' ')[0]}</span>
       </div>
     </div>
   );
@@ -235,7 +235,7 @@ const Dashboard = () => {
         <div className="lg:col-span-4 glass-card rounded-xl border border-(--color-card-border) p-6 sm:p-6 flex flex-col ">
           <span className="text-xs font-medium text-(--color-text-secondary) opacity-60 uppercase tracking-wider mb-3 sm:mb-4">Air Quality Index</span>
           <div className="flex items-end gap-3 mb-2">
-            <span className="text-5xl sm:text-7xl font-bold tabular-nums leading-none" style={{ color: band.color }}>
+            <span className="text-4xl sm:text-5xl font-bold tabular-nums leading-none" style={{ color: band.color }}>
               <AnimatedNumber value={aqi} />
             </span>
             <span className="text-lg font-medium text-(--color-text-secondary) opacity-60 mb-2">/ 500</span>
@@ -257,7 +257,7 @@ const Dashboard = () => {
               <div className="absolute top-0 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[6px] border-transparent transition-all duration-700"
                 style={{ left: `${Math.min(aqi / 500 * 100, 100)}%`, transform: 'translateX(-50%)', borderBottomColor: 'var(--color-text-primary)' }} />
             </div>
-            <div className="flex justify-between text-[10px] text-(--color-text-secondary) opacity-40 mt-0.5">
+            <div className="flex justify-between text-[11px] text-(--color-text-secondary) opacity-40 mt-0.5">
               <span>0</span><span>100</span><span>200</span><span>300</span><span>400</span><span>500</span>
             </div>
           </div>
@@ -279,7 +279,7 @@ const Dashboard = () => {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-3xl font-bold text-(--color-text-primary) tabular-nums"><AnimatedNumber value={rri} /></span>
-                <span className="text-[10px] text-(--color-text-secondary) opacity-60 uppercase tracking-wider">RRI</span>
+                <span className="text-[11px] text-(--color-text-secondary) opacity-60 uppercase tracking-wider">RRI</span>
               </div>
             </div>
           </div>
@@ -288,12 +288,12 @@ const Dashboard = () => {
             <div className="glass-card rounded-xl border border-(--color-card-border) p-6 text-center ">
               <Thermometer size={16} className="text-orange-400 mx-auto mb-1.5" />
               <span className="text-lg font-semibold text-(--color-text-primary) tabular-nums">{Number(environment?.temperature || 0).toFixed(1)}°</span>
-              <span className="block text-[10px] text-(--color-text-secondary) opacity-60 mt-0.5">Temperature</span>
+              <span className="block text-xs text-(--color-text-secondary) opacity-60 mt-0.5">Temperature</span>
             </div>
             <div className="glass-card rounded-xl border border-(--color-card-border) p-6 text-center ">
               <Droplets size={16} className="text-blue-400 mx-auto mb-1.5" />
               <span className="text-lg font-semibold text-(--color-text-primary) tabular-nums">{Number(environment?.humidity || 0).toFixed(0)}%</span>
-              <span className="block text-[10px] text-(--color-text-secondary) opacity-60 mt-0.5">Humidity</span>
+              <span className="block text-xs text-(--color-text-secondary) opacity-60 mt-0.5">Humidity</span>
             </div>
           </div>
         </div>
@@ -331,7 +331,7 @@ const Dashboard = () => {
       {/* ── Pollutant Grid ──────────────────────────────────── */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-medium text-(--color-text-secondary) opacity-60">Pollutant Readings</h2>
+          <h2 className="text-base font-semibold text-(--color-text-secondary) opacity-60">Pollutant Readings</h2>
           <button onClick={() => navigate('/pollutants')} className="text-xs text-(--color-accent) hover:text-(--color-light-sky) flex items-center gap-1 transition-colors">
             Details <ArrowUpRight size={12} />
           </button>
@@ -351,7 +351,7 @@ const Dashboard = () => {
         {/* Chart */}
         <div className="lg:col-span-8 glass-card rounded-xl p-6 sm:p-6 ">
           <div className="flex items-center justify-between mb-4 sm:mb-5">
-            <h2 className="text-sm font-medium text-(--color-text-secondary) opacity-60">AQI & RRI Trend</h2>
+            <h2 className="text-base font-semibold text-(--color-text-secondary) opacity-60">AQI & RRI Trend</h2>
             <div className="flex items-center gap-8 text-xs text-(--color-text-secondary) opacity-60">
                <span className="flex items-center gap-1.5"><span className="w-2.5 h-0.5 rounded bg-(--color-accent) inline-block" /> AQI</span>
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-0.5 rounded bg-rose-400 inline-block" /> RRI</span>
@@ -386,7 +386,7 @@ const Dashboard = () => {
           {/* Stations */}
           <div className="glass-card rounded-xl p-6 flex-1 ">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-medium text-(--color-text-secondary) opacity-60">Stations</h2>
+              <h2 className="text-base font-semibold text-(--color-text-secondary) opacity-60">Stations</h2>
               <span className="text-xs text-emerald-400">{nodes?.filter(n => n.status === 'active' || n.status === 'online')?.length || 0} online</span>
             </div>
             <div>
@@ -397,12 +397,12 @@ const Dashboard = () => {
                       <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                       <div>
                         <span className="text-sm text-(--color-text-primary)">{nd.location || nodeId}</span>
-                        <span className="block text-[10px] text-(--color-text-secondary) opacity-40 font-mono">{nodeId}</span>
+                        <span className="block text-xs text-(--color-text-secondary) opacity-40 font-mono">{nodeId}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold tabular-nums" style={{ color: getAqiBand(nd.latest?.aqi || 0).color }}>{nd.latest?.aqi || 0}</span>
-                      <span className="text-[10px] text-(--color-text-secondary) uppercase opacity-60">{getAqiBand(nd.latest?.aqi || 0).label.split(' ')[0]}</span>
+                      <span className="text-xs text-(--color-text-secondary) uppercase opacity-60">{getAqiBand(nd.latest?.aqi || 0).label.split(' ')[0]}</span>
                     </div>
                   </div>
                 ))
@@ -422,7 +422,7 @@ const Dashboard = () => {
 
           {/* Sensitive Groups */}
           <div className="glass-card rounded-xl p-6 ">
-            <h2 className="text-sm font-medium text-(--color-text-secondary) opacity-60 mb-3">At-Risk Groups</h2>
+            <h2 className="text-base font-semibold text-(--color-text-secondary) opacity-60 mb-3">At-Risk Groups</h2>
             <div className="space-y-2">
               {[
                 { label: 'Children', mult: 1.25 },

@@ -53,7 +53,7 @@ const Exposure = () => {
             {active.isNodeView ? `${active.nodeName} — ` : ''}Personalized exposure risk based on demographics and duration.
           </p>
         </div>
-        <span className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 rounded-lg text-[10px] font-semibold text-purple-400 self-start sm:self-auto">
+        <span className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 rounded-lg text-xs font-semibold text-purple-400 self-start sm:self-auto">
           <Cpu size={10} /> Sigmoid Dose-Response Model
         </span>
       </div>
@@ -125,7 +125,7 @@ const Exposure = () => {
           <div className="glass-card rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-5">
               <Clock size={16} className="text-(--color-text-secondary)" />
-              <h3 className="text-sm font-semibold text-(--color-text-primary)">Exposure Duration</h3>
+              <h3 className="text-base font-semibold text-(--color-text-primary)">Exposure Duration</h3>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[1, 4, 8, 24].map((h) => (
@@ -152,7 +152,7 @@ const Exposure = () => {
             <div className="glass-card rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Droplets size={16} className="text-cyan-400" />
-                <h3 className="text-sm font-semibold text-(--color-text-primary)">Particulate Intake</h3>
+                <h3 className="text-base font-semibold text-(--color-text-primary)">Particulate Intake</h3>
               </div>
               <div className="flex items-baseline gap-2 mb-3">
                 <span className="text-4xl font-bold text-cyan-400 tabular-nums">{dose.inhaledMass.toFixed(1)}</span>
@@ -168,7 +168,7 @@ const Exposure = () => {
             <div className="glass-card rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <HeartPulse size={16} className="text-rose-400" />
-                <h3 className="text-sm font-semibold text-(--color-text-primary)">Advisory</h3>
+                <h3 className="text-base font-semibold text-(--color-text-primary)">Advisory</h3>
               </div>
               <p className="text-sm text-(--color-text-primary) leading-relaxed mb-4">{dose.advisory}</p>
               <div>
@@ -192,7 +192,7 @@ const Exposure = () => {
           <div className="glass-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <Activity size={14} className="text-purple-400" />
-              <h3 className="text-sm font-semibold text-(--color-text-primary)">Model Parameters</h3>
+              <h3 className="text-base font-semibold text-(--color-text-primary)">Model Parameters</h3>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
@@ -202,7 +202,7 @@ const Exposure = () => {
                 { label: 'Vuln. Modifier', value: `×${activeDemo.multiplier.toFixed(1)}` },
               ].map(p => (
                 <div key={p.label} className="p-3 subtle-surface rounded-xl">
-                  <p className="text-[10px] text-(--color-text-secondary) mb-1">{p.label}</p>
+                  <p className="text-xs text-(--color-text-secondary) mb-1">{p.label}</p>
                   <p className="text-sm font-semibold text-(--color-text-primary)">{p.value}</p>
                 </div>
               ))}

@@ -197,7 +197,7 @@ const Profile = () => {
           <div className="flex-1">
             {/* Contact grid */}
             <div>
-              <h3 className="text-sm font-bold text-(--color-text-secondary) uppercase tracking-widest mb-4">
+              <h3 className="text-base font-bold text-(--color-text-secondary) uppercase tracking-widest mb-4">
                 Personal Information
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -207,7 +207,7 @@ const Profile = () => {
                     <UserCircle size={20} className="text-(--color-text-secondary) group-hover:text-(--color-primary)" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-(--color-text-secondary) uppercase tracking-wide">Full Name</span>
+                    <span className="text-xs font-bold text-(--color-text-secondary) uppercase tracking-wide">Full Name</span>
                     {editing ? (
                       <input type="text" value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -225,7 +225,7 @@ const Profile = () => {
                     <Mail size={20} className="text-(--color-text-secondary) group-hover:text-(--color-primary)" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-(--color-text-secondary) uppercase tracking-wide">Secure Email</span>
+                    <span className="text-xs font-bold text-(--color-text-secondary) uppercase tracking-wide">Secure Email</span>
                     {editing ? (
                       <input type="email" value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -243,7 +243,7 @@ const Profile = () => {
                     <Mail size={20} className="text-(--color-text-secondary) group-hover:text-(--color-primary)" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-(--color-text-secondary) uppercase tracking-wide">Contact Number</span>
+                    <span className="text-xs font-bold text-(--color-text-secondary) uppercase tracking-wide">Contact Number</span>
                     {editing ? (
                       <input type="text" value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -263,7 +263,7 @@ const Profile = () => {
                     <User size={20} className="text-(--color-text-secondary) group-hover:text-(--color-primary)" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-(--color-text-secondary) uppercase tracking-wide">Gender</span>
+                    <span className="text-xs font-bold text-(--color-text-secondary) uppercase tracking-wide">Gender</span>
                     {editing ? (
                       <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}
                         className="bg-(--color-bg-main)/30 border border-(--color-card-border) rounded-lg px-1 py-1 text-(--color-text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20"
@@ -284,7 +284,7 @@ const Profile = () => {
                     <Calendar size={20} className="text-(--color-text-secondary) group-hover:text-(--color-primary)" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-(--color-text-secondary) uppercase tracking-wide">Age</span>
+                    <span className="text-xs font-bold text-(--color-text-secondary) uppercase tracking-wide">Age</span>
                     {editing ? (
                       <input type="number" value={form.age}
                         onChange={(e) => setForm({ ...form, age: Number(e.target.value) })}
@@ -302,7 +302,7 @@ const Profile = () => {
                     <Shield size={20} className="text-(--color-text-secondary) group-hover:text-(--color-primary)" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-(--color-text-secondary) uppercase tracking-wide">Environment</span>
+                    <span className="text-xs font-bold text-(--color-text-secondary) uppercase tracking-wide">Environment</span>
                     {editing ? (
                       <select value={form.environment} onChange={(e) => setForm({ ...form, environment: e.target.value })}
                         className="bg-(--color-bg-main)/30 border border-(--color-card-border) rounded-lg px-1 py-1 text-(--color-text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20"
@@ -507,7 +507,7 @@ const Profile = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'rgba(0, 0, 0, 0.03)', border: '1px solid rgba(0, 0, 0, 0.1)' }}>
                   <div>
-                    <p className="text-[10px] text-(--color-text-secondary) font-bold uppercase tracking-wider">Base AQI</p>
+                    <p className="text-xs text-(--color-text-secondary) font-bold uppercase tracking-wider">Base AQI</p>
                     <p className="text-xs text-(--color-text-secondary)">Current Reading</p>
                   </div>
                   <span className="text-xl font-bold text-(--color-text-primary)">{baseAqi}</span>
@@ -517,7 +517,7 @@ const Profile = () => {
 
                 <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'rgba(0, 0, 0, 0.03)', border: `1px solid ${live.color}50` }}>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: live.color }}>Vulnerability</p>
+                    <p className="text-xs font-bold uppercase tracking-wider" style={{ color: live.color }}>Vulnerability</p>
                     <p className="text-xs text-(--color-text-secondary)">Personal Modifier</p>
                   </div>
                   <span className="text-xl font-bold" style={{ color: live.color }}>{live.modifier}x</span>

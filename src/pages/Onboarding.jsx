@@ -85,7 +85,7 @@ export default function Onboarding() {
                         onChange={e => setForm(f => ({ ...f, age: Number(e.target.value) }))}
                         className="w-full accent-(--color-primary)"
                     />
-                    <div className="flex justify-between w-full text-[10px] font-bold text-(--color-text-secondary) opacity-40 uppercase tracking-widest">
+                    <div className="flex justify-between w-full text-xs font-bold text-(--color-text-secondary) opacity-40 uppercase tracking-widest">
                         <span>1</span><span>Child</span><span>Adult</span><span>Senior</span><span>100</span>
                     </div>
                 </div>
@@ -165,7 +165,7 @@ export default function Onboarding() {
                         onChange={e => setForm(f => ({ ...f, outdoorExposureHours: Number(e.target.value) }))}
                         className="w-full accent-(--color-primary)"
                     />
-                    <div className="flex justify-between w-full text-[10px] font-bold text-(--color-text-secondary) uppercase tracking-widest">
+                    <div className="flex justify-between w-full text-xs font-bold text-(--color-text-secondary) uppercase tracking-widest">
                         <span>0h Indoors</span><span>6h Mixed</span><span>12h Outdoors</span>
                     </div>
                 </div>

@@ -104,8 +104,8 @@ const Forecast = () => {
           <div className="glass-card rounded-2xl p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
               <div className="flex items-center gap-3">
-                <h3 className="text-sm font-semibold text-(--color-text-primary)">AQI Trajectory</h3>
-                <span className="flex items-center gap-1 px-2 py-0.5 bg-purple-500/10 rounded-xl text-[10px] font-semibold text-purple-400">
+                <h3 className="text-base font-semibold text-(--color-text-primary)">AQI Trajectory</h3>
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-purple-500/10 rounded-xl text-xs font-semibold text-purple-400">
                   <Cpu size={10} /> EWMA Model
                 </span>
               </div>
@@ -158,7 +158,7 @@ const Forecast = () => {
           <div className="glass-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-5">
               <CalendarDays size={16} className="text-(--color-text-secondary)" />
-              <h3 className="text-sm font-semibold text-(--color-text-primary)">Risk Distribution</h3>
+              <h3 className="text-base font-semibold text-(--color-text-primary)">Risk Distribution</h3>
             </div>
             <p className="text-xs text-(--color-text-secondary) mb-4">Based on {total} recent readings</p>
             <div className="space-y-4">
@@ -183,7 +183,7 @@ const Forecast = () => {
           <div className="glass-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-5">
               <Activity size={16} className="text-(--color-text-secondary)" />
-              <h3 className="text-sm font-semibold text-(--color-text-primary)">Hourly Forecast</h3>
+              <h3 className="text-base font-semibold text-(--color-text-primary)">Hourly Forecast</h3>
             </div>
             <div className="space-y-2">
               {forecast.map((f, i) => {
@@ -199,7 +199,7 @@ const Forecast = () => {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-bold tabular-nums" style={{ color: c }}>{f.aqi}</span>
-                      <span className="text-[10px] text-(--color-text-secondary)">{f.confidence}%</span>
+                      <span className="text-xs text-(--color-text-secondary)">{f.confidence}%</span>
                     </div>
                   </div>
                 );

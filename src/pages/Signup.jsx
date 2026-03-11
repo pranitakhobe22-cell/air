@@ -68,7 +68,7 @@ const Signup = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Full Name</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Full Name</label>
               <input
                 type="text"
                 value={form.name}
@@ -79,7 +79,7 @@ const Signup = () => {
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Secure Email</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Secure Email</label>
               <input
                 type="email"
                 value={form.email}
@@ -90,7 +90,7 @@ const Signup = () => {
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Passphrase</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Passphrase</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -110,7 +110,7 @@ const Signup = () => {
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Confirm Passphrase</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2 px-1">Confirm Passphrase</label>
               <input
                 type="password"
                 value={form.confirm}
