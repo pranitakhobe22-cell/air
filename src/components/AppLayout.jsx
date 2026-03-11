@@ -76,12 +76,12 @@ const AppLayout = () => {
     <div className="min-h-screen text-slate-100 font-sans">
 
       {/* Mobile Top Bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 glass-sidebar border-b border-(--color-card-border) flex items-center justify-between px-4 z-60">
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-20 glass-sidebar border-b border-(--color-card-border) flex items-center justify-between px-4 z-60">
         <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 text-(--color-text-secondary) hover:text-(--color-text-primary) transition-colors">
           <Menu size={22} />
         </button>
         <div className="flex items-center gap-2 py-1">
-          <img src="/logo-aeris.png" alt="AERIS Logo" className="h-12 w-auto object-contain scale-110 origin-left" />
+          <img src="/logo-aeris.png" alt="AERIS Logo" className="h-20 w-auto object-contain scale-110 origin-left" />
         </div>
         <div className="flex items-center gap-2">
           <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
@@ -111,7 +111,7 @@ const AppLayout = () => {
             className="flex items-center cursor-pointer px-1 w-full justify-center"
             onClick={() => navigate('/')}
           >
-            <img src="/logo-aeris.png" alt="AERIS Logo" className="h-20 w-auto object-contain scale-125 transform" />
+            <img src="/logo-aeris.png" alt="AERIS Logo" className="h-30 w-auto object-contain scale-125 transform" />
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1 text-(--color-text-secondary) hover:text-(--color-text-primary) transition-colors">
             <X size={18} />
@@ -193,7 +193,7 @@ const AppLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="lg:ml-64 min-h-screen pt-14 lg:pt-0">
+      <main className="lg:ml-64 min-h-screen pt-20 lg:pt-0">
         {!isOnline && (
           <div className="bg-rose-500/10 border-b border-rose-500/20 px-4 py-2 flex items-center justify-center gap-2">
             <WifiOff size={14} className="text-rose-400" />
