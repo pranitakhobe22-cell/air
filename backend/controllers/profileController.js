@@ -28,6 +28,7 @@ const getProfile = async (req, res) => {
                 activityLevel: profile?.activityLevel || 'moderate',
                 commuteMode: profile?.commuteMode || 'mixed',
                 environment: profile?.environment || 'suburban',
+                phone: profile?.phone || '',
             },
         });
     } catch (e) {
@@ -39,7 +40,7 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         const { userId, email } = req.user;
-        const { name, age, conditions, sensitivity, outdoorExposureHours, gender, smoking, activityLevel, commuteMode, environment } = req.body;
+        const { name, age, conditions, sensitivity, outdoorExposureHours, gender, smoking, activityLevel, commuteMode, environment, phone } = req.body;
         const now = new Date().toISOString();
 
         if (name) {
@@ -70,6 +71,7 @@ const updateProfile = async (req, res) => {
             ...(activityLevel !== undefined && { activityLevel }),
             ...(commuteMode !== undefined && { commuteMode }),
             ...(environment !== undefined && { environment }),
+            ...(phone !== undefined && { phone }),
         };
 
         await profiles.items.upsert(updated);

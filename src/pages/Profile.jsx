@@ -76,6 +76,8 @@ const Profile = () => {
             email: p.email || user?.email || '',
             phone: p.phone || '',
             age: p.age || 28,
+            gender: p.gender || 'prefer_not_to_say',
+            smoking: p.smoking || 'none',
             conditions: Array.isArray(p.conditions) ? p.conditions : [],
             sensitivity: p.sensitivity || 'moderate',
             outdoorExposureHours: p.outdoorExposureHours || 3,
@@ -101,10 +103,11 @@ const Profile = () => {
     setSaving(true);
     try {
       await aerisApi.put('/profile', {
-        name: form.name, age: form.age, phone: form.phone, sensitivity: form.sensitivity, 
-        conditions: form.conditions, outdoorExposureHours: form.outdoorExposureHours, 
-        smoking: form.smoking, activityLevel: form.activityLevel, 
-        commuteMode: form.commuteMode, environment: form.environment,
+        name: form.name, age: form.age, phone: form.phone, gender: form.gender,
+        sensitivity: form.sensitivity, conditions: form.conditions,
+        outdoorExposureHours: form.outdoorExposureHours, smoking: form.smoking,
+        activityLevel: form.activityLevel, commuteMode: form.commuteMode,
+        environment: form.environment,
       });
       setEditing(false);
       setSaved(true);
