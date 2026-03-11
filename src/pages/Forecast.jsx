@@ -93,7 +93,7 @@ const Forecast = () => {
   return (
     <div className="p-5 sm:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">Forecast</h1>
+        <h1 className="text-2xl lg:text-xl font-bold text-(--color-text-primary) tracking-tight">Forecast</h1>
         <p className="text-sm text-(--color-text-secondary) mt-0.5">
           {activeNode.isNodeView ? `${activeNode.nodeName} — ` : ''}Predictive air quality trends based on recent sensor data.
         </p>
@@ -148,7 +148,7 @@ const Forecast = () => {
             ].map((m, i) => (
               <div key={i} className="glass-card rounded-2xl p-5">
                 <p className="text-xs text-(--color-text-secondary) mb-2">{m.label}</p>
-                <p className={`text-2xl font-bold ${m.color}`}>{m.value}</p>
+                <p className={`text-2xl lg:text-xl font-bold ${m.color}`}>{m.value}</p>
               </div>
             ))}
           </div>

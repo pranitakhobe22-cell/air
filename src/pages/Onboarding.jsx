@@ -76,7 +76,7 @@ export default function Onboarding() {
                             min={1} max={120}
                             value={form.age}
                             onChange={e => setForm(f => ({ ...f, age: Number(e.target.value) }))}
-                            className="w-40 text-center text-5xl font-black bg-transparent border-b-2 border-(--color-primary) focus:outline-none text-(--color-text-primary) py-2"
+                            className="w-40 text-center text-5xl lg:text-4xl font-black bg-transparent border-b-2 border-(--color-primary) focus:outline-none text-(--color-text-primary) py-2"
                         />
                         <span className="absolute -right-12 bottom-3 text-(--color-text-secondary) font-bold text-lg">yrs</span>
                     </div>
@@ -157,7 +157,7 @@ export default function Onboarding() {
             icon: Wind,
             content: (
                 <div className="flex flex-col items-center space-y-6">
-                    <div className="text-7xl font-black text-(--color-primary)">
+                    <div className="text-7xl lg:text-5xl font-black text-(--color-primary)">
                         {form.outdoorExposureHours}h
                     </div>
                     <input
@@ -210,7 +210,7 @@ export default function Onboarding() {
                         </div>
 
                         {/* Title */}
-                        <h1 className="text-3xl font-black text-(--color-text-primary) mb-2 tracking-tight">{currentStep.title}</h1>
+                        <h1 className="text-3xl lg:text-2xl font-black text-(--color-text-primary) mb-2 tracking-tight">{currentStep.title}</h1>
                         <p className="text-sm text-(--color-text-secondary) mb-10 font-medium leading-relaxed">{currentStep.subtitle}</p>
 
                         {/* Content */}

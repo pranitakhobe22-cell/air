@@ -67,8 +67,8 @@ const Landing = () => {
             </div>
             
             <h1 className="font-extrabold tracking-tight text-white drop-shadow-xl mb-6 leading-tight flex flex-col items-center">
-              <span className="text-5xl md:text-6xl text-transparent bg-clip-text bg-linear-to-r from-(--color-primary) to-(--color-secondary) tracking-wide pb-2">AERIS</span>
-              <span className="text-xl md:text-2xl lg:text-3xl mt-4">The Smartest Way <br/> to Check Your Space</span>
+              <span className="text-5xl md:text-6xl lg:text-5xl text-transparent bg-clip-text bg-linear-to-r from-(--color-primary) to-(--color-secondary) tracking-wide pb-2">AERIS</span>
+              <span className="text-xl md:text-2xl lg:text-2xl mt-4">The Smartest Way <br/> to Check Your Space</span>
             </h1>
             
             <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed font-light drop-shadow-md">
@@ -91,7 +91,7 @@ const Landing = () => {
       <section className="py-24 px-6 max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16">
           <h2 className="text-sm font-bold text-sky-400 tracking-widest uppercase mb-2">Core Capabilities</h2>
-          <h3 className="text-xl md:text-2xl font-bold text-white">Actionable Air Quality Insights</h3>
+          <h3 className="text-xl md:text-2xl lg:text-xl font-bold text-white">Actionable Air Quality Insights</h3>
         </div>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -128,7 +128,7 @@ const Landing = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 leading-tight">
+            <h2 className="text-2xl md:text-3xl lg:text-2xl font-bold text-white mb-6 leading-tight">
               More than just data. <br/>
               <span className="text-slate-400">Meaningful protection.</span>
             </h2>
@@ -192,7 +192,7 @@ const Landing = () => {
            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-3xl rounded-full" />
            <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/20 blur-3xl rounded-full" />
            
-           <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 relative z-10">Ready to monitor your environment?</h2>
+           <h2 className="text-2xl md:text-3xl lg:text-2xl font-bold text-white mb-6 relative z-10">Ready to monitor your environment?</h2>
            <p className="text-sky-100 text-lg md:text-xl font-light mb-10 max-w-2xl mx-auto relative z-10">
              Join AERIS today and start leveraging cutting-edge sensor arrays to understand exactly what you and your family are breathing.
            </p>

@@ -75,7 +75,7 @@ const MetricCard = ({ label, value, unit, icon: Icon, color, sparkData = [], dec
       </div>
     </div>
     <div className="flex items-baseline gap-1.5 mb-2 sm:mb-3">
-      <span className="text-xl sm:text-2xl font-bold text-(--color-text-primary) tabular-nums"><AnimatedNumber value={value} decimals={decimals} /></span>
+      <span className="text-xl sm:text-2xl lg:text-xl font-bold text-(--color-text-primary) tabular-nums"><AnimatedNumber value={value} decimals={decimals} /></span>
       <span className="text-[11px] sm:text-xs text-(--color-text-secondary) opacity-60">{unit}</span>
     </div>
     {sparkData.length > 1 && (
@@ -235,10 +235,10 @@ const Dashboard = () => {
         <div className="lg:col-span-4 glass-card rounded-xl border border-(--color-card-border) p-6 sm:p-6 flex flex-col ">
           <span className="text-xs font-medium text-(--color-text-secondary) opacity-60 uppercase tracking-wider mb-3 sm:mb-4">Air Quality Index</span>
           <div className="flex items-end gap-3 mb-2">
-            <span className="text-4xl sm:text-5xl font-bold tabular-nums leading-none" style={{ color: band.color }}>
+            <span className="text-4xl sm:text-5xl lg:text-4xl font-bold tabular-nums leading-none" style={{ color: band.color }}>
               <AnimatedNumber value={aqi} />
             </span>
-            <span className="text-lg font-medium text-(--color-text-secondary) opacity-60 mb-2">/ 500</span>
+            <span className="text-lg lg:text-base font-medium text-(--color-text-secondary) opacity-60 mb-2">/ 500</span>
           </div>
           <div className={`inline-flex self-start items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${band.bg} ${band.text} mb-4`}>
             {band.label}
@@ -278,7 +278,7 @@ const Dashboard = () => {
                   stroke={band.color} strokeLinecap="round" />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-(--color-text-primary) tabular-nums"><AnimatedNumber value={rri} /></span>
+                <span className="text-3xl lg:text-2xl font-bold text-(--color-text-primary) tabular-nums"><AnimatedNumber value={rri} /></span>
                 <span className="text-[11px] text-(--color-text-secondary) opacity-60 uppercase tracking-wider">RRI</span>
               </div>
             </div>
@@ -287,12 +287,12 @@ const Dashboard = () => {
           <div className="grid grid-cols-2 gap-3">
             <div className="glass-card rounded-xl border border-(--color-card-border) p-6 text-center ">
               <Thermometer size={16} className="text-orange-400 mx-auto mb-1.5" />
-              <span className="text-lg font-semibold text-(--color-text-primary) tabular-nums">{Number(environment?.temperature || 0).toFixed(1)}°</span>
+              <span className="text-lg lg:text-base font-semibold text-(--color-text-primary) tabular-nums">{Number(environment?.temperature || 0).toFixed(1)}°</span>
               <span className="block text-xs text-(--color-text-secondary) opacity-60 mt-0.5">Temperature</span>
             </div>
             <div className="glass-card rounded-xl border border-(--color-card-border) p-6 text-center ">
               <Droplets size={16} className="text-blue-400 mx-auto mb-1.5" />
-              <span className="text-lg font-semibold text-(--color-text-primary) tabular-nums">{Number(environment?.humidity || 0).toFixed(0)}%</span>
+              <span className="text-lg lg:text-base font-semibold text-(--color-text-primary) tabular-nums">{Number(environment?.humidity || 0).toFixed(0)}%</span>
               <span className="block text-xs text-(--color-text-secondary) opacity-60 mt-0.5">Humidity</span>
             </div>
           </div>

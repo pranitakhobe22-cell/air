@@ -83,7 +83,7 @@ const Pollutants = () => {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">Pollutant Analysis</h1>
+        <h1 className="text-2xl lg:text-xl font-bold text-(--color-text-primary) tracking-tight">Pollutant Analysis</h1>
         <p className="text-sm text-(--color-text-secondary) opacity-60 mt-0.5">
           {active.isNodeView ? `${active.nodeName} — ` : ''}Individual pollutant readings, thresholds, and health impacts.
         </p>
@@ -125,7 +125,7 @@ const Pollutants = () => {
 
                 {/* Value */}
                 <div className="flex items-baseline gap-2 mb-4">
-                  <span className="text-3xl font-bold text-(--color-text-primary) tabular-nums">{Number(value).toFixed(1)}</span>
+                  <span className="text-3xl lg:text-2xl font-bold text-(--color-text-primary) tabular-nums">{Number(value).toFixed(1)}</span>
                   <span className="text-xs text-(--color-text-secondary) opacity-60">{config.unit}</span>
                 </div>
 

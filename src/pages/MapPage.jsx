@@ -185,11 +185,11 @@ const MapPage = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className={`${subtleBg} rounded-xl p-3 text-center`}>
-                  <span className="text-2xl font-bold text-(--color-text-primary)">{selectedNode.aqi}</span>
+                  <span className="text-2xl lg:text-xl font-bold text-(--color-text-primary)">{selectedNode.aqi}</span>
                   <p className="text-[11px] text-(--color-text-secondary) mt-0.5">AQI</p>
                 </div>
                 <div className={`${subtleBg} rounded-xl p-3 text-center`}>
-                  <span className="text-2xl font-bold" style={{ color: rriColor(selectedNode.rri) }}>{selectedNode.rri}</span>
+                  <span className="text-2xl lg:text-xl font-bold" style={{ color: rriColor(selectedNode.rri) }}>{selectedNode.rri}</span>
                   <p className="text-[11px] text-(--color-text-secondary) mt-0.5">RRI</p>
                 </div>
               </div>

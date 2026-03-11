@@ -167,7 +167,7 @@ const Profile = () => {
       >
         {/* Title + Edit button */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-extrabold tracking-tight bg-linear-to-r from-(--color-primary) to-(--color-secondary) bg-clip-text text-transparent">
+          <h1 className="text-3xl lg:text-2xl font-extrabold tracking-tight bg-linear-to-r from-(--color-primary) to-(--color-secondary) bg-clip-text text-transparent">
             Profile
           </h1>
           <div className="flex items-center gap-3">
@@ -497,7 +497,7 @@ const Profile = () => {
                 border: `1px solid ${live.color}50`,
               }}>
                 <p className="text-xs text-(--color-text-secondary) opacity-60 mb-3 uppercase tracking-wider">Your Simulated RRI</p>
-                <span className="text-6xl font-black tabular-nums" style={{ color: live.color }}>{live.rri}</span>
+                <span className="text-6xl lg:text-5xl font-black tabular-nums" style={{ color: live.color }}>{live.rri}</span>
                 {editing && live.rri !== data?.derived?.rri && (
                   <p className="text-xs text-(--color-text-primary) mt-3">Unsaved preview</p>
                 )}

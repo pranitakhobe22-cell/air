@@ -123,7 +123,7 @@ const Health = () => {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">Health Center</h1>
+          <h1 className="text-2xl lg:text-xl font-bold text-(--color-text-primary) tracking-tight">Health Center</h1>
           <p className="text-sm text-(--color-text-secondary) mt-0.5">
             {active.isNodeView ? `${active.nodeName} — ` : ''}Health guidance and recommendations based on current conditions.
           </p>
@@ -219,7 +219,7 @@ const Health = () => {
                       transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                       className="flex items-baseline gap-1"
                     >
-                      <span className={`text-6xl sm:text-7xl font-extrabold tabular-nums tracking-tight ${cigPerDay >= 5 ? 'text-red-400' : cigPerDay >= 2 ? 'text-amber-400' : cigPerDay > 0 ? 'text-orange-400' : 'text-emerald-400'}`}>
+                      <span className={`text-6xl sm:text-7xl lg:text-5xl font-extrabold tabular-nums tracking-tight ${cigPerDay >= 5 ? 'text-red-400' : cigPerDay >= 2 ? 'text-amber-400' : cigPerDay > 0 ? 'text-orange-400' : 'text-emerald-400'}`}>
                         {cigPerDay}
                       </span>
                     </motion.div>
@@ -236,12 +236,12 @@ const Health = () => {
                 <div className="flex md:flex-col gap-8 md:gap-5 md:items-end">
                   <div className="text-center md:text-right">
                     <p className="text-xs text-slate-500 font-medium uppercase tracking-widest">Weekly</p>
-                    <p className={`text-3xl font-bold tabular-nums mt-0.5 ${cigWeekly >= 35 ? 'text-red-400' : 'text-amber-400'}`}>{cigWeekly}</p>
+                    <p className={`text-3xl lg:text-2xl font-bold tabular-nums mt-0.5 ${cigWeekly >= 35 ? 'text-red-400' : 'text-amber-400'}`}>{cigWeekly}</p>
                     <p className="text-xs text-slate-600">Cigarettes</p>
                   </div>
                   <div className="text-center md:text-right">
                     <p className="text-xs text-slate-500 font-medium uppercase tracking-widest">Monthly</p>
-                    <p className={`text-3xl font-bold tabular-nums mt-0.5 ${cigMonthly >= 100 ? 'text-red-400' : 'text-amber-400'}`}>{cigMonthly}</p>
+                    <p className={`text-3xl lg:text-2xl font-bold tabular-nums mt-0.5 ${cigMonthly >= 100 ? 'text-red-400' : 'text-amber-400'}`}>{cigMonthly}</p>
                     <p className="text-xs text-slate-600">Cigarettes</p>
                   </div>
                 </div>

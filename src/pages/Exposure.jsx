@@ -48,7 +48,7 @@ const Exposure = () => {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">Exposure Calculator</h1>
+          <h1 className="text-2xl lg:text-xl font-bold text-(--color-text-primary) tracking-tight">Exposure Calculator</h1>
           <p className="text-sm text-(--color-text-secondary) mt-0.5">
             {active.isNodeView ? `${active.nodeName} — ` : ''}Personalized exposure risk based on demographics and duration.
           </p>
@@ -78,7 +78,7 @@ const Exposure = () => {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-4xl font-bold text-(--color-text-primary) tabular-nums">{personalRri}</span>
+                <span className="text-4xl lg:text-3xl font-bold text-(--color-text-primary) tabular-nums">{personalRri}</span>
                 <span className="text-xs text-(--color-text-secondary)">/100</span>
               </div>
             </div>
@@ -138,7 +138,7 @@ const Exposure = () => {
                       : 'subtle-surface text-(--color-text-secondary) hover:bg-white/[0.05]'
                   }`}
                 >
-                  <span className="text-xl font-bold block">{h}</span>
+                  <span className="text-xl lg:text-lg font-bold block">{h}</span>
                   <span className="text-[11px]">hour{h > 1 ? 's' : ''}</span>
                 </button>
               ))}
@@ -155,7 +155,7 @@ const Exposure = () => {
                 <h3 className="text-base font-semibold text-(--color-text-primary)">Particulate Intake</h3>
               </div>
               <div className="flex items-baseline gap-2 mb-3">
-                <span className="text-4xl font-bold text-cyan-400 tabular-nums">{dose.inhaledMass.toFixed(1)}</span>
+                <span className="text-4xl lg:text-3xl font-bold text-cyan-400 tabular-nums">{dose.inhaledMass.toFixed(1)}</span>
                 <span className="text-sm text-(--color-text-secondary)">µg</span>
               </div>
               <p className="text-xs text-(--color-text-secondary) leading-relaxed">

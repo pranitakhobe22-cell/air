@@ -141,7 +141,7 @@ const LiveStatus = () => {
       {/* ── Header ──────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-(--color-text-primary) tracking-tight">Live Status</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-xl font-bold text-(--color-text-primary) tracking-tight">Live Status</h1>
           <p className="text-sm text-(--color-text-secondary) opacity-60 mt-0.5">
             Real-time sensor readings &middot; {active.nodeName || meta?.location || 'Local Station'}
           </p>
@@ -196,7 +196,7 @@ const LiveStatus = () => {
                     <tile.icon size={16} className="text-(--color-text-secondary) opacity-40" />
                   </div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-(--color-text-primary) tabular-nums">
+                    <span className="text-3xl lg:text-2xl font-bold text-(--color-text-primary) tabular-nums">
                       <AnimatedNum value={tile.value} decimals={tile.decimals} />
                     </span>
                     <span className="text-xs text-(--color-text-secondary) opacity-60">{tile.unit}</span>
@@ -230,14 +230,14 @@ const LiveStatus = () => {
               <div className="flex items-center gap-3 shrink-0">
                 <div className="text-right">
                   <p className="text-[11px] text-(--color-text-secondary) opacity-60">Risk Score</p>
-                  <p className="text-2xl font-bold tabular-nums" style={{ color: riskColor }}>
+                  <p className="text-2xl lg:text-xl font-bold tabular-nums" style={{ color: riskColor }}>
                     <AnimatedNum value={activeDerived?.rri || 0} />
                   </p>
                 </div>
                 <div className="w-px h-8 bg-card-border" />
                 <div className="text-right">
                   <p className="text-[11px] text-(--color-text-secondary) opacity-60">AQI</p>
-                  <p className="text-2xl font-bold text-(--color-text-primary) tabular-nums">
+                  <p className="text-2xl lg:text-xl font-bold text-(--color-text-primary) tabular-nums">
                     <AnimatedNum value={activeDerived?.aqi || 0} />
                   </p>
                 </div>

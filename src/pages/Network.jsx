@@ -65,7 +65,7 @@ const Network = () => {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">System Network</h1>
+        <h1 className="text-2xl lg:text-xl font-bold text-(--color-text-primary) tracking-tight">System Network</h1>
         <p className="text-sm text-(--color-text-secondary) opacity-60 mt-0.5">IoT fleet status, architecture, and knowledge base.</p>
       </div>
 
