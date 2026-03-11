@@ -47,7 +47,7 @@ const Login = () => {
           {/* Logo */}
           <div className="flex flex-col items-center mb-10">
             <Link to="/">
-              <img src="/logo.png" alt="AERIS Logo" className="h-24 w-auto object-contain mb-2 hover:scale-105 transition-transform" />
+              <img src="/logo-aeris.png" alt="AERIS Logo" className="h-24 w-auto object-contain mb-2 hover:scale-105 transition-transform" />
             </Link>
             <p className="text-xs text-slate-500 mt-2 text-center font-medium uppercase tracking-widest opacity-70">Environmental Intelligence</p>
           </div>

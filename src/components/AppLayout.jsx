@@ -81,7 +81,7 @@ const AppLayout = () => {
           <Menu size={22} />
         </button>
         <div className="flex items-center gap-2 py-1">
-          <img src="/logo.png" alt="AERIS Logo" className="h-12 w-auto object-contain scale-110 origin-left" />
+          <img src="/logo-aeris.png" alt="AERIS Logo" className="h-12 w-auto object-contain scale-110 origin-left" />
         </div>
         <div className="flex items-center gap-2">
           <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
@@ -111,7 +111,7 @@ const AppLayout = () => {
             className="flex items-center cursor-pointer px-1 w-full justify-center"
             onClick={() => navigate('/')}
           >
-            <img src="/logo.png" alt="AERIS Logo" className="h-20 w-auto object-contain scale-125 transform" />
+            <img src="/logo-aeris.png" alt="AERIS Logo" className="h-20 w-auto object-contain scale-125 transform" />
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1 text-(--color-text-secondary) hover:text-(--color-text-primary) transition-colors">
             <X size={18} />

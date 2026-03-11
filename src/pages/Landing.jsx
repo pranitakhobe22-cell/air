@@ -40,7 +40,7 @@ const Landing = () => {
       {/* ── Navbar ─────────────────────────────────────── */}
       <nav className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-5 max-w-7xl mx-auto w-full">
         <div className="flex items-center">
-          <img src="/logo.png" alt="AERIS" className="h-10 w-auto object-contain drop-shadow-md" />
+          <img src="/logo-aeris.png" alt="AERIS" className="h-10 w-auto object-contain drop-shadow-md" />
         </div>
         <div className="flex items-center gap-6">
           <button onClick={() => navigate('/login')} className="text-sm font-semibold text-slate-200 hover:text-white transition-colors drop-shadow-md">
@@ -212,7 +212,7 @@ const Landing = () => {
       <footer className="bg-slate-950 py-12 px-6 border-t border-slate-800">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center">
-            <img src="/logo.png" alt="AERIS" className="h-10 w-auto object-contain" />
+            <img src="/logo-aeris.png" alt="AERIS" className="h-10 w-auto object-contain" />
           </div>
           
           <div className="flex gap-8 text-sm font-medium text-slate-400">
