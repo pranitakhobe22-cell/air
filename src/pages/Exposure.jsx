@@ -48,8 +48,8 @@ const Exposure = () => {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Exposure Calculator</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h1 className="text-2xl font-bold text-(--color-text-primary) tracking-tight">Exposure Calculator</h1>
+          <p className="text-sm text-(--color-text-secondary) mt-0.5">
             {active.isNodeView ? `${active.nodeName} — ` : ''}Personalized exposure risk based on demographics and duration.
           </p>
         </div>
@@ -64,11 +64,11 @@ const Exposure = () => {
         <div className="lg:col-span-4 space-y-5">
 
           {/* RRI Gauge */}
-          <div className="bg-white/[0.03] rounded-2xl p-6 flex flex-col items-center">
-            <p className="text-xs text-slate-500 mb-4">Exposure Risk Score</p>
+          <div className="glass-card rounded-2xl p-6 flex flex-col items-center">
+            <p className="text-xs text-(--color-text-secondary) mb-4">Exposure Risk Score</p>
             <div className="relative w-40 h-40 mb-4">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 200 200">
-                <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="6" />
+                <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(128,128,128,0.1)" strokeWidth="6" />
                 <motion.circle
                   cx="100" cy="100" r="85" fill="none"
                   stroke={color} strokeWidth="6" strokeLinecap="round"
@@ -78,8 +78,8 @@ const Exposure = () => {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-4xl font-bold text-white tabular-nums">{personalRri}</span>
-                <span className="text-xs text-slate-500">/100</span>
+                <span className="text-4xl font-bold text-(--color-text-primary) tabular-nums">{personalRri}</span>
+                <span className="text-xs text-(--color-text-secondary)">/100</span>
               </div>
             </div>
             <span className="text-xs font-medium px-3 py-1 rounded-full" style={{ backgroundColor: `${color}15`, color }}>
@@ -89,7 +89,7 @@ const Exposure = () => {
 
           {/* Demographics */}
           <div className="space-y-2">
-            <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider px-1 mb-2">Select profile</p>
+            <p className="text-[11px] font-semibold text-(--color-text-secondary) uppercase tracking-wider px-1 mb-2">Select profile</p>
             {demographics.map((d) => {
               const isActive = activeDemo.id === d.id;
               const dDose = doseResponse(pm25, duration, d.multiplier);
@@ -99,15 +99,15 @@ const Exposure = () => {
                   key={d.id}
                   onClick={() => setActiveDemo(d)}
                   className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors ${
-                    isActive ? 'bg-white/[0.05]' : 'bg-white/[0.02] hover:bg-white/[0.05]'
+                    isActive ? 'bg-white/[0.05]' : 'subtle-surface hover:bg-white/[0.05]'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <d.icon size={16} style={{ color: isActive ? dColor : '#64748b' }} />
-                    <span className={`text-sm ${isActive ? 'text-white font-medium' : 'text-slate-400'}`}>{d.label}</span>
+                    <span className={`text-sm ${isActive ? 'text-(--color-text-primary) font-medium' : 'text-(--color-text-secondary)'}`}>{d.label}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-16 h-1 bg-white/[0.04] rounded-full overflow-hidden">
+                    <div className="w-16 h-1 subtle-surface rounded-full overflow-hidden">
                       <div className="h-full rounded-full" style={{ backgroundColor: dColor, width: `${dDose.risk}%` }} />
                     </div>
                     <span className="text-xs font-mono tabular-nums" style={{ color: dColor }}>{dDose.risk}</span>
@@ -122,10 +122,10 @@ const Exposure = () => {
         <div className="lg:col-span-8 space-y-5">
 
           {/* Duration */}
-          <div className="bg-white/[0.03] rounded-2xl p-6">
+          <div className="glass-card rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-5">
-              <Clock size={16} className="text-slate-400" />
-              <h3 className="text-sm font-semibold text-white">Exposure Duration</h3>
+              <Clock size={16} className="text-(--color-text-secondary)" />
+              <h3 className="text-sm font-semibold text-(--color-text-primary)">Exposure Duration</h3>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[1, 4, 8, 24].map((h) => (
@@ -135,7 +135,7 @@ const Exposure = () => {
                   className={`py-4 rounded-xl text-center transition-colors ${
                     duration === h
                       ? 'bg-sky-500/10 text-sky-400'
-                      : 'bg-white/[0.02] text-slate-400 hover:bg-white/[0.05]'
+                      : 'subtle-surface text-(--color-text-secondary) hover:bg-white/[0.05]'
                   }`}
                 >
                   <span className="text-xl font-bold block">{h}</span>
@@ -149,34 +149,34 @@ const Exposure = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
             {/* Particulate Intake */}
-            <div className="bg-white/[0.03] rounded-2xl p-6">
+            <div className="glass-card rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Droplets size={16} className="text-cyan-400" />
-                <h3 className="text-sm font-semibold text-white">Particulate Intake</h3>
+                <h3 className="text-sm font-semibold text-(--color-text-primary)">Particulate Intake</h3>
               </div>
               <div className="flex items-baseline gap-2 mb-3">
                 <span className="text-4xl font-bold text-cyan-400 tabular-nums">{dose.inhaledMass.toFixed(1)}</span>
-                <span className="text-sm text-slate-500">µg</span>
+                <span className="text-sm text-(--color-text-secondary)">µg</span>
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-(--color-text-secondary) leading-relaxed">
                 Based on respiratory rate of {dose.breathingRate} m³/hr over {duration} hour{duration > 1 ? 's' : ''}.
                 Total volume: {(dose.breathingRate * duration).toFixed(1)} m³ inhaled.
               </p>
             </div>
 
             {/* Health Advisory */}
-            <div className="bg-white/[0.03] rounded-2xl p-6">
+            <div className="glass-card rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <HeartPulse size={16} className="text-rose-400" />
-                <h3 className="text-sm font-semibold text-white">Advisory</h3>
+                <h3 className="text-sm font-semibold text-(--color-text-primary)">Advisory</h3>
               </div>
-              <p className="text-sm text-slate-300 leading-relaxed mb-4">{dose.advisory}</p>
+              <p className="text-sm text-(--color-text-primary) leading-relaxed mb-4">{dose.advisory}</p>
               <div>
                 <div className="flex justify-between mb-1.5">
-                  <span className="text-xs text-slate-500">Cumulative Stress</span>
-                  <span className="text-xs font-medium text-slate-400">{dose.stressScore} units</span>
+                  <span className="text-xs text-(--color-text-secondary)">Cumulative Stress</span>
+                  <span className="text-xs font-medium text-(--color-text-secondary)">{dose.stressScore} units</span>
                 </div>
-                <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+                <div className="h-1.5 subtle-surface rounded-full overflow-hidden">
                   <motion.div
                     className="h-full bg-gradient-to-r from-sky-400 via-amber-400 to-red-500 rounded-full"
                     initial={{ width: 0 }}
@@ -189,10 +189,10 @@ const Exposure = () => {
           </div>
 
           {/* Model Info */}
-          <div className="bg-white/[0.03] rounded-2xl p-5">
+          <div className="glass-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <Activity size={14} className="text-purple-400" />
-              <h3 className="text-sm font-semibold text-white">Model Parameters</h3>
+              <h3 className="text-sm font-semibold text-(--color-text-primary)">Model Parameters</h3>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
@@ -201,9 +201,9 @@ const Exposure = () => {
                 { label: 'EC50 Threshold', value: '55 µg/m³' },
                 { label: 'Vuln. Modifier', value: `×${activeDemo.multiplier.toFixed(1)}` },
               ].map(p => (
-                <div key={p.label} className="p-3 bg-white/[0.02] rounded-xl">
-                  <p className="text-[10px] text-slate-500 mb-1">{p.label}</p>
-                  <p className="text-sm font-semibold text-white">{p.value}</p>
+                <div key={p.label} className="p-3 subtle-surface rounded-xl">
+                  <p className="text-[10px] text-(--color-text-secondary) mb-1">{p.label}</p>
+                  <p className="text-sm font-semibold text-(--color-text-primary)">{p.value}</p>
                 </div>
               ))}
             </div>

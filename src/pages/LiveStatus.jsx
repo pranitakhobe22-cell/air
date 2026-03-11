@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
 import useActiveNode from '@/hooks/useActiveNode';
+import useThemeMode from '@/hooks/useThemeMode';
 import useNodeStore from '@/store/useNodeStore';
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -59,6 +60,7 @@ const LiveStatus = () => {
   const data = useAerisStore((s) => s.data);
   const loading = useAerisStore((s) => s.loading);
   const active = useActiveNode();
+  const isDark = useThemeMode();
   const userLocation = useNodeStore((s) => s.userLocation);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [eventLog, setEventLog] = useState([]);
@@ -126,10 +128,11 @@ const LiveStatus = () => {
   const defaultCenter = userLocation ? [userLocation.lat, userLocation.lng] : [20.5937, 78.9629];
   const mapCenter = sectors?.[0]?.lat ? [sectors[0].lat, sectors[0].lng] : defaultCenter;
   const riskColor = activeDerived?.risk_color || '#10b981';
+  const tileUrl = isDark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 
   const eventColors = {
     alert: 'border-red-500/30 bg-red-500/5 text-red-400',
-    sync: 'border-slate-700/50 bg-slate-800/30 text-slate-400',
+    sync: 'border-(--color-card-border) subtle-surface text-(--color-text-secondary)',
   };
 
   return (
@@ -160,10 +163,10 @@ const LiveStatus = () => {
 
       {/* ── Rain Banner ──────────────────────────────── */}
       {activeEnv?.rain && (
-        <div className="bg-sky-900/30 border border-sky-700/40 rounded-xl px-5 py-3 flex items-center gap-3">
+        <div className="bg-sky-500/10 border border-sky-500/20 rounded-xl px-5 py-3 flex items-center gap-3">
           <Droplets size={18} className="text-sky-400 shrink-0" />
           <div>
-            <span className="text-sm font-medium text-sky-300">Raining is happening</span>
+            <span className="text-sm font-medium text-sky-600">Raining is happening</span>
             {(activeEnv.pm25RainDelta || 0) > 0 && (
               <span className="block text-xs text-sky-400/80 mt-0.5">
                 PM2.5 reduced by {Number(activeEnv.pm25RainDelta).toFixed(1)} µg/m³
@@ -199,7 +202,7 @@ const LiveStatus = () => {
                     <span className="text-xs text-(--color-text-secondary) opacity-60">{tile.unit}</span>
                   </div>
                   {/* Status bar */}
-                  <div className="mt-3 h-1 bg-white/10 rounded-full overflow-hidden">
+                  <div className="mt-3 h-1 subtle-surface rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-700"
                       style={{
@@ -257,7 +260,7 @@ const LiveStatus = () => {
             </div>
             <div className="h-[240px]">
               <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%', background: 'var(--color-bg-main)' }} zoomControl={false} dragging={false}>
-                <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+                <TileLayer key={isDark ? 'dark' : 'light'} url={tileUrl} />
                 {sectors?.map((s, i) => (
                   <CircleMarker
                     key={s.id || i}

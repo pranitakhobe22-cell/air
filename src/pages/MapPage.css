@@ -21,3 +21,17 @@
 .map-legend { display: flex; gap: var(--spacing); justify-content: center; margin-top: var(--spacing); font-size: var(--font-size-xs); color: var(--text-secondary); }
 
 @media (max-width: 768px) { .map-grid { grid-template-columns: 1fr; } }
+
+/* Leaflet popup overrides */
+.custom-popup .leaflet-popup-content-wrapper {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 12px;
+  padding: 0;
+}
+.custom-popup .leaflet-popup-content {
+  margin: 0;
+}
+.custom-popup .leaflet-popup-tip-container {
+  display: none;
+}

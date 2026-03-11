@@ -197,60 +197,60 @@ const Profile = () => {
           <div className="flex-1">
             {/* Contact grid */}
             <div>
-              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">
+              <h3 className="text-sm font-bold text-(--color-text-secondary) uppercase tracking-widest mb-4">
                 Personal Information
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Name */}
                 <div className="flex items-center gap-4 group">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-slate-100 group-hover:bg-(--color-primary)/10 transition-colors">
-                    <UserCircle size={20} className="text-slate-400 group-hover:text-(--color-primary)" />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center subtle-surface group-hover:bg-(--color-primary)/10 transition-colors">
+                    <UserCircle size={20} className="text-(--color-text-secondary) group-hover:text-(--color-primary)" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Full Name</span>
+                    <span className="text-[10px] font-bold text-(--color-text-secondary) uppercase tracking-wide">Full Name</span>
                     {editing ? (
                       <input type="text" value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20"
+                        className="bg-(--color-bg-main)/30 border border-(--color-card-border) rounded-lg px-2 py-1 text-(--color-text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20"
                       />
                     ) : (
-                      <span className="text-sm font-bold text-slate-700">{form.name || 'Not set'}</span>
+                      <span className="text-sm font-bold text-(--color-text-primary)">{form.name || 'Not set'}</span>
                     )}
                   </div>
                 </div>
 
                 {/* Email */}
                 <div className="flex items-center gap-4 group">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-slate-100 group-hover:bg-(--color-primary)/10 transition-colors">
-                    <Mail size={20} className="text-slate-400 group-hover:text-(--color-primary)" />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center subtle-surface group-hover:bg-(--color-primary)/10 transition-colors">
+                    <Mail size={20} className="text-(--color-text-secondary) group-hover:text-(--color-primary)" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Secure Email</span>
+                    <span className="text-[10px] font-bold text-(--color-text-secondary) uppercase tracking-wide">Secure Email</span>
                     {editing ? (
                       <input type="email" value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20"
+                        className="bg-(--color-bg-main)/30 border border-(--color-card-border) rounded-lg px-2 py-1 text-(--color-text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20"
                       />
                     ) : (
-                      <span className="text-sm font-bold text-slate-700 truncate max-w-[180px]">{form.email || 'Not set'}</span>
+                      <span className="text-sm font-bold text-(--color-text-primary) truncate max-w-[180px]">{form.email || 'Not set'}</span>
                     )}
                   </div>
                 </div>
 
                 {/* Contact Number */}
                 <div className="flex items-center gap-4 group">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-slate-100 group-hover:bg-(--color-primary)/10 transition-colors">
-                    <Mail size={20} className="text-slate-400 group-hover:text-(--color-primary)" />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center subtle-surface group-hover:bg-(--color-primary)/10 transition-colors">
+                    <Mail size={20} className="text-(--color-text-secondary) group-hover:text-(--color-primary)" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Contact Number</span>
+                    <span className="text-[10px] font-bold text-(--color-text-secondary) uppercase tracking-wide">Contact Number</span>
                     {editing ? (
                       <input type="text" value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                        className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20"
+                        className="bg-(--color-bg-main)/30 border border-(--color-card-border) rounded-lg px-2 py-1 text-(--color-text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20"
                       />
                     ) : (
-                      <span className="text-sm font-bold text-slate-700">
+                      <span className="text-sm font-bold text-(--color-text-primary)">
                         {form.phone ? form.phone.replace(/(\d{3})\d+(?=\d{3})/, '$1 **** ') : 'Not set'}
                       </span>
                     )}
@@ -259,60 +259,60 @@ const Profile = () => {
 
                 {/* Gender */}
                 <div className="flex items-center gap-4 group">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-slate-100 group-hover:bg-(--color-primary)/10 transition-colors">
-                    <User size={20} className="text-slate-400 group-hover:text-(--color-primary)" />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center subtle-surface group-hover:bg-(--color-primary)/10 transition-colors">
+                    <User size={20} className="text-(--color-text-secondary) group-hover:text-(--color-primary)" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Gender</span>
+                    <span className="text-[10px] font-bold text-(--color-text-secondary) uppercase tracking-wide">Gender</span>
                     {editing ? (
                       <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                        className="bg-white border border-slate-200 rounded-lg px-1 py-1 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20"
+                        className="bg-(--color-bg-main)/30 border border-(--color-card-border) rounded-lg px-1 py-1 text-(--color-text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20"
                       >
                         <option value="male">Male</option>
                         <option value="female">Female</option>
                         <option value="prefer_not_to_say">Prefer not to say</option>
                       </select>
                     ) : (
-                      <span className="text-sm font-bold text-slate-700 capitalize">{(form.gender || '').replace(/_/g, ' ')}</span>
+                      <span className="text-sm font-bold text-(--color-text-primary) capitalize">{(form.gender || '').replace(/_/g, ' ')}</span>
                     )}
                   </div>
                 </div>
 
                 {/* Age */}
                 <div className="flex items-center gap-4 group">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-slate-100 group-hover:bg-(--color-primary)/10 transition-colors">
-                    <Calendar size={20} className="text-slate-400 group-hover:text-(--color-primary)" />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center subtle-surface group-hover:bg-(--color-primary)/10 transition-colors">
+                    <Calendar size={20} className="text-(--color-text-secondary) group-hover:text-(--color-primary)" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Age</span>
+                    <span className="text-[10px] font-bold text-(--color-text-secondary) uppercase tracking-wide">Age</span>
                     {editing ? (
                       <input type="number" value={form.age}
                         onChange={(e) => setForm({ ...form, age: Number(e.target.value) })}
-                        className="w-20 bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20"
+                        className="w-20 bg-(--color-bg-main)/30 border border-(--color-card-border) rounded-lg px-2 py-1 text-(--color-text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20"
                       />
                     ) : (
-                      <span className="text-sm font-bold text-slate-700">{form.age} yrs</span>
+                      <span className="text-sm font-bold text-(--color-text-primary)">{form.age} yrs</span>
                     )}
                   </div>
                 </div>
 
                 {/* Environment */}
                 <div className="flex items-center gap-4 group">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-slate-100 group-hover:bg-(--color-primary)/10 transition-colors">
-                    <Shield size={20} className="text-slate-400 group-hover:text-(--color-primary)" />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center subtle-surface group-hover:bg-(--color-primary)/10 transition-colors">
+                    <Shield size={20} className="text-(--color-text-secondary) group-hover:text-(--color-primary)" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Environment</span>
+                    <span className="text-[10px] font-bold text-(--color-text-secondary) uppercase tracking-wide">Environment</span>
                     {editing ? (
                       <select value={form.environment} onChange={(e) => setForm({ ...form, environment: e.target.value })}
-                        className="bg-white border border-slate-200 rounded-lg px-1 py-1 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20"
+                        className="bg-(--color-bg-main)/30 border border-(--color-card-border) rounded-lg px-1 py-1 text-(--color-text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20"
                       >
                         <option value="urban">Urban</option>
                         <option value="suburban">Suburban</option>
                         <option value="rural">Rural</option>
                       </select>
                     ) : (
-                      <span className="text-sm font-bold text-slate-700 capitalize">{form.environment}</span>
+                      <span className="text-sm font-bold text-(--color-text-primary) capitalize">{form.environment}</span>
                     )}
                   </div>
                 </div>
@@ -350,7 +350,7 @@ const Profile = () => {
 
               {/* Air Sensitivity */}
               <div className="mb-6">
-                <label className="text-sm text-slate-500 mb-3 block font-bold uppercase tracking-wide">Air Sensitivity</label>
+                <label className="text-sm text-(--color-text-secondary) mb-3 block font-bold uppercase tracking-wide">Air Sensitivity</label>
                 {editing ? (
                   <div className="grid grid-cols-4 gap-2">
                     {[
@@ -373,14 +373,14 @@ const Profile = () => {
                     <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-violet-500/10">
                       <Gauge size={16} className="text-violet-600" />
                     </div>
-                    <span className="text-base font-bold text-slate-800">{SENSITIVITY[form.sensitivity]}</span>
+                    <span className="text-base font-bold text-(--color-text-primary)">{SENSITIVITY[form.sensitivity]}</span>
                   </div>
                 )}
               </div>
 
               {/* Smoking */}
               <div className="mb-6">
-                <label className="text-sm text-slate-500 mb-3 block font-bold uppercase tracking-wide">Smoking Status</label>
+                <label className="text-sm text-(--color-text-secondary) mb-3 block font-bold uppercase tracking-wide">Smoking Status</label>
                 {editing ? (
                   <div className="grid grid-cols-3 gap-2">
                     {['none', 'light', 'heavy'].map((l) => (
@@ -400,19 +400,19 @@ const Profile = () => {
                     <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-violet-500/10">
                       <Cigarette size={16} className="text-violet-600" />
                     </div>
-                    <span className="text-base font-bold text-slate-800 capitalize">{form.smoking === 'none' ? 'Non-smoker' : form.smoking}</span>
+                    <span className="text-base font-bold text-(--color-text-primary) capitalize">{form.smoking === 'none' ? 'Non-smoker' : form.smoking}</span>
                   </div>
                 )}
               </div>
 
               {/* Outdoor Exposure */}
               <div>
-                <label className="text-base text-slate-500 mb-3 block font-bold uppercase tracking-wide">Daily Outdoor Exposure</label>
+                <label className="text-base text-(--color-text-secondary) mb-3 block font-bold uppercase tracking-wide">Daily Outdoor Exposure</label>
                 {editing ? (
                   <div className="p-3 rounded-xl border" style={{ background: 'rgba(0, 0, 0, 0.03)', borderColor: 'rgba(0, 0, 0, 0.1)' }}>
                     <div className="flex justify-between mb-2">
                       <span className="text-lg font-bold text-violet-400">{form.outdoorExposureHours}h</span>
-                      <span className="text-sm text-slate-500">per day</span>
+                      <span className="text-sm text-(--color-text-secondary)">per day</span>
                     </div>
                     <input type="range" min={0} max={12} step={1} value={form.outdoorExposureHours}
                       onChange={(e) => setForm({ ...form, outdoorExposureHours: Number(e.target.value) })}
@@ -424,7 +424,7 @@ const Profile = () => {
                     <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-violet-500/10">
                       <Sun size={16} className="text-violet-600" />
                     </div>
-                    <span className="text-base font-bold text-slate-800">{form.outdoorExposureHours} hours per day</span>
+                    <span className="text-base font-bold text-(--color-text-primary)">{form.outdoorExposureHours} hours per day</span>
                   </div>
                 )}
               </div>
@@ -436,7 +436,7 @@ const Profile = () => {
                 fontSize: '1.25rem',
                 fontWeight: 800,
                 fontStyle: 'italic',
-                color: '#e2e8f0',
+                color: 'var(--color-text-primary)',
                 marginBottom: '1rem',
               }}>
                 Conditions
@@ -468,7 +468,7 @@ const Profile = () => {
                   )) : (
                     <div className="flex items-center gap-2">
                       <Stethoscope size={14} className="text-violet-500" />
-                      <span className="text-sm font-medium text-slate-600">None reported</span>
+                      <span className="text-sm font-medium text-(--color-text-secondary)">None reported</span>
                     </div>
                   )}
                 </div>
@@ -485,7 +485,7 @@ const Profile = () => {
                 fontSize: '1.25rem',
                 fontWeight: 800,
                 fontStyle: 'italic',
-                color: '#e2e8f0',
+                color: 'var(--color-text-primary)',
                 marginBottom: '1rem',
               }}>
                 Risk Score
@@ -507,24 +507,24 @@ const Profile = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'rgba(0, 0, 0, 0.03)', border: '1px solid rgba(0, 0, 0, 0.1)' }}>
                   <div>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Base AQI</p>
-                    <p className="text-xs text-slate-500">Current Reading</p>
+                    <p className="text-[10px] text-(--color-text-secondary) font-bold uppercase tracking-wider">Base AQI</p>
+                    <p className="text-xs text-(--color-text-secondary)">Current Reading</p>
                   </div>
-                  <span className="text-xl font-bold text-slate-800">{baseAqi}</span>
+                  <span className="text-xl font-bold text-(--color-text-primary)">{baseAqi}</span>
                 </div>
 
-                <div className="flex justify-center text-slate-600 text-sm">×</div>
+                <div className="flex justify-center text-(--color-text-secondary) text-sm">×</div>
 
                 <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'rgba(0, 0, 0, 0.03)', border: `1px solid ${live.color}50` }}>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: live.color }}>Vulnerability</p>
-                    <p className="text-xs text-slate-500">Personal Modifier</p>
+                    <p className="text-xs text-(--color-text-secondary)">Personal Modifier</p>
                   </div>
                   <span className="text-xl font-bold" style={{ color: live.color }}>{live.modifier}x</span>
                 </div>
 
                 {/* Modifier breakdown */}
-                <div className="pl-4 border-l-2 space-y-1.5 text-xs text-slate-500" style={{ borderColor: 'rgba(139, 92, 246, 0.3)' }}>
+                <div className="pl-4 border-l-2 space-y-1.5 text-xs text-(--color-text-secondary)" style={{ borderColor: 'rgba(139, 92, 246, 0.3)' }}>
                   <div className="flex justify-between"><span>Base</span><span>1.00x</span></div>
                   {(form.age < 12 || form.age > 65) && (
                     <div className="flex justify-between text-amber-500"><span>Age ({form.age})</span><span>+{form.age < 12 ? '0.25' : '0.30'}x</span></div>
@@ -553,7 +553,7 @@ const Profile = () => {
           fontSize: '1.25rem',
           fontWeight: 800,
           fontStyle: 'italic',
-          color: '#334155', /* Changed for light theme */
+          color: 'var(--color-text-primary)',
           marginBottom: '1.5rem',
         }}>
           Account Settings
@@ -561,31 +561,31 @@ const Profile = () => {
         <form onSubmit={handleAccountSave} className="space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             <div>
-              <label className="text-sm text-slate-500 mb-2 block font-bold uppercase tracking-wide">Name</label>
+              <label className="text-sm text-(--color-text-secondary) mb-2 block font-bold uppercase tracking-wide">Name</label>
               <input type="text" value={accountForm.name} onChange={(e) => setAccountForm({ ...accountForm, name: e.target.value })}
-                className="w-full rounded-xl px-4 py-3 text-slate-700 text-sm font-medium focus:outline-none transition-colors border border-slate-200 bg-white/50 focus:ring-2 focus:ring-(--color-primary)/20"
+                className="w-full rounded-xl px-4 py-3 text-(--color-text-primary) text-sm font-medium focus:outline-none transition-colors border border-(--color-card-border) bg-(--color-bg-main)/30 focus:ring-2 focus:ring-(--color-primary)/20"
               />
             </div>
             <div>
-              <label className="text-sm text-slate-500 mb-2 block font-bold uppercase tracking-wide">Email</label>
+              <label className="text-sm text-(--color-text-secondary) mb-2 block font-bold uppercase tracking-wide">Email</label>
               <input type="email" value={accountForm.email} onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })}
-                className="w-full rounded-xl px-4 py-3 text-slate-700 text-sm font-medium focus:outline-none transition-colors border border-slate-200 bg-white/50 focus:ring-2 focus:ring-(--color-primary)/20"
+                className="w-full rounded-xl px-4 py-3 text-(--color-text-primary) text-sm font-medium focus:outline-none transition-colors border border-(--color-card-border) bg-(--color-bg-main)/30 focus:ring-2 focus:ring-(--color-primary)/20"
               />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             <div>
-              <label className="text-sm text-slate-500 mb-2 block font-bold uppercase tracking-wide">Current Password *</label>
+              <label className="text-sm text-(--color-text-secondary) mb-2 block font-bold uppercase tracking-wide">Current Password *</label>
               <input type="password" placeholder="Required" value={accountForm.currentPassword}
                 onChange={(e) => setAccountForm({ ...accountForm, currentPassword: e.target.value })}
-                className="w-full rounded-xl px-4 py-3 text-slate-700 text-sm font-medium focus:outline-none transition-colors border border-slate-200 bg-white/50 focus:ring-2 focus:ring-(--color-primary)/20"
+                className="w-full rounded-xl px-4 py-3 text-(--color-text-primary) text-sm font-medium focus:outline-none transition-colors border border-(--color-card-border) bg-(--color-bg-main)/30 focus:ring-2 focus:ring-(--color-primary)/20"
               />
             </div>
             <div>
-              <label className="text-sm text-slate-500 mb-2 block font-bold uppercase tracking-wide">New Password</label>
+              <label className="text-sm text-(--color-text-secondary) mb-2 block font-bold uppercase tracking-wide">New Password</label>
               <input type="password" placeholder="Optional" value={accountForm.newPassword}
                 onChange={(e) => setAccountForm({ ...accountForm, newPassword: e.target.value })}
-                className="w-full rounded-xl px-4 py-3 text-slate-700 text-sm font-medium focus:outline-none transition-colors border border-slate-200 bg-white/50 focus:ring-2 focus:ring-(--color-primary)/20"
+                className="w-full rounded-xl px-4 py-3 text-(--color-text-primary) text-sm font-medium focus:outline-none transition-colors border border-(--color-card-border) bg-(--color-bg-main)/30 focus:ring-2 focus:ring-(--color-primary)/20"
               />
             </div>
           </div>
@@ -622,7 +622,7 @@ const Profile = () => {
           fontSize: '1.25rem',
           fontWeight: 800,
           fontStyle: 'italic',
-          color: theme === 'dark' ? '#EAF6FA' : '#334155',
+          color: 'var(--color-text-primary)',
           marginBottom: '1.5rem',
         }}>
           Appearance

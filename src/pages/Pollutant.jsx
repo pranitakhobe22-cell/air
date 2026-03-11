@@ -130,7 +130,7 @@ const Pollutants = () => {
                 </div>
 
                 {/* Progress bar */}
-                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-1">
+                <div className="h-1.5 subtle-surface rounded-full overflow-hidden mb-1">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{ width: `${fill}%`, backgroundColor: statusColor }}

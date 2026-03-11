@@ -76,16 +76,16 @@ export default function Onboarding() {
                             min={1} max={120}
                             value={form.age}
                             onChange={e => setForm(f => ({ ...f, age: Number(e.target.value) }))}
-                            className="w-40 text-center text-5xl font-black bg-transparent border-b-2 border-(--color-primary) focus:outline-none text-slate-800 py-2"
+                            className="w-40 text-center text-5xl font-black bg-transparent border-b-2 border-(--color-primary) focus:outline-none text-(--color-text-primary) py-2"
                         />
-                        <span className="absolute -right-12 bottom-3 text-slate-400 font-bold text-lg">yrs</span>
+                        <span className="absolute -right-12 bottom-3 text-(--color-text-secondary) font-bold text-lg">yrs</span>
                     </div>
                     <input
                         type="range" min={1} max={100} value={form.age}
                         onChange={e => setForm(f => ({ ...f, age: Number(e.target.value) }))}
                         className="w-full accent-(--color-primary)"
                     />
-                    <div className="flex justify-between w-full text-[10px] font-bold text-slate-500 opacity-40 uppercase tracking-widest">
+                    <div className="flex justify-between w-full text-[10px] font-bold text-(--color-text-secondary) opacity-40 uppercase tracking-widest">
                         <span>1</span><span>Child</span><span>Adult</span><span>Senior</span><span>100</span>
                     </div>
                 </div>
@@ -104,12 +104,12 @@ export default function Onboarding() {
                             onClick={() => setForm(f => ({ ...f, sensitivity: s.id }))}
                             className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${form.sensitivity === s.id
                                     ? 'border-(--color-primary)/60 bg-(--color-primary)/5 shadow-[0_0_20px_rgba(22,93,185,0.05)]'
-                                    : 'border-slate-200 bg-white/20 hover:bg-white/40'
+                                    : 'border-(--color-card-border) subtle-surface hover:bg-white/10'
                                 }`}
                         >
                             <div className="text-left">
-                                <div className="font-black text-sm text-slate-800">{s.label}</div>
-                                <div className="text-[11px] text-slate-500 mt-0.5">{s.desc}</div>
+                                <div className="font-black text-sm text-(--color-text-primary)">{s.label}</div>
+                                <div className="text-[11px] text-(--color-text-secondary) mt-0.5">{s.desc}</div>
                             </div>
                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: form.sensitivity === s.id ? s.color : '#cbd5e1' }} />
                         </button>
@@ -133,7 +133,7 @@ export default function Onboarding() {
                                     onClick={() => toggleCondition(c)}
                                     className={`px-5 py-3 rounded-xl text-sm font-bold transition-all border ${sel
                                             ? 'bg-rose-500/20 border-rose-400/50 text-rose-400 shadow-[0_0_12px_rgba(239,68,68,0.15)]'
-                                            : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+                                            : 'subtle-surface border-white/10 text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-white/10'
                                         }`}
                                 >
                                     {c}
@@ -165,7 +165,7 @@ export default function Onboarding() {
                         onChange={e => setForm(f => ({ ...f, outdoorExposureHours: Number(e.target.value) }))}
                         className="w-full accent-(--color-primary)"
                     />
-                    <div className="flex justify-between w-full text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                    <div className="flex justify-between w-full text-[10px] font-bold text-(--color-text-secondary) uppercase tracking-widest">
                         <span>0h Indoors</span><span>6h Mixed</span><span>12h Outdoors</span>
                     </div>
                 </div>
@@ -184,11 +184,11 @@ export default function Onboarding() {
             <div className="absolute inset-0 bg-slate-900/10 backdrop-blur-[2px]" />
 
             {/* Progress dots */}
-            <div className="fixed top-8 left-1/2 -translate-x-1/2 flex items-center space-x-3 z-20 bg-white/40 backdrop-blur-md px-6 py-3 rounded-full border border-white/40 shadow-xl">
+            <div className="fixed top-8 left-1/2 -translate-x-1/2 flex items-center space-x-3 z-20 glass-card backdrop-blur-md px-6 py-3 rounded-full shadow-xl">
                 {steps.map((_, i) => (
                     <div
                         key={i}
-                        className={`rounded-full transition-all duration-500 ${i === step ? 'w-10 h-2 bg-(--color-primary)' : i < step ? 'w-2 h-2 bg-(--color-primary)/60' : 'w-2 h-2 bg-slate-300'
+                        className={`rounded-full transition-all duration-500 ${i === step ? 'w-10 h-2 bg-(--color-primary)' : i < step ? 'w-2 h-2 bg-(--color-primary)/60' : 'w-2 h-2 bg-(--color-text-secondary)/30'
                             }`}
                     />
                 ))}
@@ -203,15 +203,15 @@ export default function Onboarding() {
                     transition={{ duration: 0.3 }}
                     className="w-full max-w-lg z-10"
                 >
-                    <div className="glass-card backdrop-blur-3xl border border-white/40 rounded-3xl p-10 shadow-2xl">
+                    <div className="glass-card backdrop-blur-3xl rounded-3xl p-10 shadow-2xl">
                         {/* Step icon */}
                         <div className="w-16 h-16 bg-(--color-primary)/10 border border-(--color-primary)/20 rounded-2xl flex items-center justify-center mb-8 shadow-inner">
                             <Icon className="w-8 h-8 text-(--color-primary)" />
                         </div>
 
                         {/* Title */}
-                        <h1 className="text-3xl font-black text-slate-800 mb-2 tracking-tight">{currentStep.title}</h1>
-                        <p className="text-sm text-slate-500 mb-10 font-medium leading-relaxed">{currentStep.subtitle}</p>
+                        <h1 className="text-3xl font-black text-(--color-text-primary) mb-2 tracking-tight">{currentStep.title}</h1>
+                        <p className="text-sm text-(--color-text-secondary) mb-10 font-medium leading-relaxed">{currentStep.subtitle}</p>
 
                         {/* Content */}
                         {currentStep.content && (
@@ -219,11 +219,11 @@ export default function Onboarding() {
                         )}
 
                         {/* Buttons */}
-                        <div className={`flex ${isFirst ? 'justify-end' : 'justify-between'} items-center mt-8 pt-8 border-t border-slate-200/50`}>
+                        <div className={`flex ${isFirst ? 'justify-end' : 'justify-between'} items-center mt-8 pt-8 border-t border-(--color-card-border)`}>
                             {!isFirst && (
                                 <button
                                     onClick={() => setStep(s => s - 1)}
-                                    className="px-4 py-2 text-sm font-bold text-slate-400 hover:text-(--color-primary) transition-colors flex items-center gap-2 group"
+                                    className="px-4 py-2 text-sm font-bold text-(--color-text-secondary) hover:text-(--color-primary) transition-colors flex items-center gap-2 group"
                                 >
                                     <span className="group-hover:-translate-x-1 transition-transform">←</span> Back
                                 </button>

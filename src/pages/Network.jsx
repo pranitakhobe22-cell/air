@@ -166,7 +166,7 @@ const Network = () => {
                           {isHardware ? (
                             <span className="text-[10px] font-semibold px-2 py-0.5 rounded text-sky-400 bg-sky-500/10 border border-sky-500/20">ESP32</span>
                           ) : (
-                            <span className="text-[10px] font-medium px-2 py-0.5 rounded text-(--color-text-secondary) bg-white/10">SIM</span>
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded text-(--color-text-secondary) subtle-surface">SIM</span>
                           )}
                         </td>
                         <td className="py-3">

@@ -125,17 +125,17 @@ const Dashboard = () => {
     return (
       <div className="p-6 sm:p-6 lg:p-8 max-w-[1440px] mx-auto space-y-5 sm:space-y-8">
         <div>
-          <div className="h-6 w-52 bg-slate-800/60 rounded-lg animate-pulse" />
-          <div className="h-4 w-36 bg-slate-800/40 rounded mt-2 animate-pulse" />
+          <div className="h-6 w-52 subtle-surface rounded-lg animate-pulse" />
+          <div className="h-4 w-36 subtle-surface rounded mt-2 animate-pulse" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-5">
-          <div className="lg:col-span-4 bg-slate-800/40 border border-slate-700/40 rounded-xl h-44 sm:h-56 animate-pulse" />
-          <div className="lg:col-span-3 bg-slate-800/40 border border-slate-700/40 rounded-xl h-44 sm:h-56 animate-pulse" />
-          <div className="lg:col-span-5 bg-slate-800/40 border border-slate-700/40 rounded-xl h-44 sm:h-56 animate-pulse" />
+          <div className="lg:col-span-4 glass-card rounded-xl h-44 sm:h-56 animate-pulse" />
+          <div className="lg:col-span-3 glass-card rounded-xl h-44 sm:h-56 animate-pulse" />
+          <div className="lg:col-span-5 glass-card rounded-xl h-44 sm:h-56 animate-pulse" />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-slate-800/40 border border-slate-700/40 rounded-xl h-24 sm:h-28 animate-pulse" />
+            <div key={i} className="glass-card rounded-xl h-24 sm:h-28 animate-pulse" />
           ))}
         </div>
       </div>
@@ -212,11 +212,11 @@ const Dashboard = () => {
       {/* ── Rain Status Banner ─────────────────────────────── */}
       {environment?.rain && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-sky-900/30 border border-sky-700/40 rounded-xl px-5 py-3 flex items-center justify-between">
+          className="bg-sky-500/10 border border-sky-500/20 rounded-xl px-5 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Droplets size={18} className="text-sky-400" />
             <div>
-              <span className="text-sm font-medium text-sky-300">Rain Detected — Raining is happening</span>
+              <span className="text-sm font-medium text-sky-600">Rain Detected — Raining is happening</span>
               {(environment.pm25RainDelta || 0) > 0 && (
                 <span className="block text-xs text-sky-400/80 mt-0.5">
                   PM2.5 reduced by {Number(environment.pm25RainDelta).toFixed(1)} µg/m³ due to rain washout
@@ -254,8 +254,8 @@ const Dashboard = () => {
               <div className="flex-1 bg-red-900" />
             </div>
             <div className="relative h-3">
-              <div className="absolute top-0 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[6px] border-transparent border-b-white transition-all duration-700"
-                style={{ left: `${Math.min(aqi / 500 * 100, 100)}%`, transform: 'translateX(-50%)' }} />
+              <div className="absolute top-0 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[6px] border-transparent transition-all duration-700"
+                style={{ left: `${Math.min(aqi / 500 * 100, 100)}%`, transform: 'translateX(-50%)', borderBottomColor: 'var(--color-text-primary)' }} />
             </div>
             <div className="flex justify-between text-[10px] text-(--color-text-secondary) opacity-40 mt-0.5">
               <span>0</span><span>100</span><span>200</span><span>300</span><span>400</span><span>500</span>
@@ -270,7 +270,7 @@ const Dashboard = () => {
             <span className="text-xs font-medium text-(--color-text-secondary) opacity-60 uppercase tracking-wider mb-3">Risk Index</span>
             <div className="relative w-28 h-28">
               <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-                <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
+                <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(128,128,128,0.1)" strokeWidth="8" />
                 <motion.circle cx="60" cy="60" r="52" fill="none" strokeWidth="8"
                   strokeDasharray={327} initial={{ strokeDashoffset: 327 }}
                   animate={{ strokeDashoffset: 327 - (327 * Math.min(rri, 100) / 100) }}
@@ -370,12 +370,12 @@ const Dashboard = () => {
                     <stop offset="100%" stopColor="#fb7185" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.1)" vertical={false} />
                 <XAxis dataKey="time" stroke="#9FB8C3" opacity={0.5} fontSize={10} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                 <YAxis stroke="#9FB8C3" opacity={0.5} fontSize={10} tickLine={false} axisLine={false} width={40} domain={[0, 'auto']} allowDecimals={false} tickCount={6} />
                 <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '4 4' }} />
-                <Area type="linear" dataKey="AQI" stroke="#64B3D0" strokeWidth={2} fill="url(#aqiFill)" isAnimationActive={false} dot={false} activeDot={{ r: 4, fill: '#64B3D0', stroke: '#0B1220', strokeWidth: 2 }} />
-                <Area type="linear" dataKey="RRI" stroke="#fb7185" strokeWidth={1.5} fill="url(#rriFill)" isAnimationActive={false} dot={false} activeDot={{ r: 4, fill: '#fb7185', stroke: '#0B1220', strokeWidth: 2 }} />
+                <Area type="linear" dataKey="AQI" stroke="#64B3D0" strokeWidth={2} fill="url(#aqiFill)" isAnimationActive={false} dot={false} activeDot={{ r: 4, fill: '#64B3D0', stroke: '#64B3D0', strokeWidth: 2 }} />
+                <Area type="linear" dataKey="RRI" stroke="#fb7185" strokeWidth={1.5} fill="url(#rriFill)" isAnimationActive={false} dot={false} activeDot={{ r: 4, fill: '#fb7185', stroke: '#fb7185', strokeWidth: 2 }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
