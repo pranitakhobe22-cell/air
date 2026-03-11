@@ -96,8 +96,6 @@ static esp_adc_cal_characteristics_t adc2_chars;
 // =============================================
 //  CALIBRATION
 // =============================================
-const float DUST_CLEAN_VOLTAGE = 0.5;
-
 const float MQ131_RL_KOHM = 10.0, MQ131_VCC = 5.0, MQ131_CLEAN_AIR_FACTOR = 15.0;
 const float MQ7_RL_KOHM   = 10.0, MQ7_VCC   = 5.0, MQ7_CLEAN_AIR_FACTOR   = 27.5;
 const float MQ135_RL_KOHM = 10.0, MQ135_VCC = 5.0, MQ135_CLEAN_AIR_FACTOR = 3.6;
@@ -130,7 +128,7 @@ float applyEMA(float val, float prev) {
 }
 
 float stabilize(float current, float previous, float maxStep) {
-  if (previous == 0) return current;
+  if (previous == 0) return current * 0.8;
   float diff = current - previous;
   if (diff > maxStep) diff = maxStep;
   if (diff < -maxStep) diff = -maxStep;
@@ -549,38 +547,27 @@ int aqiFromNO2(float v) {
 // =============================================
 
 void handleData() {
-  String json = "{";
-  json += "\"ready\":" + String(isLive ? "true" : "false") + ",";
-  json += "\"pm25\":" + String(g_pm25, 1) + ",";
-  json += "\"o3\":" + String(g_o3, 1) + ",";
-  json += "\"co\":" + String(g_co, 2) + ",";
-  json += "\"no2\":" + String(g_no2_ppb, 0) + ",";
-  json += "\"co2\":" + String(g_co2, 0) + ",";
-  json += "\"co_mq\":" + String(g_co_mq, 2) + ",";
-  json += "\"voc\":" + String(g_voc) + ",";
-  json += "\"uv\":" + String(g_uv, 1) + ",";
-  json += "\"temp\":" + String(g_temp, 1) + ",";
-  json += "\"hum\":" + String(g_hum, 1) + ",";
-  json += "\"aqi\":" + String(g_aqi) + ",";
-  json += "\"aqi_pm\":" + String(g_aqi_pm) + ",";
-  json += "\"aqi_o3\":" + String(g_aqi_o3) + ",";
-  json += "\"aqi_co\":" + String(g_aqi_co) + ",";
-  json += "\"aqi_no2\":" + String(g_aqi_no2) + ",";
-  json += "\"co_mems_v\":" + String(g_co_mems_v, 3) + ",";
-  json += "\"no2_mems_v\":" + String(g_no2_mems_v, 3) + ",";
-  json += "\"rain\":" + String(g_raining ? "true" : "false") + ",";
-  json += "\"pm25_rain_delta\":" + String(g_pm25_rain_delta, 1) + ",";
-  json += "\"pm25_tag\":\"" + String(pm25Tag(g_pm25)) + "\",";
-  json += "\"o3_tag\":\"" + String(o3Tag(g_o3)) + "\",";
-  json += "\"co_tag\":\"" + String(coTag(g_co)) + "\",";
-  json += "\"no2_tag\":\"" + String(no2Tag(g_no2_ppb)) + "\",";
-  json += "\"co2_tag\":\"" + String(co2Tag(g_co2)) + "\",";
-  json += "\"voc_tag\":\"" + String(vocTag(g_voc)) + "\",";
-  json += "\"uv_tag\":\"" + String(uvTag(g_uv)) + "\",";
-  json += "\"label\":\"" + aqiLabel(g_aqi) + "\",";
-  json += "\"color\":\"" + aqiColor(g_aqi) + "\"";
-  json += "}";
-  server.send(200, "application/json", json);
+  char buf[768];
+  snprintf(buf, sizeof(buf),
+    "{\"ready\":%s,\"pm25\":%.1f,\"o3\":%.1f,\"co\":%.2f,\"no2\":%.0f,\"co2\":%.0f,"
+    "\"co_mq\":%.2f,\"voc\":%u,\"uv\":%.1f,\"temp\":%.1f,\"hum\":%.1f,\"aqi\":%d,"
+    "\"aqi_pm\":%d,\"aqi_o3\":%d,\"aqi_co\":%d,\"aqi_no2\":%d,"
+    "\"co_mems_v\":%.3f,\"no2_mems_v\":%.3f,"
+    "\"rain\":%s,\"pm25_rain_delta\":%.1f,"
+    "\"pm25_tag\":\"%s\",\"o3_tag\":\"%s\",\"co_tag\":\"%s\","
+    "\"no2_tag\":\"%s\",\"co2_tag\":\"%s\",\"voc_tag\":\"%s\","
+    "\"uv_tag\":\"%s\",\"label\":\"%s\",\"color\":\"%s\"}",
+    isLive ? "true" : "false",
+    g_pm25, g_o3, g_co, g_no2_ppb, g_co2,
+    g_co_mq, (unsigned int)g_voc, g_uv, g_temp, g_hum, g_aqi,
+    g_aqi_pm, g_aqi_o3, g_aqi_co, g_aqi_no2,
+    g_co_mems_v, g_no2_mems_v,
+    g_raining ? "true" : "false", g_pm25_rain_delta,
+    pm25Tag(g_pm25), o3Tag(g_o3), coTag(g_co),
+    no2Tag(g_no2_ppb), co2Tag(g_co2), vocTag(g_voc),
+    uvTag(g_uv), aqiLabel(g_aqi).c_str(), aqiColor(g_aqi).c_str()
+  );
+  server.send(200, "application/json", buf);
 }
 
 // =============================================
@@ -588,7 +575,7 @@ void handleData() {
 // =============================================
 
 void handleRoot() {
-  String html = R"rawliteral(
+  static const char html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
 <head>
@@ -1097,6 +1084,7 @@ void setup() {
     co_b[i]  = esp_adc_cal_raw_to_voltage(analogRead(CO_MEMS_PIN), &adc2_chars) / 1000.0;
     no2_b[i] = esp_adc_cal_raw_to_voltage(analogRead(NO2_MEMS_PIN), &adc2_chars) / 1000.0;
     delay(20);
+    yield();
   }
   sortFloats(co_b, 100);
   sortFloats(no2_b, 100);
@@ -1173,6 +1161,9 @@ void setup() {
     IPAddress dns1(8, 8, 8, 8);
     IPAddress dns2(8, 8, 4, 4);
     WiFi.config(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask(), dns1, dns2);
+
+    WiFi.setSleep(false);
+    esp_wifi_set_ps(WIFI_PS_NONE);
 
     server.on("/", handleRoot);
     server.on("/data", handleData);
@@ -1382,10 +1373,20 @@ void loop() {
   int aqi_co  = aqiFromCO(co_best);
   int aqi_no2 = aqiFromNO2(no2_ppb);
   int totalAQI = max(max(aqi_pm, aqi_o3), max(aqi_co, aqi_no2));
+  static float aqiSmooth = -1;
+  if (aqiSmooth < 0.0f) aqiSmooth = totalAQI;
+  else aqiSmooth = 0.3f * totalAQI + 0.7f * aqiSmooth;
+  totalAQI = (int)(aqiSmooth + 0.5f);
 
   // Update globals (for web — but web shows warmup screen until live)
   g_o3 = o3_ppb; g_co = co_best; g_co_mq = co_mq_ppm;
   g_no2_ppb = no2_ppb; g_co2 = co2_ppm;
+  if (isnan(g_pm25) || g_pm25 < 0) g_pm25 = 0;
+  if (isnan(g_o3) || g_o3 < 0) g_o3 = 0;
+  if (isnan(g_co) || g_co < 0) g_co = 0;
+  if (isnan(g_no2_ppb) || g_no2_ppb < 0) g_no2_ppb = 0;
+  if (isnan(g_co2) || g_co2 < 0) g_co2 = 400;
+  if (isnan(g_uv) || g_uv < 0) g_uv = 0;
   if (g_pm25 < 2) g_pm25 = 0;
   if (g_no2_ppb < 10) g_no2_ppb = 0;
   if (g_co < 0.2) g_co = 0;
