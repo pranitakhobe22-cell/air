@@ -1,0 +1,42 @@
+[
+    {
+        "original_selector": "scanned-element",
+        "healed_to": "scanned-element",
+        "method": "scan",
+        "confidence": 100,
+        "intent": "Pre-cached fingerprint: input id=email text=",
+        "timestamp": "2026-03-23T09:53:37.885958",
+        "script_name": "scan_page",
+        "fingerprint": {
+            "tag": "input",
+            "id": "email",
+            "class": "",
+            "type": "",
+            "placeholder": "Email",
+            "text": "",
+            "role": "",
+            "scanned_url": "file:///D:/webhealer/shop_v1.html",
+            "timestamp": "2026-03-23T09:53:37.885958"
+        }
+    },
+    {
+        "original_selector": "scanned-element",
+        "healed_to": "scanned-element",
+        "method": "scan",
+        "confidence": 100,
+        "intent": "Pre-cached fingerprint: button id=submit text=Submit",
+        "timestamp": "2026-03-23T09:53:37.926311",
+        "script_name": "scan_page",
+        "fingerprint": {
+            "tag": "button",
+            "id": "submit",
+            "class": "",
+            "type": "",
+            "placeholder": "",
+            "text": "Submit",
+            "role": "",
+            "scanned_url": "file:///D:/webhealer/shop_v1.html",
+            "timestamp": "2026-03-23T09:53:37.926311"
+        }
+    }
+]
