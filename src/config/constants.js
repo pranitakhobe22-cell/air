@@ -6,14 +6,14 @@
 export const APP_NAME = 'AERIS';
 export const APP_TAGLINE = 'Environmental Risk Intelligence';
 
-// ── AQI Breakpoints (EPA Standard) ──────────────────────────────
+// ── AQI Breakpoints (CPCB India National AQI) ──────────────────
 export const AQI_BREAKPOINTS = [
-  { min: 0,   max: 50,  label: 'Good',                   key: 'good',       color: '#2ECCB0' },
-  { min: 51,  max: 100, label: 'Moderate',                key: 'moderate',   color: '#F4A261' },
-  { min: 101, max: 150, label: 'Unhealthy for Sensitive', key: 'sensitive',  color: '#E67E22' },
-  { min: 151, max: 200, label: 'Unhealthy',               key: 'unhealthy',  color: '#E63946' },
-  { min: 201, max: 300, label: 'Very Unhealthy',          key: 'very_unhealthy', color: '#9B59B6' },
-  { min: 301, max: 500, label: 'Hazardous',               key: 'hazardous',  color: '#7D1128' },
+  { min: 0,   max: 50,  label: 'Good',          key: 'good',       color: '#2ECCB0' },
+  { min: 51,  max: 100, label: 'Satisfactory',  key: 'satisfactory', color: '#86EFAC' },
+  { min: 101, max: 200, label: 'Moderate',       key: 'moderate',   color: '#F4A261' },
+  { min: 201, max: 300, label: 'Poor',           key: 'poor',       color: '#E67E22' },
+  { min: 301, max: 400, label: 'Very Poor',      key: 'very_poor',  color: '#E63946' },
+  { min: 401, max: 500, label: 'Severe',         key: 'severe',     color: '#7D1128' },
 ];
 
 // ── RRI Risk Thresholds ─────────────────────────────────────────

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  User, Shield, Save, Edit3, Clock, Wind, Lock,
+  User, Shield, Save, Edit3, Clock, Wind, Lock, X, Settings,
   AlertTriangle, CheckCircle, HeartPulse, Mail, Calendar,
   Activity, Cigarette, Sun, Moon, Stethoscope, Gauge, UserCircle, Monitor
 } from 'lucide-react';
@@ -63,6 +63,7 @@ const Profile = () => {
   const [savingAccount, setSavingAccount] = useState(false);
   const [accountSaved, setAccountSaved] = useState(false);
   const [accountError, setAccountError] = useState('');
+  const [showAccountModal, setShowAccountModal] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -181,10 +182,16 @@ const Profile = () => {
               </div>
             )}
             <button
+              onClick={() => setShowAccountModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all glass-button"
+            >
+              <Settings size={15} />Account
+            </button>
+            <button
               onClick={() => (editing ? handleSave() : setEditing(true))}
               disabled={saving}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg glass-button ${
-                editing 
+                editing
                   ? 'bg-emerald-500/10! border-emerald-500/30! text-emerald-400! hover:bg-emerald-500/20!'
                   : ''
               }`}
@@ -545,74 +552,63 @@ const Profile = () => {
         </div>
       </motion.div>
 
-      {/* ── Account Settings Card ──────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="p-6 sm:p-8 glass-card border-(--color-card-border) rounded-3xl"
-      >
-        <h3 style={{
-          fontSize: '1.25rem',
-          fontWeight: 800,
-          fontStyle: 'italic',
-          color: 'var(--color-text-primary)',
-          marginBottom: '1.5rem',
-        }}>
-          Account Settings
-        </h3>
-        <form onSubmit={handleAccountSave} className="space-y-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <div>
-              <label className="text-sm text-(--color-text-secondary) mb-2 block font-bold uppercase tracking-wide">Name</label>
-              <input type="text" value={accountForm.name} onChange={(e) => setAccountForm({ ...accountForm, name: e.target.value })}
-                className="w-full rounded-xl px-4 py-3 text-(--color-text-primary) text-sm font-medium focus:outline-none transition-colors border border-(--color-card-border) bg-(--color-bg-main)/30 focus:ring-2 focus:ring-(--color-primary)/20"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-(--color-text-secondary) mb-2 block font-bold uppercase tracking-wide">Email</label>
-              <input type="email" value={accountForm.email} onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })}
-                className="w-full rounded-xl px-4 py-3 text-(--color-text-primary) text-sm font-medium focus:outline-none transition-colors border border-(--color-card-border) bg-(--color-bg-main)/30 focus:ring-2 focus:ring-(--color-primary)/20"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <div>
-              <label className="text-sm text-(--color-text-secondary) mb-2 block font-bold uppercase tracking-wide">Current Password *</label>
-              <input type="password" placeholder="Required" value={accountForm.currentPassword}
-                onChange={(e) => setAccountForm({ ...accountForm, currentPassword: e.target.value })}
-                className="w-full rounded-xl px-4 py-3 text-(--color-text-primary) text-sm font-medium focus:outline-none transition-colors border border-(--color-card-border) bg-(--color-bg-main)/30 focus:ring-2 focus:ring-(--color-primary)/20"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-(--color-text-secondary) mb-2 block font-bold uppercase tracking-wide">New Password</label>
-              <input type="password" placeholder="Optional" value={accountForm.newPassword}
-                onChange={(e) => setAccountForm({ ...accountForm, newPassword: e.target.value })}
-                className="w-full rounded-xl px-4 py-3 text-(--color-text-primary) text-sm font-medium focus:outline-none transition-colors border border-(--color-card-border) bg-(--color-bg-main)/30 focus:ring-2 focus:ring-(--color-primary)/20"
-              />
-            </div>
-          </div>
-          {accountError && (
-            <div className="text-xs text-rose-600 p-3 rounded-xl flex items-center gap-2" /* Changed for light theme */
-              style={{ background: 'rgba(244, 63, 94, 0.08)', border: '1px solid rgba(244, 63, 94, 0.2)' }}
+      {/* ── Account Settings Modal ──────────────────────────── */}
+      <AnimatePresence>
+        {showAccountModal && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90]" onClick={() => setShowAccountModal(false)} />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md z-[100] glass-card rounded-2xl border border-(--color-card-border) p-6 shadow-2xl"
             >
-              <AlertTriangle size={14} />{accountError}
-            </div>
-          )}
-          {accountSaved && (
-            <div className="text-xs text-emerald-600 p-3 rounded-xl flex items-center gap-2" /* Changed for light theme */
-              style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.2)' }}
-            >
-              <CheckCircle size={14} />Updated successfully
-            </div>
-          )}
-          <button type="submit" disabled={savingAccount || !accountForm.currentPassword}
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 bg-violet-500 text-white hover:bg-violet-600" /* Changed for light theme */
-          >
-            <Lock size={16} />{savingAccount ? 'Updating...' : 'Update Account'}
-          </button>
-        </form>
-      </motion.div>
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-base font-bold text-(--color-text-primary)">Account Settings</h3>
+                <button onClick={() => setShowAccountModal(false)} className="p-1.5 rounded-lg text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-white/10 transition-colors"><X size={16} /></button>
+              </div>
+              <form onSubmit={(e) => { handleAccountSave(e); }} className="space-y-4">
+                <div>
+                  <label className="text-[11px] text-(--color-text-secondary) mb-1.5 block font-bold uppercase tracking-wide">Name</label>
+                  <input type="text" value={accountForm.name} onChange={(e) => setAccountForm({ ...accountForm, name: e.target.value })}
+                    className="w-full rounded-xl px-4 py-2.5 text-(--color-text-primary) text-sm subtle-surface border border-(--color-card-border) focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20" />
+                </div>
+                <div>
+                  <label className="text-[11px] text-(--color-text-secondary) mb-1.5 block font-bold uppercase tracking-wide">Email</label>
+                  <input type="email" value={accountForm.email} onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })}
+                    className="w-full rounded-xl px-4 py-2.5 text-(--color-text-primary) text-sm subtle-surface border border-(--color-card-border) focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] text-(--color-text-secondary) mb-1.5 block font-bold uppercase tracking-wide">Current Password *</label>
+                    <input type="password" placeholder="Required" value={accountForm.currentPassword}
+                      onChange={(e) => setAccountForm({ ...accountForm, currentPassword: e.target.value })}
+                      className="w-full rounded-xl px-4 py-2.5 text-(--color-text-primary) text-sm subtle-surface border border-(--color-card-border) focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-(--color-text-secondary) mb-1.5 block font-bold uppercase tracking-wide">New Password</label>
+                    <input type="password" placeholder="Optional" value={accountForm.newPassword}
+                      onChange={(e) => setAccountForm({ ...accountForm, newPassword: e.target.value })}
+                      className="w-full rounded-xl px-4 py-2.5 text-(--color-text-primary) text-sm subtle-surface border border-(--color-card-border) focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20" />
+                  </div>
+                </div>
+                {accountError && (
+                  <div className="text-xs text-rose-500 p-2.5 rounded-lg flex items-center gap-2 bg-rose-500/10 border border-rose-500/20">
+                    <AlertTriangle size={13} />{accountError}
+                  </div>
+                )}
+                {accountSaved && (
+                  <div className="text-xs text-emerald-500 p-2.5 rounded-lg flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20">
+                    <CheckCircle size={13} />Updated successfully
+                  </div>
+                )}
+                <button type="submit" disabled={savingAccount || !accountForm.currentPassword}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 bg-linear-to-r from-(--color-primary) to-(--color-secondary) text-white hover:opacity-90">
+                  <Lock size={14} />{savingAccount ? 'Updating...' : 'Update Account'}
+                </button>
+              </form>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* ── Appearance / Theme Card ──────────────────────────── */}
       <motion.div

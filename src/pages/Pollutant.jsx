@@ -8,30 +8,30 @@ import {
 import useAerisStore from '@/store/aerisStore';
 import useActiveNode from '@/hooks/useActiveNode';
 
+// CPCB India + WHO thresholds
 const POLLUTANTS = {
   pm25: {
-    label: 'PM2.5', unit: 'µg/m³', safe: 12, moderate: 35, danger: 55,
+    label: 'PM2.5', unit: 'µg/m³', safe: 30, moderate: 60, danger: 90,
     color: '#38bdf8',
-    desc: 'Fine particulate matter that penetrates deep into lung tissue.',
+    desc: 'Fine particulate matter that penetrates deep into lung tissue. WHO 24hr guideline: 15 µg/m³. CPCB Good: ≤30 µg/m³.',
     impact: 'Cardiovascular stress and respiratory irritation.',
   },
-
   o3: {
-    label: 'Ozone (O3)', unit: 'ppb', safe: 54, moderate: 70, danger: 85,
+    label: 'Ozone (O3)', unit: 'ppb', safe: 50, moderate: 100, danger: 168,
     color: '#34d399',
-    desc: 'Ground-level gas formed by sunlight and emissions.',
+    desc: 'Ground-level gas formed by sunlight and emissions. CPCB Good: ≤50 µg/m³.',
     impact: 'Damages lung tissue and reduces pulmonary function.',
   },
   no2: {
-    label: 'NO2', unit: 'ppb', safe: 53, moderate: 100, danger: 360,
+    label: 'NO2', unit: 'ppb', safe: 40, moderate: 80, danger: 180,
     color: '#fbbf24',
-    desc: 'Reactive gas primarily from vehicle exhaust.',
+    desc: 'Reactive gas primarily from vehicle exhaust. CPCB Good: ≤40 µg/m³.',
     impact: 'Increases susceptibility to respiratory infections.',
   },
   co: {
-    label: 'CO', unit: 'ppm', safe: 4.4, moderate: 9.4, danger: 12.4,
+    label: 'CO', unit: 'ppm', safe: 1.0, moderate: 2.0, danger: 10,
     color: '#f472b6',
-    desc: 'Odorless toxic gas from incomplete combustion.',
+    desc: 'Odourless toxic gas from incomplete combustion. CPCB Good: ≤1.0 mg/m³.',
     impact: 'Reduces oxygen delivery to organs and tissues.',
   },
   voc: {
@@ -43,7 +43,7 @@ const POLLUTANTS = {
   uv: {
     label: 'UV Index', unit: 'idx', safe: 3, moderate: 6, danger: 8,
     color: '#f59e0b',
-    desc: 'Ultraviolet radiation intensity measured by the onboard UV sensor (0-14 scale).',
+    desc: 'Ultraviolet radiation intensity measured by the onboard UV sensor (0-14 scale). WHO: UV ≥3 requires protection.',
     impact: 'Skin burns, eye damage, and increased skin cancer risk at high levels.',
   },
 };

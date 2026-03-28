@@ -5,20 +5,23 @@ import { Shield, Wind, Activity, ArrowRight, Eye, Heart, Cloud, ActivitySquare, 
 import useAerisStore from '@/store/aerisStore';
 
 // Keep helpers to not break any external/internal expectations
+// CPCB India AQI categories
 const getAqiColor = (aqi) => {
   if (aqi <= 50) return '#22c55e';
-  if (aqi <= 100) return '#eab308';
-  if (aqi <= 150) return '#f97316';
-  if (aqi <= 200) return '#ef4444';
-  return '#7c3aed';
+  if (aqi <= 100) return '#86efac';
+  if (aqi <= 200) return '#eab308';
+  if (aqi <= 300) return '#f97316';
+  if (aqi <= 400) return '#ef4444';
+  return '#991b1b';
 };
 
 const getAqiLabel = (aqi) => {
   if (aqi <= 50) return 'Good';
-  if (aqi <= 100) return 'Moderate';
-  if (aqi <= 150) return 'Unhealthy for Sensitive';
-  if (aqi <= 200) return 'Unhealthy';
-  return 'Hazardous';
+  if (aqi <= 100) return 'Satisfactory';
+  if (aqi <= 200) return 'Moderate';
+  if (aqi <= 300) return 'Poor';
+  if (aqi <= 400) return 'Very Poor';
+  return 'Severe';
 };
 
 // Timing constants — single source of truth

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, CalendarDays, Cpu, Grid3x3 } from 'lucide-react';
+import { Activity, Cpu, Grid3x3 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine
 } from 'recharts';
@@ -84,11 +84,6 @@ const Forecast = () => {
   const avgConf = forecast.length > 0
     ? Math.round(forecast.reduce((a, f) => a + (f.confidence || 80), 0) / forecast.length) : 80;
 
-  const allAqi = [...history.map(h => h.aqi || 0), currentAqi];
-  const total = allAqi.length || 1;
-  const safePct = Math.round(allAqi.filter(a => a <= 50).length / total * 100);
-  const elevPct = Math.round(allAqi.filter(a => a > 50 && a <= 150).length / total * 100);
-  const dangPct = Math.round(allAqi.filter(a => a > 150).length / total * 100);
 
   return (
     <div className="p-5 sm:p-8 lg:p-10 max-w-[1600px] mx-auto space-y-6">
@@ -157,38 +152,13 @@ const Forecast = () => {
         <div className="lg:col-span-4 space-y-5">
           <div className="glass-card rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-5">
-              <CalendarDays size={16} className="text-(--color-text-secondary)" />
-              <h3 className="text-base font-semibold text-(--color-text-primary)">Risk Distribution</h3>
-            </div>
-            <p className="text-xs text-(--color-text-secondary) mb-4">Based on {total} recent readings</p>
-            <div className="space-y-4">
-              {[
-                { label: 'Safe (0-50)', percent: safePct, color: '#22c55e' },
-                { label: 'Elevated (51-150)', percent: elevPct, color: '#eab308' },
-                { label: 'Dangerous (151+)', percent: dangPct, color: '#ef4444' },
-              ].map((w) => (
-                <div key={w.label}>
-                  <div className="flex justify-between mb-1.5">
-                    <span className="text-xs text-(--color-text-secondary)">{w.label}</span>
-                    <span className="text-xs font-semibold" style={{ color: w.color }}>{w.percent}%</span>
-                  </div>
-                  <div className="h-1.5 subtle-surface rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${w.percent}%` }} transition={{ duration: 1 }} className="h-full rounded-full" style={{ backgroundColor: w.color }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="glass-card rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-5">
               <Activity size={16} className="text-(--color-text-secondary)" />
               <h3 className="text-base font-semibold text-(--color-text-primary)">Hourly Forecast</h3>
             </div>
             <div className="space-y-2">
               {forecast.map((f, i) => {
                 const time = new Date(f.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const c = f.aqi <= 50 ? '#22c55e' : f.aqi <= 100 ? '#eab308' : f.aqi <= 150 ? '#f97316' : '#ef4444';
+                const c = f.aqi <= 50 ? '#22c55e' : f.aqi <= 100 ? '#86efac' : f.aqi <= 200 ? '#eab308' : f.aqi <= 300 ? '#f97316' : '#ef4444';
                 return (
                   <div key={i} className="flex items-center justify-between p-3 subtle-surface rounded-xl">
                     <div className="flex items-center gap-3">
@@ -216,12 +186,13 @@ const Forecast = () => {
 };
 
 // ── Pollutant Heatmap ───────────────────────────────────────────
+// CPCB India + WHO thresholds
 const POLLUTANT_CONFIG = [
-  { key: 'pm25',      label: 'PM2.5',  unit: 'µg/m³', safe: 12, moderate: 35, danger: 55, max: 150 },
-  { key: 'co',        label: 'CO',     unit: 'ppm',   safe: 4.4, moderate: 9.4, danger: 12.4, max: 20 },
-  { key: 'o3',        label: 'O₃',     unit: 'ppb',   safe: 54, moderate: 70, danger: 85, max: 120 },
+  { key: 'pm25',      label: 'PM2.5',  unit: 'µg/m³', safe: 30, moderate: 60, danger: 90, max: 250 },
+  { key: 'co',        label: 'CO',     unit: 'ppm',   safe: 1.0, moderate: 2.0, danger: 10, max: 34 },
+  { key: 'o3',        label: 'O₃',     unit: 'ppb',   safe: 50, moderate: 100, danger: 168, max: 300 },
   { key: 'voc_index', label: 'VOC',    unit: 'index', safe: 100, moderate: 250, danger: 400, max: 500 },
-  { key: 'nox',       label: 'NOx',    unit: 'ppb',   safe: 53, moderate: 100, danger: 360, max: 500 },
+  { key: 'nox',       label: 'NOx',    unit: 'ppb',   safe: 40, moderate: 80, danger: 180, max: 400 },
   { key: 'uv',        label: 'UV',     unit: 'idx',   safe: 3, moderate: 6, danger: 8, max: 14 },
 ];
 
@@ -253,10 +224,10 @@ function statusColor(value, config) {
 }
 
 function formatHour(h) {
-  if (h === 0) return '12a';
-  if (h < 12) return `${h}a`;
-  if (h === 12) return '12p';
-  return `${h - 12}p`;
+  if (h === 0) return '12 AM';
+  if (h < 12) return `${h} AM`;
+  if (h === 12) return '12 PM';
+  return `${h - 12} PM`;
 }
 
 // Diurnal pattern multipliers — models morning rush, midday dip, evening peak

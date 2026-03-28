@@ -38,14 +38,14 @@ const AnimatedNumber = ({ value, decimals = 0 }) => {
   return <>{display.toFixed(decimals)}</>;
 };
 
-// ── AQI Color + Category Logic ───────────────────────────────────
+// ── AQI Color + Category Logic (CPCB India + WHO) ───────────────
 const getAqiBand = (aqi) => {
-  if (aqi <= 50) return { label: 'Good', color: '#22c55e', bg: 'bg-emerald-500/10', text: 'text-emerald-400', advice: 'Air quality is satisfactory. Enjoy outdoor activities.' };
-  if (aqi <= 100) return { label: 'Moderate', color: '#eab308', bg: 'bg-yellow-500/10', text: 'text-yellow-400', advice: 'Acceptable air quality. Sensitive individuals should limit prolonged outdoor exertion.' };
-  if (aqi <= 150) return { label: 'Unhealthy for Sensitive Groups', color: '#f97316', bg: 'bg-orange-500/10', text: 'text-orange-400', advice: 'People with respiratory conditions should reduce outdoor activity.' };
-  if (aqi <= 200) return { label: 'Unhealthy', color: '#ef4444', bg: 'bg-red-500/10', text: 'text-red-400', advice: 'Everyone may begin to experience health effects. Limit outdoor exposure.' };
-  if (aqi <= 300) return { label: 'Very Unhealthy', color: '#a855f7', bg: 'bg-purple-500/10', text: 'text-purple-400', advice: 'Health alert: everyone may experience serious health effects.' };
-  return { label: 'Hazardous', color: '#991b1b', bg: 'bg-red-900/20', text: 'text-red-300', advice: 'Emergency conditions. Avoid all outdoor activity.' };
+  if (aqi <= 50) return { label: 'Good', color: '#22c55e', bg: 'bg-emerald-500/10', text: 'text-emerald-400', advice: 'Air quality is satisfactory with minimal health risk. Enjoy outdoor activities.' };
+  if (aqi <= 100) return { label: 'Satisfactory', color: '#86efac', bg: 'bg-emerald-400/10', text: 'text-emerald-300', advice: 'May cause minor discomfort to sensitive people. (CPCB: Satisfactory)' };
+  if (aqi <= 200) return { label: 'Moderate', color: '#eab308', bg: 'bg-yellow-500/10', text: 'text-yellow-400', advice: 'Breathing discomfort to people with lung/heart disease, children, and elderly. (CPCB: Moderate)' };
+  if (aqi <= 300) return { label: 'Poor', color: '#f97316', bg: 'bg-orange-500/10', text: 'text-orange-400', advice: 'Breathing discomfort on prolonged exposure. Limit outdoor activity. (CPCB: Poor)' };
+  if (aqi <= 400) return { label: 'Very Poor', color: '#ef4444', bg: 'bg-red-500/10', text: 'text-red-400', advice: 'Respiratory illness on prolonged exposure. Avoid outdoor exertion. (CPCB: Very Poor)' };
+  return { label: 'Severe', color: '#991b1b', bg: 'bg-red-900/20', text: 'text-red-300', advice: 'Severe health impact on healthy people. Avoid all outdoor activity. (CPCB: Severe)' };
 };
 
 // ── Chart Tooltip ────────────────────────────────────────────────

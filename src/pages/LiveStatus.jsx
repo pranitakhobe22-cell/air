@@ -39,11 +39,11 @@ const AnimatedNum = ({ value, decimals = 0 }) => {
 /* ── Sensor color helper (EPA thresholds) ────────────── */
 const sensorStatus = (id, val) => {
   const thresholds = {
-    pm25: [12, 35, 55, 150],
-   
-    co: [4.4, 9.4, 12.4, 15.4],
-    o3: [54, 70, 85, 105],
-    nox: [53, 100, 360, 649],
+    pm25: [30, 60, 90, 120],  // CPCB: Good/Satisfactory/Moderate/Poor
+
+    co: [1.0, 2.0, 10, 17],  // CPCB mg/m³
+    o3: [50, 100, 168, 208],  // CPCB µg/m³
+    nox: [40, 80, 180, 280],  // CPCB µg/m³
     voc: [100, 200, 300, 400],
     uv: [3, 6, 8, 11],
     temp: [25, 32, 38, 45],

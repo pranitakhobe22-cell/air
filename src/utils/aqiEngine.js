@@ -1,52 +1,57 @@
 /**
  * AERIS – AQI Precision Engine
  * ─────────────────────────────────────────────────────────────────────
- * EPA-standard sub-AQI calculation, dominant pollutant detection,
+ * CPCB (India) & WHO-aligned AQI calculation, dominant pollutant detection,
  * EWMA-based forecast model, non-linear dose-response, and
  * multi-factor health advisory generation.
+ *
+ * Standards:  CPCB National Air Quality Index (NAQI) — Gazette of India, 2014
+ *             WHO Global Air Quality Guidelines, 2021
  */
 
-// ── EPA Sub-AQI Breakpoints ───────────────────────────────────────
-// Source: US EPA AQI Technical Assistance Document (EPA-454/B-18-007)
+// ── CPCB India AQI Breakpoints ───────────────────────────────────
+// Source: CPCB — National Air Quality Index, Oct 2014
+// Categories: Good (0-50), Satisfactory (51-100), Moderate (101-200),
+//             Poor (201-300), Very Poor (301-400), Severe (401-500)
 const BREAKPOINTS = {
   pm25: [
-    { cLow: 0,     cHigh: 12,    iLow: 0,   iHigh: 50 },
-    { cLow: 12.1,  cHigh: 35.4,  iLow: 51,  iHigh: 100 },
-    { cLow: 35.5,  cHigh: 55.4,  iLow: 101, iHigh: 150 },
-    { cLow: 55.5,  cHigh: 150.4, iLow: 151, iHigh: 200 },
-    { cLow: 150.5, cHigh: 250.4, iLow: 201, iHigh: 300 },
-    { cLow: 250.5, cHigh: 500.4, iLow: 301, iHigh: 500 },
+    { cLow: 0,   cHigh: 30,   iLow: 0,   iHigh: 50 },
+    { cLow: 31,  cHigh: 60,   iLow: 51,  iHigh: 100 },
+    { cLow: 61,  cHigh: 90,   iLow: 101, iHigh: 200 },
+    { cLow: 91,  cHigh: 120,  iLow: 201, iHigh: 300 },
+    { cLow: 121, cHigh: 250,  iLow: 301, iHigh: 400 },
+    { cLow: 251, cHigh: 500,  iLow: 401, iHigh: 500 },
   ],
   pm10: [
-    { cLow: 0,   cHigh: 54,  iLow: 0,   iHigh: 50 },
-    { cLow: 55,  cHigh: 154, iLow: 51,  iHigh: 100 },
-    { cLow: 155, cHigh: 254, iLow: 101, iHigh: 150 },
-    { cLow: 255, cHigh: 354, iLow: 151, iHigh: 200 },
-    { cLow: 355, cHigh: 424, iLow: 201, iHigh: 300 },
-    { cLow: 425, cHigh: 604, iLow: 301, iHigh: 500 },
+    { cLow: 0,   cHigh: 50,   iLow: 0,   iHigh: 50 },
+    { cLow: 51,  cHigh: 100,  iLow: 51,  iHigh: 100 },
+    { cLow: 101, cHigh: 250,  iLow: 101, iHigh: 200 },
+    { cLow: 251, cHigh: 350,  iLow: 201, iHigh: 300 },
+    { cLow: 351, cHigh: 430,  iLow: 301, iHigh: 400 },
+    { cLow: 431, cHigh: 600,  iLow: 401, iHigh: 500 },
   ],
   co: [
-    { cLow: 0,    cHigh: 4.4,  iLow: 0,   iHigh: 50 },
-    { cLow: 4.5,  cHigh: 9.4,  iLow: 51,  iHigh: 100 },
-    { cLow: 9.5,  cHigh: 12.4, iLow: 101, iHigh: 150 },
-    { cLow: 12.5, cHigh: 15.4, iLow: 151, iHigh: 200 },
-    { cLow: 15.5, cHigh: 30.4, iLow: 201, iHigh: 300 },
-    { cLow: 30.5, cHigh: 50.4, iLow: 301, iHigh: 500 },
+    { cLow: 0,    cHigh: 1.0,  iLow: 0,   iHigh: 50 },
+    { cLow: 1.1,  cHigh: 2.0,  iLow: 51,  iHigh: 100 },
+    { cLow: 2.1,  cHigh: 10,   iLow: 101, iHigh: 200 },
+    { cLow: 10.1, cHigh: 17,   iLow: 201, iHigh: 300 },
+    { cLow: 17.1, cHigh: 34,   iLow: 301, iHigh: 400 },
+    { cLow: 34.1, cHigh: 50,   iLow: 401, iHigh: 500 },
   ],
   o3: [
-    { cLow: 0,     cHigh: 54,  iLow: 0,   iHigh: 50 },
-    { cLow: 55,    cHigh: 70,  iLow: 51,  iHigh: 100 },
-    { cLow: 71,    cHigh: 85,  iLow: 101, iHigh: 150 },
-    { cLow: 86,    cHigh: 105, iLow: 151, iHigh: 200 },
-    { cLow: 106,   cHigh: 200, iLow: 201, iHigh: 300 },
+    { cLow: 0,     cHigh: 50,   iLow: 0,   iHigh: 50 },
+    { cLow: 51,    cHigh: 100,  iLow: 51,  iHigh: 100 },
+    { cLow: 101,   cHigh: 168,  iLow: 101, iHigh: 200 },
+    { cLow: 169,   cHigh: 208,  iLow: 201, iHigh: 300 },
+    { cLow: 209,   cHigh: 748,  iLow: 301, iHigh: 400 },
   ],
   no2: [
-    { cLow: 0,   cHigh: 53,   iLow: 0,   iHigh: 50 },
-    { cLow: 54,  cHigh: 100,  iLow: 51,  iHigh: 100 },
-    { cLow: 101, cHigh: 360,  iLow: 101, iHigh: 150 },
-    { cLow: 361, cHigh: 649,  iLow: 151, iHigh: 200 },
-    { cLow: 650, cHigh: 1249, iLow: 201, iHigh: 300 },
-    { cLow: 1250, cHigh: 2049, iLow: 301, iHigh: 500 },
+    { cLow: 0,   cHigh: 40,   iLow: 0,   iHigh: 50 },
+    { cLow: 41,  cHigh: 80,   iLow: 51,  iHigh: 100 },
+    { cLow: 81,  cHigh: 180,  iLow: 101, iHigh: 200 },
+    { cLow: 181, cHigh: 280,  iLow: 201, iHigh: 300 },
+    { cLow: 281, cHigh: 400,  iLow: 301, iHigh: 400 },
+    { cLow: 401, cHigh: 800,  iLow: 401, iHigh: 500 },
   ],
 };
 
