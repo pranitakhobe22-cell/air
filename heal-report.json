@@ -1,18 +1,33 @@
 {
   "testFile": "/Users/sangharshgedekar/web-healer/Web-Healer/tests/checkout.spec.js",
-  "timestamp": "2026-03-28T06:44:20.282Z",
-  "totalSteps": 2,
-  "healsApplied": 0,
+  "timestamp": "2026-03-28T09:32:15.346Z",
+  "totalSteps": 5,
+  "healsApplied": 4,
   "steps": [
     {
       "action": "goto",
-      "selector": "http://localhost:3000/pages/shop_v2.html",
+      "selector": "http://localhost:3000/pages/checkout-page.html",
       "status": "pass"
     },
     {
       "action": "fill",
       "selector": "#email-input",
-      "status": "fail"
+      "status": "healed"
+    },
+    {
+      "action": "fill",
+      "selector": "#promo-input",
+      "status": "healed"
+    },
+    {
+      "action": "click",
+      "selector": "body > div.form-group:nth-child(4) > button",
+      "status": "healed"
+    },
+    {
+      "action": "click",
+      "selector": "#success-msg",
+      "status": "healed"
     }
   ]
 }

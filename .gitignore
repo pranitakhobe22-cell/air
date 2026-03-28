@@ -1,0 +1,5 @@
+node_modules/
+.env
+data/heals.db*
+heal-report.json
+app_log.txt

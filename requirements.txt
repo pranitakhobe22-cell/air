@@ -2,3 +2,4 @@ flask
 playwright
 google-generativeai
 flask-cors
+requests

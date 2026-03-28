@@ -14,10 +14,25 @@ class WebHealerAgent:
         self.gemini_api_key = self.config.get("gemini_api_key", "")
         self.heal_threshold = self.config.get("heal_threshold", 70)
         self.headless = self.config.get("headless", True)
+        self.api_keys = self._get_api_keys()
+
+    def _get_api_keys(self):
+        keys = []
+        env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+        if os.path.exists(env_path):
+            with open(env_path, 'r') as f:
+                for line in f:
+                    if line.startswith("GEMINI_API_KEYS="):
+                        val = line.split("=", 1)[1].strip()
+                        keys.extend([k.strip() for k in val.split(",") if k.strip()])
+                    elif line.startswith("GEMINI_API_KEY="):
+                        val = line.split("=", 1)[1].strip()
+                        keys.append(val)
         
-        # Initialize Gemini AI (section 2)
-        genai.configure(api_key=self.gemini_api_key)
-        self.model = genai.GenerativeModel("gemini-1.5-flash")
+        if not keys and self.config.get("gemini_api_key"):
+            keys.append(self.config.get("gemini_api_key"))
+            
+        return list(dict.fromkeys(keys))
 
     def _load_json(self, path):
         if not os.path.exists(path):
@@ -84,13 +99,19 @@ class WebHealerAgent:
             f"Reply with ONLY a single CSS selector. No explanation. No markdown. Just the selector."
         )
 
-        try:
-            response = self.model.generate_content(prompt)
-            selector = response.text.strip().strip("`")
-            return selector if selector else None
-        except Exception as e:
-            print(f"ask_gemini error: {e}")
-            return None
+        for key in self.api_keys:
+            try:
+                genai.configure(api_key=key)
+                model = genai.GenerativeModel("gemini-1.5-flash")
+                response = model.generate_content(prompt)
+                selector = response.text.strip().strip("`")
+                if selector:
+                    return selector
+            except Exception as e:
+                print(f"ask_gemini error with a key: {e}")
+                continue
+        print("ask_gemini error: All API keys failed.")
+        return None
 
     # ── Self-healing click ────────────────────────────────────────────────────
 

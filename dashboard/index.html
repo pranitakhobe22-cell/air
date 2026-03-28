@@ -68,15 +68,31 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       
-      <section class="glass-panel rounded-2xl flex flex-col h-[600px]">
-        <div class="p-4 border-b border-slate-700/50 flex items-center justify-between">
-          <h2 class="font-semibold text-slate-200">Execution Timeline</h2>
-          <span class="text-xs px-2 py-1 bg-slate-800 rounded-md text-slate-400" id="step-count">0 Steps</span>
-        </div>
-        <div class="p-4 overflow-y-auto flex-1 space-y-3" id="timeline">
-          <div class="text-center text-slate-500 py-10 italic">Waiting for steps...</div>
-        </div>
-      </section>
+      <div class="space-y-6 flex flex-col h-[600px]">
+        <section class="glass-panel rounded-2xl flex flex-col h-[300px]">
+          <div class="p-4 border-b border-slate-700/50 flex items-center justify-between">
+            <h2 class="font-semibold text-slate-200">Execution Timeline</h2>
+            <span class="text-xs px-2 py-1 bg-slate-800 rounded-md text-slate-400" id="step-count">0 Steps</span>
+          </div>
+          <div class="p-4 overflow-y-auto flex-1 space-y-3" id="timeline">
+            <div class="text-center text-slate-500 py-10 italic">Waiting for steps...</div>
+          </div>
+        </section>
+
+        <!-- Fragility Scorer Panel (Phase 4) -->
+        <section class="glass-panel rounded-2xl flex flex-col h-[276px]">
+          <div class="p-4 border-b border-slate-700/50 flex items-center justify-between bg-amber-500/10">
+            <h2 class="font-semibold text-amber-400 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              Fragility Pre-Scan
+            </h2>
+            <span class="text-[10px] uppercase font-bold text-amber-600">Phase 4 Active</span>
+          </div>
+          <div class="p-4 overflow-y-auto flex-1 space-y-2" id="fragility-scans">
+            <div class="text-center text-slate-500 py-6 italic text-sm">Waiting for pre-scan...</div>
+          </div>
+        </section>
+      </div>
 
       <div class="space-y-6 flex flex-col h-[600px]">
         
