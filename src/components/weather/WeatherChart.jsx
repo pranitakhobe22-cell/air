@@ -48,14 +48,12 @@ export default function WeatherChart({ hourlyData = [] }) {
     time: new Date(h.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     temperature: h.temperature,
     humidity: h.humidity,
-    pressure: h.pressure,
   }));
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-5">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-5">
       <MiniChart data={chartData} dataKey="temperature" name="Temperature" color="#f97316" unit="°C" />
       <MiniChart data={chartData} dataKey="humidity" name="Humidity" color="#3b82f6" unit="%" />
-      <MiniChart data={chartData} dataKey="pressure" name="Pressure" color="#a855f7" unit="hPa" />
     </div>
   );
 }
