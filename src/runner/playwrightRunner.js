@@ -69,6 +69,7 @@ async function mockHealAgent(failureBundle) {
   };
 }
 
+<<<<<<< Updated upstream
 // ─────────────────────────────────────────────────────────────
 // SECTION 2 — MOCK FAILURE WATCHER
 // ─────────────────────────────────────────────────────────────
@@ -219,6 +220,80 @@ export class PlaywrightRunner extends EventEmitter {
       testModule = await import(testFile);
     } catch (err) {
       throw new Error(`[playwrightRunner] Cannot load test file: ${testFile}\n${err.message}`);
+=======
+export async function executeStep(page, action, selector, performPlaywrightAction, intent, testFile, io) {
+    emitEvent(io, 'step:start', { action, selector, testFile });
+    
+    // Capture logs
+    const consoleErrors = [];
+    const networkLogs = [];
+    page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+    page.on('requestfailed', req => networkLogs.push(`${req.url()}: ${req.failure().errorText}`));
+
+    try {
+        await performPlaywrightAction(selector);
+        stepHistory.push({ action, selector, status: 'pass' });
+        emitEvent(io, 'step:pass', { action, selector });
+    } catch (error) {
+        console.log(`\n  ❌ [PlaywrightRunner] Action failed: ${action}('${selector}')`);
+        stepHistory.push({ action, selector, status: 'fail' });
+        emitEvent(io, 'step:fail', { action, selector, error: error.message });
+        
+        // Screenshot support
+        let screenshotBase64 = '';
+        try {
+            screenshotBase64 = (await page.screenshot()).toString('base64');
+        } catch (e) { /* ignore */ }
+
+        // Start healing
+        emitEvent(io, 'heal:start', { action, selector });
+        const ctx = await captureFailureContext(page, error, selector, intent, stepHistory);
+        
+        const failureBundle = {
+            ...ctx,
+            consoleErrors,
+            networkLogs,
+            screenshotBase64
+        };
+        
+        // Use Dev 1's Heal Engine
+        const healResult = await askHealAgent(failureBundle);
+        emitEvent(io, 'heal:result', healResult);
+
+        // Final key mapping (handling both camelCase and snake_case for safety)
+        const newSelector = healResult.new_selector || healResult.newSelector;
+        const confidence = healResult.confidence;
+        const rootCause = healResult.root_cause || healResult.rootCause;
+
+        if (!newSelector) {
+            emitEvent(io, 'step:heal_failed', { selector });
+            throw error;
+        }
+
+        if (confidence >= 0.8) {
+            console.log(`  ✅ [PlaywrightRunner] Auto-healing: ${selector} → ${newSelector}`);
+            
+            // Use Dev 2's Patch Writer
+            if (testFile) patchTestFile(testFile, selector, newSelector);
+
+            // Retry the act
+            await performPlaywrightAction(newSelector);
+            emitEvent(io, 'step:healed', { 
+                action, 
+                selector: newSelector, 
+                extra: { root_cause: rootCause, confidence: confidence } 
+            });
+        } else {
+            console.log(`  ⚠️  Low confidence (${confidence.toFixed(2)}), human approval required for ${selector}`);
+            emitEvent(io, 'heal:confirm', { 
+                brokenSelector: selector, 
+                suggestedSelector: newSelector, 
+                confidence: confidence, 
+                rootCause: rootCause 
+            });
+            throw new Error(`Unresolved heal: ${confidence} < 0.8 conf`);
+        }
+>>>>>>> Stashed changes
     }
 
     const testName = testModule.testName ?? path.basename(testFile, ".js");
