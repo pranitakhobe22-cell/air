@@ -91,10 +91,10 @@ const UI = (() => {
 
     const stateMap = {
       pending: { icon: '○', label: 'Pending' },
-      running: { icon: '⟳', label: 'Running…' },
+      running: { icon: '<div class="spinner"></div>', label: 'Running…' },
       pass:    { icon: '✓', label: 'Passed'  },
       fail:    { icon: '✕', label: 'Failed'  },
-      healing: { icon: '⚡', label: 'Healing…'},
+      healing: { icon: '✦', label: 'Healing…'},
       healed:  { icon: '✦', label: 'Healed'  },
     };
 

@@ -1,9 +1,7 @@
-/* ================================================================
-   chat.js
-   Chat system for the SelfHeal AI Dev Assistant.
-   Handles message rendering, markdown parsing, command autocomplete,
-   and streaming response display inside the VS Code webview sidebar.
-   ================================================================ */
+/* ── VS Code API Mock ────────────────────────────────────── */
+const vscode = (typeof acquireVsCodeApi === 'function') ? acquireVsCodeApi() : {
+  postMessage: (msg) => console.log('VSCode PostMessage:', msg)
+};
 
 const Chat = (() => {
 
@@ -15,7 +13,14 @@ const Chat = (() => {
   const sendBtn       = document.getElementById('send-btn');
   const dropdownEl    = document.getElementById('cmd-dropdown');
 
-  let commands = [];      // populated from extension host
+  let commands = [
+    { name: 'debug', description: 'Deep-dive into test failures', icon: '🔍' },
+    { name: 'heal', description: 'Auto-fix broken selectors', icon: '🩹' },
+    { name: 'fix', description: 'Generate a fix for the current error', icon: '🔧' },
+    { name: 'explain', description: 'Understand complex code blocks', icon: '📖' },
+    { name: 'analyze', description: 'Identify fragility patterns', icon: '📊' }
+  ];
+      // populated from extension host
   let selectedIdx = -1;   // dropdown selection index
   let isStreaming = false; // prevent double-send during streaming
   let streamingMsgId = null;
@@ -35,6 +40,9 @@ const Chat = (() => {
 
     // Auto-resize textarea
     inputEl.addEventListener('input', autoResize);
+
+    // Initial render of welcome screen
+    renderWelcome();
   }
 
   function autoResize() {
@@ -118,7 +126,7 @@ const Chat = (() => {
     selectedIdx = 0;
     dropdownEl.innerHTML = matches.map((c, i) => `
       <div class="cmd-option ${i === 0 ? 'selected' : ''}" data-cmd="${c.name}">
-        <span class="cmd-option-icon">${c.icon}</span>
+        <span class="cmd-option-icon">${getIconForCommand(c.name)}</span>
         <span class="cmd-option-name">/${c.name}</span>
         <span class="cmd-option-desc">${c.description}</span>
       </div>
@@ -154,7 +162,12 @@ const Chat = (() => {
     welcomeCmds.innerHTML = commands
       .filter(c => c.requiresCode !== false || c.name === 'clear')
       .slice(0, 6)
-      .map(c => `<button class="welcome-cmd" data-cmd="${c.name}">${c.icon} /${c.name}</button>`)
+      .map(c => `
+        <button class="welcome-cmd" data-cmd="${c.name}">
+          <span class="welcome-cmd-icon">${getIconForCommand(c.name)}</span>
+          /${c.name}
+        </button>
+      `)
       .join('');
 
     welcomeCmds.querySelectorAll('.welcome-cmd').forEach(btn => {
@@ -174,7 +187,12 @@ const Chat = (() => {
     const msgEl = document.createElement('div');
     msgEl.className = 'msg user';
     msgEl.innerHTML = `
-      <div class="msg-avatar">👤</div>
+      <div class="msg-avatar">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </div>
       <div class="msg-body">
         <div class="msg-header">
           <span class="msg-role">You</span>
@@ -198,10 +216,14 @@ const Chat = (() => {
     msgEl.className = 'msg assistant';
     msgEl.id = `msg-${msgId}`;
     msgEl.innerHTML = `
-      <div class="msg-avatar">🛡️</div>
+      <div class="msg-avatar">
+        <svg class="gemini-spark" viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11.666 1.805a.75.75 0 01.668 0l1.109.529c1.658.791 2.923 2.056 3.714 3.714l.529 1.109a.75.75 0 010 .668l-.529 1.109c-.791 1.658-2.056 2.923-3.714 3.714l-1.109.529a.75.75 0 01-.668 0l-1.109-.529c-1.658-.791-2.923-2.056-3.714-3.714l-.529-1.109a.75.75 0 010-.668l.529-1.109c.791-1.658 2.056-2.923 3.714-3.714l1.109-.529z" fill="url(#gemini-gradient)"/>
+        </svg>
+      </div>
       <div class="msg-body">
         <div class="msg-header">
-          <span class="msg-role">SelfHeal</span>
+          <span class="msg-role">SelfHeal AI</span>
           ${command ? `<span class="msg-cmd-badge">/${command}</span>` : ''}
         </div>
         <div class="msg-content streaming-cursor" id="content-${msgId}"></div>
@@ -209,13 +231,15 @@ const Chat = (() => {
     `;
     messagesEl.appendChild(msgEl);
 
-    // Add typing indicator
+    // Add premium gemini-style indicator
     const typingEl = document.createElement('div');
     typingEl.className = 'typing-indicator';
     typingEl.id = `typing-${msgId}`;
     typingEl.innerHTML = `
-      <div class="typing-dots"><span></span><span></span><span></span></div>
-      <span>Thinking…</span>
+      <svg class="gemini-spark" viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11.666 1.805a.75.75 0 01.668 0l1.109.529c1.658.791 2.923 2.056 3.714 3.714l.529 1.109a.75.75 0 010 .668l-.529 1.109c-.791 1.658-2.056 2.923-3.714 3.714l-1.109.529a.75.75 0 01-.668 0l-1.109-.529c-1.658-.791-2.923-2.056-3.714-3.714l-.529-1.109a.75.75 0 010-.668l.529-1.109c.791-1.658 2.056-2.923 3.714-3.714l1.109-.529z" fill="url(#gemini-gradient)"/>
+      </svg>
+      <span class="gemini-text">Synthesizing...</span>
     `;
     messagesEl.appendChild(typingEl);
     scrollToBottom();
@@ -269,10 +293,14 @@ const Chat = (() => {
     msgEl.className = 'msg assistant';
     if (msgId) msgEl.id = `msg-${msgId}`;
     msgEl.innerHTML = `
-      <div class="msg-avatar">🛡️</div>
+      <div class="msg-avatar">
+        <svg class="gemini-spark" viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11.666 1.805a.75.75 0 01.668 0l1.109.529c1.658.791 2.923 2.056 3.714 3.714l.529 1.109a.75.75 0 010 .668l-.529 1.109c-.791 1.658-2.056 2.923-3.714 3.714l-1.109.529a.75.75 0 01-.668 0l-1.109-.529c-1.658-.791-2.923-2.056-3.714-3.714l-.529-1.109a.75.75 0 010-.668l.529-1.109c.791-1.658 2.056-2.923 3.714-3.714l1.109-.529z" fill="url(#gemini-gradient)"/>
+        </svg>
+      </div>
       <div class="msg-body">
         <div class="msg-header">
-          <span class="msg-role">SelfHeal</span>
+          <span class="msg-role">SelfHeal AI</span>
         </div>
         <div class="msg-content">${renderMarkdown(content)}</div>
       </div>
@@ -289,7 +317,11 @@ const Chat = (() => {
     // Re-add welcome
     const welcomeHtml = `
       <div class="chat-welcome" id="chat-welcome">
-        <span class="welcome-icon">🛡️</span>
+        <span class="welcome-icon">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </span>
         <div class="welcome-title">SelfHeal AI Assistant</div>
         <div class="welcome-sub">Debugging intelligence for your IDE</div>
         <div class="welcome-commands" id="welcome-commands"></div>
@@ -374,6 +406,24 @@ const Chat = (() => {
       });
     });
     header.appendChild(btn);
+  }
+
+  /* ── Icon Mapping ───────────────────────────────────────── */
+
+  const iconMap = {
+    debug:   '🔍',
+    heal:    '🩹',
+    fix:     '🔧',
+    explain: '📖',
+    analyze: '📊',
+    generate:'✨',
+    refactor:'🧹',
+    clear:   '🗑️',
+    default: '✦'
+  };
+
+  function getIconForCommand(cmd) {
+    return iconMap[cmd.toLowerCase()] || iconMap.default;
   }
 
   /* ── Helpers ─────────────────────────────────────────────── */
