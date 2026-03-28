@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SelfHeal Checkout - v2.0 (Broken Selectors Demo)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+        body { font-family: 'Outfit', sans-serif; background: #0f172a; color: #f1f5f9; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .input-group input { background: #1e293b; border: 1px solid #334155; padding: 0.75rem; border-radius: 0.5rem; width: 100%; color: white; }
+        .btn-fancy { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); transition: transform 0.2s; }
+        .btn-fancy:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="glass max-w-md w-full p-8 rounded-3xl shadow-2xl">
+        <div class="mb-8 text-center">
+            <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-blue-500">Secure Checkout</h1>
+            <p class="text-slate-400 mt-2">V2.0 Update: New Dynamic Layout</p>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Selector changed from #email-input (V1) to #user-email-field (V2) -->
+            <div class="input-group">
+                <label class="block text-sm font-medium mb-2 text-slate-300">Email Address</label>
+                <input type="email" id="user-email-field" placeholder="alex@example.com">
+            </div>
+
+            <!-- Selector changed from #promo-input (V1) to #discount-code (V2) -->
+            <div class="input-group">
+                <label class="block text-sm font-medium mb-2 text-slate-300">Promo Code</label>
+                <input type="text" id="discount-code" placeholder="HACKATHON2026">
+            </div>
+
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 mb-6">
+                <div class="flex justify-between text-sm">
+                    <span>Subtotal</span>
+                    <span>$499.00</span>
+                </div>
+                <div class="flex justify-between font-bold text-lg mt-2 text-sky-400">
+                    <span>Total</span>
+                    <span>$499.00</span>
+                </div>
+            </div>
+
+            <!-- Broken Structural Selector Demo: This was previously body > div:nth-child(2) > button in V1
+                 Now it's wrapped in a new container, breaking the nth-child(2) structural link! -->
+            <div class="new-container-wrap">
+                <button id="checkout-submit" class="w-full py-4 rounded-xl font-bold text-lg btn-fancy shadow-lg shadow-blue-500/20">
+                    Place My Order
+                </button>
+            </div>
+            
+            <!-- Success message container (initially hidden) -->
+            <!-- V1 was #success-msg, V2 is #order-confirm-status -->
+            <div id="order-confirm-status" class="hidden mt-6 p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-center text-emerald-400">
+                🎉 Order placed successfully!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('checkout-submit').addEventListener('click', () => {
+            const btn = document.getElementById('checkout-submit');
+            btn.innerHTML = '<span class="animate-pulse">Processing...</span>';
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.classList.add('hidden');
+                document.getElementById('order-confirm-status').classList.remove('hidden');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
