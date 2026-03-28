@@ -33,14 +33,16 @@ export interface CommandDefinition {
 
 /** All recognised slash commands. */
 export const COMMANDS: CommandDefinition[] = [
-    { name: 'debug',   description: 'Deep debugging — find root cause & suggest fix',       icon: '🔍', requiresCode: true  },
-    { name: 'heal',    description: 'Analyze errors & heal broken code / selectors',        icon: '🩹', requiresCode: true  },
-    { name: 'fix',     description: 'Fix the bug at cursor position or in selection',       icon: '🔧', requiresCode: true  },
-    { name: 'explain', description: 'Explain selected code or the entire active file',      icon: '📖', requiresCode: true  },
-    { name: 'analyze', description: 'Code quality & performance analysis',                  icon: '📊', requiresCode: true  },
-    { name: 'run',     description: 'Run current test through the SelfHeal engine',         icon: '▶️',  requiresCode: false },
-    { name: 'scan',    description: 'Static fragility scan on selector brittleness',        icon: '🛡️', requiresCode: false },
-    { name: 'clear',   description: 'Clear conversation history',                           icon: '🗑️', requiresCode: false },
+    { name: 'debug',    description: 'Deep debugging — find root cause & suggest fix',       icon: '🔍', requiresCode: true  },
+    { name: 'heal',     description: 'Analyze errors & heal broken code / selectors',        icon: '🩹', requiresCode: true  },
+    { name: 'fix',      description: 'Fix the bug at cursor position or in selection',       icon: '🔧', requiresCode: true  },
+    { name: 'explain',  description: 'Explain selected code or the entire active file',      icon: '📖', requiresCode: true  },
+    { name: 'analyze',  description: 'Code quality & performance analysis',                  icon: '📊', requiresCode: true  },
+    { name: 'refactor', description: 'Refactor code to be cleaner and more scalable',        icon: '♻️',  requiresCode: true  },
+    { name: 'generate', description: 'Generate code or a full test script from a prompt',    icon: '✨', requiresCode: false },
+    { name: 'run',      description: 'Run current test through the SelfHeal engine',         icon: '▶️',  requiresCode: false },
+    { name: 'scan',     description: 'Static fragility scan on selector brittleness',        icon: '🛡️', requiresCode: false },
+    { name: 'clear',    description: 'Clear conversation history',                           icon: '🗑️', requiresCode: false },
 ];
 
 const COMMAND_NAMES = new Set(COMMANDS.map(c => c.name));
