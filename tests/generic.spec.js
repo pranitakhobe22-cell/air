@@ -49,7 +49,7 @@ export default async function genericTest(page, { serverUrl, targetUrl } = {}) {
     // Step 4: Click login / submit (broken selector)
     console.log('\n  Step 4/4 - Click login/submit button');
     try {
-        await healClick(page, 'button#submit', {
+        await healClick(page, '#pt-login-2', {
             intent: 'Submit the login form by clicking the login or submit button',
         });
         console.log('  [OK] Submit clicked');

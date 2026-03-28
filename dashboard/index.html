@@ -81,26 +81,32 @@ select{cursor:pointer}
   max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 
-/* TICKER */
+/* TICKER (FOOTER) */
 .ticker{
   display:flex;align-items:center;
-  height:28px;background:var(--bg1);border-bottom:1px solid var(--border);
-  overflow:hidden;flex-shrink:0;padding:0 16px;
+  height:36px;
+  background:linear-gradient(180deg, #222226 0%, #060608 100%);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--green); /* Bright green bottom edge */
+  box-shadow: 0 -3px 12px rgba(0,0,0,0.6); /* stronger shadow for depth */
+  overflow:hidden;flex-shrink:0;padding:0 8px;
+  position: relative;
+  z-index: 10;
 }
 .tick-item{
-  display:flex;align-items:center;gap:5px;
-  padding:0 12px;border-right:1px solid var(--border);
-  height:100%;font-size:9.5px;font-family:var(--mono);white-space:nowrap;
+  display:flex;align-items:center;gap:12px;
+  padding:0 16px;border-right:1px solid var(--border2);
+  height:70%;font-size:10.5px;font-family:var(--mono);white-space:nowrap;
 }
-.tick-item:first-child{padding-left:0}
-.tick-key{color:var(--txt2);letter-spacing:.06em}
-.tick-val{color:var(--txt0);font-weight:600;transition:color .3s}
-.tick-up{color:var(--green)}
-.tick-dn{color:var(--red)}
+.tick-item:last-of-type { border-right:none; }
+.tick-key{color:var(--txt2);letter-spacing:1px;font-weight:500;}
+.tick-val{color:var(--txt0);font-weight:700;font-size:11.5px;transition:color .3s;text-shadow:var(--gglow);}
+.tick-up{color:var(--green);}
+.tick-dn{color:var(--red);text-shadow:0 0 10px rgba(255,61,61,0.3);}
 .tick-flash{animation:numFlash .4s ease}
 @keyframes numFlash{0%{color:#fff;text-shadow:0 0 8px #fff}100%{}}
 .tick-spacer{flex:1}
-.tick-brand{font-size:9px;color:var(--txt3);font-family:var(--mono)}
+.tick-brand{font-size:10px;color:var(--txt2);font-family:var(--mono);padding-right:16px;}
 
 /* BODY */
 .body{display:flex;flex:1;min-height:0;overflow:hidden}
@@ -108,24 +114,41 @@ select{cursor:pointer}
 /* LEFT */
 .left{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
 
-/* STAT ROW */
-.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg)}
-.stat-card{
-  padding:12px 16px;border-radius:var(--r8);
-  background:var(--bg2);border:1px solid var(--border2);
-  position:relative;overflow:hidden;transition:background .2s, box-shadow .2s;
-  box-shadow:0 4px 16px rgba(0,0,0,0.45),0 1px 3px rgba(0,0,0,0.3);
+/* UNIFIED STAT PANEL (Trading Header) */
+.stat-row{padding:12px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg);display:flex;gap:16px;align-items:stretch;}
+.stat-panel{
+  display:flex;align-items:center;padding:12px 24px;
+  background:linear-gradient(180deg, #1c1c1f 0%, #060608 100%);
+  border:1px solid var(--border2);
+  border-radius:var(--r8);box-shadow:var(--card-shadow);
+  position:relative;overflow:hidden;transition:background .2s,border-color .2s;
+  width:65%;
 }
-.stat-card:hover{background:var(--bg3);box-shadow:0 6px 24px rgba(0,0,0,0.55),0 2px 6px rgba(0,0,0,0.4)}
-.stat-label{font-size:9.5px;color:var(--txt2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;font-weight:500}
-.stat-num{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--green);line-height:1;transition:all .35s;text-shadow:0 0 14px rgba(0,255,106,0.45)}
-.stat-num.red{color:var(--red)}
-.stat-num.amber{color:var(--amber)}
-.stat-sub{font-size:9.5px;color:var(--txt2);margin-top:4px;font-family:var(--mono)}
-.stat-bar{position:absolute;bottom:0;left:0;right:0;height:2px;opacity:.7}
-.stat-bar.g{background:linear-gradient(90deg,transparent,var(--green),transparent)}
-.stat-bar.r{background:linear-gradient(90deg,transparent,var(--red),transparent)}
-.stat-bar.a{background:linear-gradient(90deg,transparent,var(--amber),transparent)}
+.stat-panel::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,var(--green),rgba(0,255,106,0.1) 40%,transparent 80%);
+}
+.stat-panel:hover{border-color:var(--border3);background:linear-gradient(180deg, #202024 0%, #0a0a0d 100%);}
+
+.tp-hero{display:flex;flex-direction:column;pointer-events:none}
+.tp-hero-top{display:flex;align-items:baseline;gap:8px}
+.tp-hero-num{font-family:var(--mono);font-size:32px;font-weight:700;color:var(--green);text-shadow:var(--gglow);line-height:1;transition:all .3s}
+.tp-hero-name{font-size:17px;font-weight:600;color:var(--txt0);letter-spacing:.5px}
+.tp-hero-sub{font-size:11.5px;color:var(--txt2);margin-top:5px;text-transform:uppercase;letter-spacing:.5px}
+
+.tp-divider{width:1px;height:46px;background:var(--border2);margin:0 36px}
+
+.tp-stats{display:flex;gap:56px;flex:1}
+.tp-col{display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.tp-label{font-size:13px;color:var(--txt1);font-weight:500;}
+.tp-val{font-size:20px;font-family:var(--mono);font-weight:600;color:var(--txt0);transition:all .3s}
+.tp-val.green{color:var(--green);text-shadow:0 0 10px rgba(0,255,106,0.25)}
+.tp-val.red{color:var(--red);text-shadow:0 0 10px rgba(255,61,61,0.25)}
+.tp-val.amber{color:var(--amber);text-shadow:0 0 10px rgba(255,184,0,0.25)}
+
+.tp-right{margin-left:auto;opacity:.5;transition:.2s;}
+.tp-right:hover{opacity:1}
+
 @keyframes numPop{0%{transform:scale(1.18)}100%{transform:scale(1)}}
 .num-pop{animation:numPop .3s ease}
 
@@ -137,14 +160,7 @@ select{cursor:pointer}
 .chart-wrap{padding:12px 16px 8px;border-bottom:1px solid var(--border);flex-shrink:0;height:180px}
 .panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .panel-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--txt2)}
-.time-tabs{display:flex;gap:1px;background:var(--bg3);border-radius:5px;padding:2px}
-.ttab{
-  padding:2px 8px;border-radius:4px;border:none;
-  font-size:9.5px;font-family:var(--mono);font-weight:600;
-  color:var(--txt2);background:transparent;transition:.15s;cursor:pointer;
-}
-.ttab:hover{color:var(--txt0)}
-.ttab.active{background:var(--bg5);color:var(--green)}
+.ttab{display:none}
 canvas{width:100%!important;height:100%!important}
 
 /* LIVE FEED (center, below chart) */
@@ -152,24 +168,34 @@ canvas{width:100%!important;height:100%!important}
   border-bottom:1px solid var(--border);flex-shrink:0;
   padding:10px 0 0;
   display:flex;flex-direction:column;
-  max-height:170px;
+  max-height:190px;
 }
-.feed-panel-hdr{padding:0 16px 8px;display:flex;align-items:center;justify-content:space-between}
-.feed{display:flex;flex-direction:column;gap:3px;overflow-y:auto;flex:1;padding:0 16px 8px}
+.feed-panel-hdr{padding:0 16px 6px;display:flex;align-items:center;justify-content:space-between}
+.feed{display:flex;flex-direction:column;overflow-y:auto;flex:1;padding:0 16px 8px}
+
+.feed-header{
+  display:grid;grid-template-columns:4fr 6fr 55px;gap:8px;
+  font-size:9px;color:var(--txt2);padding-bottom:4px;
+  font-family:var(--mono);margin-bottom:2px;
+}
+
 .feed-item{
-  padding:5px 8px;border-radius:var(--r4);
-  border-left:2px solid;font-size:10.5px;line-height:1.4;
-  background:var(--bg2);flex-shrink:0;
+  display:grid;grid-template-columns:4fr 6fr 55px;gap:8px;
+  padding:2.5px 0;font-size:10.5px;font-family:var(--mono);
+  background:transparent;flex-shrink:0;align-items:center;
 }
-@keyframes fi{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-.feed-item{animation:fi .18s ease}
-.feed-item.pass{border-color:var(--green)}
-.feed-item.fail{border-color:var(--red)}
-.feed-item.heal{border-color:var(--amber)}
-.feed-item.info{border-color:var(--txt3)}
-.feed-time{font-family:var(--mono);font-size:8.5px;color:var(--txt2)}
-.feed-msg{color:var(--txt0);margin-top:1px;font-size:10.5px}
-.feed-sub{font-family:var(--mono);font-size:8.5px;color:var(--txt2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@keyframes fi{from{opacity:0;transform:translateY(-2px)}to{opacity:1;transform:none}}
+.feed-item{animation:fi .15s ease}
+
+/* Colors similar to market trades */
+.feed-item.info .feed-msg{color:var(--green)}
+.feed-item.pass .feed-msg{color:var(--green)}
+.feed-item.fail .feed-msg{color:var(--red)}
+.feed-item.heal .feed-msg{color:var(--amber)}
+
+.feed-msg{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.feed-sub{color:var(--txt1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed-time{color:var(--txt2);text-align:right}
 
 /* STEP LOG */
 .log-panel{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:10px 0 0}
@@ -215,23 +241,23 @@ table.log tr:hover td{background:var(--bg2)}
 .risk-badge.hi{background:var(--rdim);color:var(--red)}
 .frag-empty{font-size:10px;color:var(--txt2);text-align:center;padding:10px 0;font-style:italic}
 
-/* HEAL CARD */
-.heal-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r6);padding:10px;margin-bottom:7px}
-.heal-from{font-family:var(--mono);font-size:9.5px;color:var(--red);text-decoration:line-through;margin-bottom:2px;opacity:.8}
-.heal-arrow{font-size:9.5px;color:var(--txt2);margin-bottom:2px}
-.heal-to{font-family:var(--mono);font-size:10.5px;color:var(--green);font-weight:600;margin-bottom:5px}
-.heal-reason{font-size:10.5px;color:var(--txt1);line-height:1.4}
-.heal-meta{display:flex;align-items:center;justify-content:space-between;margin-top:7px;padding-top:7px;border-top:1px solid var(--border)}
-.conf-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r6);padding:10px;margin-bottom:7px}
-.conf-label{font-size:8.5px;color:var(--txt2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
-.conf-track{height:4px;background:var(--bg5);border-radius:3px;overflow:hidden}
-.conf-fill{height:100%;border-radius:3px;transition:width .7s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,var(--green3),var(--green))}
-.conf-fill.low{background:linear-gradient(90deg,#a00,var(--red))}
-.conf-val{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--green);margin-top:4px;line-height:1}
+/* HEAL CARD (SHRUNKEN) */
+.heal-card{background:linear-gradient(180deg, #1c1c1f 0%, #060608 100%);border:1px solid var(--border);border-radius:3px;padding:6px;margin-bottom:6px;box-shadow:var(--card-shadow);}
+.heal-from{font-family:var(--mono);font-size:8.5px;color:var(--red);text-decoration:line-through;margin-bottom:1px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.heal-arrow{display:none}
+.heal-to{font-family:var(--mono);font-size:9.5px;color:var(--green);font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.heal-reason{font-size:9px;color:var(--txt2);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.heal-meta{display:flex;align-items:center;justify-content:space-between;margin-top:4px;padding-top:4px;border-top:1px solid var(--border2)}
+.conf-block{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:6px;margin-bottom:6px}
+.conf-label{font-size:8px;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.conf-track{height:3px;background:var(--bg5);border-radius:2px;overflow:hidden}
+.conf-fill{height:100%;border-radius:2px;transition:width .7s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,var(--green3),var(--green))}
+.conf-fill.low{background:linear-gradient(90deg,#800,var(--red))}
+.conf-val{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green);margin-top:3px;line-height:1}
 .conf-val.low{color:var(--red)}
 
 /* APPROVAL */
-.approve-box{background:rgba(255,184,0,.05);border:1px solid rgba(255,184,0,.25);border-radius:var(--r6);padding:10px;margin-bottom:7px;display:none}
+.approve-box{background:linear-gradient(180deg, #1c1c1f 0%, #060608 100%);border:1px solid rgba(255,184,0,.5);border-radius:var(--r6);padding:10px;margin-bottom:7px;display:none;box-shadow:var(--card-shadow);}
 .approve-box.show{display:block}
 .approve-title{font-size:10.5px;font-weight:600;color:var(--amber);margin-bottom:7px;display:flex;align-items:center;gap:5px}
 .approve-row{font-family:var(--mono);font-size:9.5px;padding:4px 6px;border-radius:var(--r4);background:var(--bg);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -370,182 +396,204 @@ select.inp option{background:var(--bg2)}
   </div>
 </nav>
 
-<!-- TICKER -->
-<div class="ticker">
-  <div class="tick-item"><span class="tick-key">HEALS</span>&nbsp;<span class="tick-val tick-up" id="tkHeals">0</span></div>
-  <div class="tick-item"><span class="tick-key">PASSED</span>&nbsp;<span class="tick-val tick-up" id="tkPassed">0</span></div>
-  <div class="tick-item"><span class="tick-key">FAILED</span>&nbsp;<span class="tick-val tick-dn" id="tkFailed">0</span></div>
-  <div class="tick-item"><span class="tick-key">AVG CONF</span>&nbsp;<span class="tick-val" id="tkConf">—</span></div>
-  <div class="tick-item"><span class="tick-key">STATUS</span>&nbsp;<span class="tick-val" id="tkStatus">IDLE</span></div>
-  <div class="tick-item"><span class="tick-key">MODEL</span>&nbsp;<span class="tick-val tick-up" id="tkModel">GEMINI-2.5-FLASH</span></div>
-  <div class="tick-item"><span class="tick-key">THRESHOLD</span>&nbsp;<span class="tick-val" id="tkThreshold">80%</span></div>
-  <div class="tick-spacer"></div>
-  <span class="tick-brand">© 2025 SelfHeal</span>
-</div>
-
 <!-- LIVE RUN BODY -->
 <div class="body" id="liveBody">
 
   <!-- LEFT -->
   <div class="left">
-    <!-- STAT CARDS -->
-    <div class="stat-row">
-      <div class="stat-card">
-        <div class="stat-label">Heals Applied</div>
-        <div class="stat-num" id="statHeals">0</div>
-        <div class="stat-sub" id="statHealSub">auto-patched selectors</div>
-        <div class="stat-bar g"></div>
+  <!-- LEFT MAIN AREA (2-column split) -->
+  <div class="left" style="flex-direction:row; padding:12px; gap:16px;">
+    
+    <!-- COL 1: Hero Stats + Step Log -->
+    <div style="flex:1.8; display:flex; flex-direction:column; gap:16px; min-width:0;">
+      
+      <!-- STAT PANEL (Native Height, Fixed) -->
+      <div class="stat-panel" style="width:auto; flex-shrink:0;">
+        <div class="tp-hero">
+          <div class="tp-hero-top">
+            <span class="tp-hero-num" id="statHeals">0</span>
+            <span class="tp-hero-name">HEALS <span style="font-size:11px;color:var(--txt2);font-weight:400;margin-left:4px">▾</span></span>
+          </div>
+          <div class="tp-hero-sub">auto-patched selectors</div>
+        </div>
+        <div class="tp-divider"></div>
+        <div class="tp-stats">
+          <div class="tp-col">
+            <div class="tp-label">Steps Passed / Rate</div>
+            <div class="tp-val id-statPassed" style="color:var(--green)">
+              <span id="statPassed">0</span> 
+              <span id="statPassRate" style="font-size:10px;color:var(--txt1);margin-left:4px"></span>
+            </div>
+          </div>
+          <div class="tp-col">
+            <div class="tp-label">Steps Failed</div>
+            <div class="tp-val red" id="statFailed">0</div>
+          </div>
+          <div class="tp-col">
+            <div class="tp-label">Avg Confidence</div>
+            <div class="tp-val amber" id="statConf">—</div>
+          </div>
+        </div>
+        <div style="margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; justify-content:center; gap:6px;">
+          <div id="readyUrl" style="display:none;"></div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <button class="btn btn-green" id="demoBtn" onclick="triggerRun()" style="padding:0 24px; font-size:12.5px; border-radius:var(--r6); height:34px; box-shadow:var(--gglow); display:inline-flex; align-items:center; justify-content:center; gap:6px;">▶ Run</button>
+            <button class="btn btn-outline" onclick="resetAll()" style="padding:0 16px; font-size:12.5px; border-radius:var(--r6); height:34px; display:inline-flex; align-items:center; justify-content:center; gap:6px;">↺ Reset</button>
+            <button class="btn-ghost" title="Settings" style="margin-left:6px; font-size:14px; opacity:0.6; display:inline-flex; align-items:center; justify-content:center; height:34px;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">⚙</button>
+          </div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Steps Passed</div>
-        <div class="stat-num" id="statPassed">0</div>
-        <div class="stat-sub" id="statPassRate">—% success rate</div>
-        <div class="stat-bar g"></div>
+
+      <!-- INLINE REVIEW / HEAL ACTIVITY -->
+      <div style="display:flex;gap:12px;flex-shrink:0">
+        <div style="flex:1;display:flex;flex-direction:column;">
+          <div class="heal-card" id="healCard" style="margin:0;padding:12px;">
+            <div style="font-size:10.5px;color:var(--txt2);font-style:italic">No heal yet this run</div>
+          </div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Steps Failed</div>
-        <div class="stat-num red" id="statFailed">0</div>
-        <div class="stat-sub">unresolved failures</div>
-        <div class="stat-bar r"></div>
+      <div class="approve-box" id="approveBox" style="margin-top:0;flex-shrink:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div class="approve-title" style="margin:0;">⚠ Low Confidence &mdash; Human Review Required</div>
+          <div style="font-size:9.5px;color:var(--txt1);">Confidence: <b id="approveConf" style="color:var(--amber)"></b>%</div>
+        </div>
+        <div class="approve-row old" id="approveOld" style="font-size:11px;padding:6px;"></div>
+        <div class="approve-row new" id="approveNew" style="font-size:11px;padding:6px;margin-bottom:8px;"></div>
+        <div class="approve-btns" style="margin:0;">
+          <button class="btn btn-green" id="btnApprove" style="padding:10px;">Approve Heal</button>
+          <button class="btn btn-red" id="btnReject" style="padding:10px;">Reject</button>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Avg Confidence</div>
-        <div class="stat-num amber" id="statConf">—</div>
-        <div class="stat-sub">gemini heal quality</div>
-        <div class="stat-bar a"></div>
+      <div id="approveEmpty" style="display:none"></div>
+
+      <!-- STEP LOG (Flex:1, Stretches vertically) -->
+      <div class="log-panel" style="flex:1; min-height:0; display:flex; flex-direction:column; background:linear-gradient(180deg, #1c1c1f 0%, #060608 100%); border:1px solid var(--border2); border-radius:var(--r8); box-shadow:var(--card-shadow); padding:0;">
+        <div class="log-panel-hdr" style="padding:12px 16px;">
+          <span class="panel-title">Step Execution Log</span>
+          <span id="stepBadge" style="font-size:8.5px;font-family:var(--mono);color:var(--txt2);font-weight:700">0 STEPS</span>
+        </div>
+        <div class="log-scroll" style="flex:1;overflow-y:auto;">
+          <table class="log">
+            <thead>
+              <tr><th>Time</th><th>Action</th><th>Selector</th><th>Status</th><th>Detail</th></tr>
+            </thead>
+            <tbody id="logBody">
+              <tr><td colspan="5" class="log-empty">
+                <div class="log-empty-icon">🔍</div>
+                No steps executed yet
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+      
     </div>
 
-    <div class="inner-body">
-      <div class="center-col">
-
-        <!-- CHART -->
-        <div class="chart-wrap">
-          <div class="panel-hdr">
-            <div style="display:flex;align-items:center;gap:8px">
-              <span class="panel-title">Heal Activity</span>
-              <span id="runBadge" style="display:none;font-size:8.5px;font-family:var(--mono);color:var(--green);font-weight:700;animation:blink .9s infinite">● LIVE</span>
-            </div>
-            <div class="time-tabs">
-              <button class="ttab active" onclick="setChartView('live',this)">LIVE</button>
-              <button class="ttab" onclick="setChartView('1h',this)">1H</button>
-              <button class="ttab" onclick="setChartView('all',this)">ALL</button>
-            </div>
+    <!-- COL 2: Confidence + Live Feed -->
+    <div style="flex:1.2; display:flex; flex-direction:column; gap:16px; min-width:0;">
+      
+      <!-- GEMINI CONFIDENCE & FRAGILITY SCAN -->
+      <div style="display:flex; gap:16px; flex-shrink:0; height:80px;">
+        
+        <!-- GEMINI CONFIDENCE (50% Width) -->
+        <div class="stat-panel" style="flex:1; width:auto; flex-shrink:0; padding:12px 18px; flex-direction:column; align-items:stretch; justify-content:center;">
+          <div class="conf-label" style="font-size:9.5px;margin-bottom:8px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;">Gemini Confidence</div>
+          <div class="conf-track" style="height:4px;background:var(--bg5);border-radius:2px;overflow:hidden;flex-shrink:0;">
+            <div class="conf-fill" id="confFill" style="width:0%;height:100%;transition:width .7s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,var(--green3),var(--green))"></div>
           </div>
-          <canvas id="healChart"></canvas>
+          <div class="conf-val" id="confVal" style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--green);margin-top:8px;line-height:1;">—</div>
         </div>
 
-        <!-- LIVE FEED -->
-        <div class="feed-panel">
-          <div class="feed-panel-hdr">
-            <span class="panel-title">Live Event Feed</span>
-            <button class="btn-ghost btn-sm" onclick="clearFeed()">Clear</button>
+        <!-- FRAGILITY SCORE (50% Width) -->
+        <div class="stat-panel" style="flex:1; width:auto; flex-shrink:0; padding:12px 18px; flex-direction:column; align-items:stretch;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-shrink:0;">
+            <span class="conf-label" style="font-size:9.5px;margin:0;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;">Fragility Scan</span>
+            <span id="highRisk" style="font-size:8.5px;font-family:var(--mono);color:var(--amber);font-weight:700">— RISK</span>
           </div>
-          <div class="feed" id="liveFeed">
+          <div id="fragList" style="flex:1; overflow-y:auto; overflow-x:hidden; padding-right:4px;">
+            <div class="frag-empty" style="font-size:10px; color:var(--txt2); font-style:italic;">Scanning…</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- LIVE FEED (Flex:1, Stretches vertically) -->
+      <div class="stat-panel" style="width:auto; flex:1; padding:12px 18px; flex-direction:column; align-items:stretch; min-height:0;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:12px; flex-shrink:0;">
+          <span class="panel-title" style="margin:0; text-transform:uppercase; font-size:10px; font-weight:600; letter-spacing:1px; color:var(--txt2);">Live Event Feed</span>
+          <button class="btn-ghost btn-sm" onclick="clearFeed()" style="padding:0; margin:0;">Clear</button>
+        </div>
+        <div class="feed" style="flex:1; overflow-y:auto; padding:0;">
+          <div class="feed-header" style="margin-bottom:8px; opacity:0.8;">
+            <div>EVENT (ACTION)</div>
+            <div>DETAILS (SELECTOR)</div>
+            <div style="text-align:right">TIME</div>
+          </div>
+          <div id="liveFeed" style="display:flex;flex-direction:column;gap:4px">
             <div class="feed-item info">
+              <div class="feed-msg">System Ready</div>
+              <div class="feed-sub">Standing by</div>
               <div class="feed-time">—</div>
-              <div class="feed-msg">Dashboard ready</div>
-              <div class="feed-sub">Click "Demo Run" to simulate a full test execution</div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- STEP LOG -->
-        <div class="log-panel">
-          <div class="log-panel-hdr">
-            <span class="panel-title">Step Execution Log</span>
-            <span id="stepBadge" style="font-size:8.5px;font-family:var(--mono);color:var(--txt2);font-weight:700">0 STEPS</span>
-          </div>
-          <div class="log-scroll">
-            <table class="log">
-              <thead>
-                <tr><th>Time</th><th>Action</th><th>Selector</th><th>Status</th><th>Detail</th></tr>
-              </thead>
-              <tbody id="logBody">
-                <tr><td colspan="5" class="log-empty">
-                  <div class="log-empty-icon">🔍</div>
-                  No steps executed yet
-                </td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+    </div>
 
-      </div><!-- /center-col -->
-    </div><!-- /inner-body -->
   </div><!-- /left -->
-
-  <!-- RIGHT -->
-  <div class="right">
-
-    <!-- FRAGILITY SCAN -->
-    <div class="rp">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
-        <span class="rp-title" style="margin-bottom:0">Fragility Scan</span>
-        <span id="highRisk" style="font-size:8.5px;font-family:var(--mono);color:var(--amber);font-weight:700">— HIGH RISK</span>
-      </div>
-      <div id="fragList">
-        <div class="frag-empty">Waiting for test file scan…</div>
-      </div>
-    </div>
-
-    <!-- HUMAN REVIEW -->
-    <div class="rp">
-      <span class="rp-title">Human Review</span>
-      <div class="approve-box" id="approveBox">
-        <div class="approve-title">⚠ Low Confidence</div>
-        <div style="font-size:9.5px;color:var(--txt1);margin-bottom:6px">Confidence: <b id="approveConf" style="color:var(--amber)"></b>%</div>
-        <div class="approve-row old" id="approveOld"></div>
-        <div class="approve-row new" id="approveNew"></div>
-        <div class="approve-btns">
-          <button class="btn btn-green" id="btnApprove">Approve</button>
-          <button class="btn btn-red" id="btnReject">Reject</button>
-        </div>
-      </div>
-      <div id="approveEmpty" style="font-size:10px;color:var(--txt2);font-style:italic">No pending reviews</div>
-    </div>
-
-    <!-- LAST HEAL -->
-    <div class="rp">
-      <span class="rp-title">Last Heal Applied</span>
-      <div class="heal-card" id="healCard">
-        <div style="font-size:10px;color:var(--txt2);font-style:italic">No heal yet this run</div>
-      </div>
-      <div class="conf-block">
-        <div class="conf-label">Gemini Confidence</div>
-        <div class="conf-track"><div class="conf-fill" id="confFill" style="width:0%"></div></div>
-        <div class="conf-val" id="confVal">—</div>
-      </div>
-    </div>
-
-    <!-- CONTROLS -->
-    <div class="rp">
-      <span class="rp-title">Controls</span>
-      <div id="readyUrl" style="font-size:9.5px;font-family:var(--mono);color:var(--txt2);margin-bottom:8px;word-break:break-all;min-height:14px"></div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-green" id="demoBtn" onclick="triggerRun()" style="flex:1;padding:9px;font-size:11.5px;border-radius:var(--r6)">
-          ▶ Run
-        </button>
-        <button class="btn btn-outline" onclick="resetAll()" style="flex:1;padding:9px;font-size:11.5px;border-radius:var(--r6)">
-          ↺ Reset
-        </button>
-      </div>
-    </div>
-
-  </div><!-- /right -->
 </div><!-- /liveBody -->
 
 <!-- HISTORY TAB -->
 <div id="tab-history" class="tab-panel" style="display:none">
+  <!-- Header -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
     <span class="tab-section-title" style="margin-bottom:0">Run History</span>
-    <button class="btn btn-outline btn-sm" onclick="clearHistory()">Clear All</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select class="inp" id="histFileFilter" onchange="renderHistory()" style="font-size:10px;padding:4px 8px;min-width:140px;">
+        <option value="all">All Spec Files</option>
+      </select>
+      <button class="btn btn-outline btn-sm" onclick="clearHistory()">Clear All</button>
+    </div>
   </div>
-  <div id="historyList">
-    <div class="hist-empty-state">
-      <div class="hist-empty-icon">📋</div>
-      <div class="hist-empty-text">No runs recorded yet.<br>Complete a run on the Live tab to see history here.</div>
-      <div class="hist-empty-hint">→ Live Run → Demo Run</div>
+
+  <!-- Trend Charts Row -->
+  <div style="display:flex;gap:16px;margin-bottom:16px;flex-shrink:0;">
+    <div class="stat-panel" style="flex:1;padding:14px 18px;flex-direction:column;align-items:stretch;height:160px;">
+      <div style="font-size:9.5px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;margin-bottom:8px;">Pass Rate Trend (Last 10 Runs)</div>
+      <div style="flex:1;position:relative;"><canvas id="histPassChart"></canvas></div>
+    </div>
+    <div class="stat-panel" style="flex:1;padding:14px 18px;flex-direction:column;align-items:stretch;height:160px;">
+      <div style="font-size:9.5px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;margin-bottom:8px;">Heal Success Rate Over Time</div>
+      <div style="flex:1;position:relative;"><canvas id="histHealChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Main Content: Run Log + Flaky Selectors -->
+  <div style="display:flex;gap:16px;flex:1;min-height:0;">
+    <!-- Run Log Table -->
+    <div class="stat-panel" style="flex:2;padding:0;flex-direction:column;min-height:0;overflow:hidden;">
+      <div style="padding:12px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:10px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;font-weight:600;">Run Log</span>
+        <span id="histCount" style="font-size:9px;font-family:var(--mono);color:var(--txt2);">0 runs</span>
+      </div>
+      <div style="flex:1;overflow-y:auto;" id="historyList">
+        <div class="hist-empty-state">
+          <div class="hist-empty-icon">📋</div>
+          <div class="hist-empty-text">No runs recorded yet.<br>Complete a run on the Live tab to see history here.</div>
+          <div class="hist-empty-hint">→ Live Run → Demo Run</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flaky Selector Tracker -->
+    <div class="stat-panel" style="flex:1;padding:0;flex-direction:column;min-height:0;overflow:hidden;">
+      <div style="padding:12px 18px;border-bottom:1px solid var(--border);flex-shrink:0;">
+        <span style="font-size:10px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;font-weight:600;">Flaky Selector Tracker</span>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:10px 14px;" id="flakyList">
+        <div style="font-size:10px;color:var(--txt2);text-align:center;padding:20px 0;font-style:italic;">No flaky selectors detected yet</div>
+      </div>
     </div>
   </div>
 </div>
@@ -570,7 +618,21 @@ select.inp option{background:var(--bg2)}
 
 <!-- CONFIG TAB -->
 <div id="tab-config" class="tab-panel" style="display:none">
-  <div style="max-width:660px">
+  <div style="max-width:720px">
+    <!-- ─── API Key Management ──────────────── -->
+    <span class="tab-section-title">API Key Management</span>
+    <div class="stat-panel" style="padding:16px 18px;flex-direction:column;align-items:stretch;margin-bottom:20px;">
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input type="text" class="inp" id="cfgNewKey" placeholder="AIzaSy... (paste Gemini API key)" style="flex:1;font-size:10.5px;"/>
+        <button class="btn btn-green" style="flex:0;padding:6px 16px;font-size:10.5px;" onclick="addApiKey()">Add Key</button>
+      </div>
+      <div id="apiKeyList" style="display:flex;flex-direction:column;gap:6px;">
+        <!-- keys rendered here -->
+      </div>
+      <div class="cfg-desc" style="margin-top:8px;">Manage multiple Gemini API keys for round-robin rotation. Keys are tested on add.</div>
+    </div>
+
+    <!-- ─── Agent Configuration ─────────────── -->
     <span class="tab-section-title">Agent Configuration</span>
     <div class="cfg-grid">
 
@@ -589,6 +651,7 @@ select.inp option{background:var(--bg2)}
         <label class="inp-label">AI Model</label>
         <select class="inp" id="cfgModel" onchange="onModelChange(this.value)">
           <option value="gemini-2.5-flash" selected>gemini-2.5-flash</option>
+          <option value="gemini-2.0-flash">gemini-2.0-flash</option>
           <option value="gemini-1.5-flash">gemini-1.5-flash</option>
           <option value="gemini-1.5-pro">gemini-1.5-pro</option>
         </select>
@@ -608,9 +671,15 @@ select.inp option{background:var(--bg2)}
       </div>
 
       <div class="cfg-card">
-        <label class="inp-label">Report Output Path</label>
-        <input type="text" class="inp" id="cfgReportPath" value="./heal-report.json"/>
-        <div class="cfg-desc">File path where the JSON report is written after each run.</div>
+        <label class="inp-label">Selector Strategy Preference</label>
+        <select class="inp" id="cfgSelectorStrategy">
+          <option value="auto" selected>Auto (AI decides)</option>
+          <option value="data-testid">Prefer data-testid</option>
+          <option value="id">Prefer #id</option>
+          <option value="css">Prefer CSS class</option>
+          <option value="xpath">Prefer XPath</option>
+        </select>
+        <div class="cfg-desc">Preferred selector type when the AI suggests replacements.</div>
       </div>
 
       <div class="cfg-card">
@@ -637,6 +706,31 @@ select.inp option{background:var(--bg2)}
 
     </div>
 
+    <!-- ─── Test Environment ───────────────── -->
+    <span class="tab-section-title" style="margin-top:20px;display:block;">Test Environment</span>
+    <div class="cfg-grid">
+      <div class="cfg-card">
+        <label class="inp-label">Base URL</label>
+        <input type="text" class="inp" id="cfgBaseUrl" placeholder="https://your-app.com"/>
+        <div class="cfg-desc">Default target URL for test runs.</div>
+      </div>
+      <div class="cfg-card">
+        <label class="inp-label">Report Output Path</label>
+        <input type="text" class="inp" id="cfgReportPath" value="./heal-report.json"/>
+        <div class="cfg-desc">File path where the JSON report is written after each run.</div>
+      </div>
+      <div class="cfg-card">
+        <label class="inp-label">Auth Username</label>
+        <input type="text" class="inp" id="cfgAuthUser" placeholder="testuser@example.com"/>
+        <div class="cfg-desc">Pre-filled username for tests requiring authentication.</div>
+      </div>
+      <div class="cfg-card">
+        <label class="inp-label">Auth Password</label>
+        <input type="password" class="inp" id="cfgAuthPass" placeholder="••••••••"/>
+        <div class="cfg-desc">Pre-filled password used by healFill for auth flows.</div>
+      </div>
+    </div>
+
     <div class="cfg-save-row">
       <button class="btn btn-green" style="flex:0;padding:8px 22px;font-size:11.5px" onclick="saveConfig()">Save Config</button>
       <button class="btn btn-outline" style="flex:0;padding:8px 16px;font-size:11.5px" onclick="resetConfig()">Reset Defaults</button>
@@ -654,10 +748,25 @@ select.inp option{background:var(--bg2)}
       </div>
       <button class="btn btn-outline btn-sm" style="margin-top:7px" onclick="copyCmd()">Copy first command</button>
     </div>
+    </div>
   </div>
 </div>
 
+<!-- TICKER (MOVED TO BOTTOM) -->
+<div class="ticker">
+  <div class="tick-item"><span class="tick-key">HEALS</span><span class="tick-val tick-up" id="tkHeals">0</span></div>
+  <div class="tick-item"><span class="tick-key">PASSED</span><span class="tick-val tick-up" id="tkPassed">0</span></div>
+  <div class="tick-item"><span class="tick-key">FAILED</span><span class="tick-val tick-dn" id="tkFailed">0</span></div>
+  <div class="tick-item"><span class="tick-key">AVG CONF</span><span class="tick-val" id="tkConf">—</span></div>
+  <div class="tick-item"><span class="tick-key">STATUS</span><span class="tick-val tick-up" id="tkStatus" style="color:#fff;text-shadow:none">IDLE</span></div>
+  <div class="tick-item"><span class="tick-key">MODEL</span><span class="tick-val tick-up" id="tkModel">GEMINI-2.5-FLASH</span></div>
+  <div class="tick-item"><span class="tick-key">THRESHOLD</span><span class="tick-val" id="tkThreshold" style="color:#fff;text-shadow:none">80%</span></div>
+  <div class="tick-spacer"></div>
+  <span class="tick-brand">Connection: <span style="color:var(--green)">Stable (12ms)</span></span>
+</div>
+
 </div><!-- /app -->
+<div style="display:none"><canvas id="healChart"></canvas></div>
 
 
 
@@ -755,7 +864,7 @@ function updateStats(){
   $('statPassed').textContent=S.passed;
   $('statFailed').textContent=S.failed;
   $('statConf').textContent=avgConf;
-  $('statPassRate').textContent=rate+' success rate';
+  $('statPassRate').textContent='/ '+rate;
 
   if(S.heals!==prevHeals)flashEl('statHeals');
   if(S.passed!==prevPassed)flashEl('statPassed');
@@ -773,7 +882,7 @@ function updateStats(){
 function feed(msg,sub,type='info'){
   const el=document.createElement('div');
   el.className=`feed-item ${type}`;
-  el.innerHTML=`<div class="feed-time">${now()}</div><div class="feed-msg">${msg}</div>${sub?`<div class="feed-sub">${sub}</div>`:''}`;
+  el.innerHTML=`<div class="feed-msg" title="${msg}">${msg}</div><div class="feed-sub" title="${sub||''}">${sub||''}</div><div class="feed-time">${now()}</div>`;
   const f=$('liveFeed');
   f.insertBefore(el,f.firstChild);
   while(f.children.length>60)f.removeChild(f.lastChild);
@@ -901,35 +1010,138 @@ function recordHistory(){
   const avgConf=S.confs.length>0?(S.confs.reduce((a,b)=>a+b,0)/S.confs.length*100).toFixed(0)+'%':'—';
   const dur=S.startTime?((Date.now()-S.startTime)/1000).toFixed(1)+'s':'—';
   const status=S.failed===0?'pass':(S.heals>0?'healed':'fail');
-  runHistory.unshift({ts:Date.now(),file:$('runFile').textContent||'unknown',steps:total,healed:S.heals,failed:S.failed,conf:avgConf,duration:dur,status,selectors:S._healedSelectors||[]});
+  const failedSels=(S._failedSelectors||[]).slice();
+  runHistory.unshift({ts:Date.now(),file:$('runFile').textContent||'unknown',steps:total,healed:S.heals,failed:S.failed,conf:avgConf,duration:dur,status,selectors:S._healedSelectors||[],failedSelectors:failedSels});
+  trackFlaky();
+  updateHistFileFilter();
   renderHistory();
 }
 
-function renderHistory(){
-  const el=$('historyList');
-  if(!runHistory.length){
-    el.innerHTML=`<div class="hist-empty-state"><div class="hist-empty-icon">📋</div><div class="hist-empty-text">No runs recorded yet.<br>Complete a run on the Live tab to see history here.</div><div class="hist-empty-hint">→ Live Run → Demo Run</div></div>`;
-    return;
-  }
-  el.innerHTML=`
-    <table class="log" style="width:100%">
-      <thead><tr><th>Date / Time</th><th>File</th><th style="text-align:center">Steps</th><th style="text-align:center">Healed</th><th style="text-align:center">Failed</th><th style="text-align:center">Avg Conf</th><th style="text-align:center">Duration</th><th>Status</th></tr></thead>
-      <tbody>${runHistory.map(r=>`
-        <tr>
-          <td style="color:var(--txt2);font-size:9.5px">${fmtTime(r.ts)}</td>
-          <td style="color:var(--txt0)">${r.file}</td>
-          <td style="text-align:center">${r.steps}</td>
-          <td style="text-align:center;color:var(--amber)">${r.healed}</td>
-          <td style="text-align:center;color:${r.failed>0?'var(--red)':'var(--txt2)'}">${r.failed}</td>
-          <td style="text-align:center;color:var(--green)">${r.conf}</td>
-          <td style="text-align:center">${r.duration}</td>
-          <td><span class="spill ${r.status}"><span class="sdot"></span>${r.status.toUpperCase()}</span></td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
+function updateHistFileFilter(){
+  const sel=$('histFileFilter');
+  const files=[...new Set(runHistory.map(r=>r.file))];
+  const cur=sel.value;
+  sel.innerHTML='<option value="all">All Spec Files</option>'+files.map(f=>`<option value="${f}">${f}</option>`).join('');
+  sel.value=cur||'all';
 }
 
-function clearHistory(){runHistory.length=0;renderHistory();}
+function getFilteredHistory(){
+  const f=$('histFileFilter').value;
+  return f==='all'?runHistory:runHistory.filter(r=>r.file===f);
+}
+
+function renderHistory(){
+  const filtered=getFilteredHistory();
+  const el=$('historyList');
+  $('histCount').textContent=filtered.length+' runs';
+  if(!filtered.length){
+    el.innerHTML=`<div class="hist-empty-state"><div class="hist-empty-icon">📋</div><div class="hist-empty-text">No runs recorded yet.<br>Complete a run on the Live tab to see history here.</div><div class="hist-empty-hint">→ Live Run → Demo Run</div></div>`;
+  } else {
+    el.innerHTML=`
+      <table class="log" style="width:100%">
+        <thead><tr><th>Date / Time</th><th>File</th><th style="text-align:center">Steps</th><th style="text-align:center">Healed</th><th style="text-align:center">Failed</th><th style="text-align:center">Avg Conf</th><th style="text-align:center">Duration</th><th>Status</th></tr></thead>
+        <tbody>${filtered.map((r,i)=>`
+          <tr style="cursor:pointer" onclick="toggleHistDetail(this,${i})">
+            <td style="color:var(--txt2);font-size:9.5px">${fmtTime(r.ts)}</td>
+            <td style="color:var(--txt0)">${r.file}</td>
+            <td style="text-align:center">${r.steps}</td>
+            <td style="text-align:center;color:var(--amber)">${r.healed}</td>
+            <td style="text-align:center;color:${r.failed>0?'var(--red)':'var(--txt2)'}">${r.failed}</td>
+            <td style="text-align:center;color:var(--green)">${r.conf}</td>
+            <td style="text-align:center">${r.duration}</td>
+            <td><span class="spill ${r.status}"><span class="sdot"></span>${r.status.toUpperCase()}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+  renderHistCharts(filtered);
+  renderFlakyList();
+}
+
+function toggleHistDetail(row,idx){
+  const existing=row.nextElementSibling;
+  if(existing && existing.classList.contains('hist-detail-row')){
+    existing.remove(); return;
+  }
+  const r=getFilteredHistory()[idx];
+  if(!r) return;
+  const sels=r.selectors||[];
+  const fails=r.failedSelectors||[];
+  const detailRow=document.createElement('tr');
+  detailRow.className='hist-detail-row';
+  detailRow.innerHTML=`<td colspan="8" style="padding:10px 16px;background:rgba(0,255,136,.02);border-left:2px solid var(--green);">
+    <div style="display:flex;gap:20px;font-size:10px;">
+      <div style="flex:1;">
+        <div style="color:var(--txt2);text-transform:uppercase;font-size:8.5px;letter-spacing:.06em;margin-bottom:6px;font-weight:600;">Healed Selectors</div>
+        ${sels.length?sels.map(s=>`<div style="margin-bottom:3px;"><span style="color:var(--red);text-decoration:line-through;font-family:var(--mono);font-size:9.5px;">${s.from}</span> → <span style="color:var(--green);font-family:var(--mono);font-size:9.5px;">${s.to}</span> <span style="color:var(--txt2);">(${Math.round((s.conf||0)*100)}%)</span></div>`).join(''):'<span style="color:var(--txt2);font-style:italic;">None</span>'}
+      </div>
+      <div style="flex:1;">
+        <div style="color:var(--txt2);text-transform:uppercase;font-size:8.5px;letter-spacing:.06em;margin-bottom:6px;font-weight:600;">Failed Selectors</div>
+        ${fails.length?fails.map(s=>`<div style="margin-bottom:3px;color:var(--red);font-family:var(--mono);font-size:9.5px;">${s}</div>`).join(''):'<span style="color:var(--txt2);font-style:italic;">None</span>'}
+      </div>
+    </div>
+  </td>`;
+  row.after(detailRow);
+}
+
+/* History Trend Charts */
+let histPassChartInst=null, histHealChartInst=null;
+function renderHistCharts(data){
+  const last10=data.slice(0,10).reverse();
+  const labels=last10.map(r=>new Date(r.ts).toLocaleDateString('en',{month:'short',day:'numeric'}));
+  const passRates=last10.map(r=>{const t=r.steps||1;return (((t-r.failed)/t)*100).toFixed(1);});
+  const healRates=last10.map(r=>{const t=r.steps||1;return ((r.healed/t)*100).toFixed(1);});
+  const mkOpts=(color,label)=>({
+    type:'line',data:{labels,datasets:[{label,data:label==='Pass %'?passRates:healRates,borderColor:color,backgroundColor:color+'18',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:color,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},plugins:{legend:{display:false},tooltip:{backgroundColor:'#151515',borderColor:'rgba(255,255,255,.1)',borderWidth:1,bodyColor:'#f0f0f0',bodyFont:{family:'JetBrains Mono',size:10},padding:7}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#3a3a3a',font:{family:'JetBrains Mono',size:8},maxTicksLimit:6}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#3a3a3a',font:{family:'JetBrains Mono',size:8}},min:0,max:100}}}
+  });
+  if(histPassChartInst){histPassChartInst.destroy();}
+  if(histHealChartInst){histHealChartInst.destroy();}
+  const c1=document.getElementById('histPassChart');
+  const c2=document.getElementById('histHealChart');
+  if(c1)histPassChartInst=new Chart(c1.getContext('2d'),mkOpts('#00FF88','Pass %'));
+  if(c2)histHealChartInst=new Chart(c2.getContext('2d'),mkOpts('#FFB800','Heal %'));
+}
+
+/* Flaky Selector Tracker */
+const flakyMap={};
+function trackFlaky(){
+  runHistory.forEach(r=>{
+    (r.failedSelectors||[]).forEach(sel=>{
+      if(!flakyMap[sel])flakyMap[sel]={count:0,lastSeen:0,files:new Set()};
+      flakyMap[sel].count++;
+      if(r.ts>flakyMap[sel].lastSeen)flakyMap[sel].lastSeen=r.ts;
+      flakyMap[sel].files.add(r.file);
+    });
+    (r.selectors||[]).forEach(s=>{
+      const sel=s.from;
+      if(!flakyMap[sel])flakyMap[sel]={count:0,lastSeen:0,files:new Set()};
+      flakyMap[sel].count++;
+      if(r.ts>flakyMap[sel].lastSeen)flakyMap[sel].lastSeen=r.ts;
+      flakyMap[sel].files.add(r.file);
+    });
+  });
+}
+function renderFlakyList(){
+  const el=$('flakyList');
+  const entries=Object.entries(flakyMap).sort((a,b)=>b[1].count-a[1].count);
+  if(!entries.length){
+    el.innerHTML='<div style="font-size:10px;color:var(--txt2);text-align:center;padding:20px 0;font-style:italic;">No flaky selectors detected yet</div>';
+    return;
+  }
+  el.innerHTML=entries.slice(0,15).map(([sel,d])=>{
+    const riskColor=d.count>=3?'var(--red)':d.count>=2?'var(--amber)':'var(--txt2)';
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-family:var(--mono);font-size:9.5px;color:var(--txt0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${sel}</span>
+        <span style="font-family:var(--mono);font-size:10px;color:${riskColor};font-weight:700;flex-shrink:0;margin-left:8px;">${d.count}x</span>
+      </div>
+      <div style="font-size:8.5px;color:var(--txt2);margin-top:2px;">Last: ${new Date(d.lastSeen).toLocaleDateString()} · ${[...d.files].join(', ')}</div>
+    </div>`;
+  }).join('');
+}
+
+function clearHistory(){runHistory.length=0;Object.keys(flakyMap).forEach(k=>delete flakyMap[k]);renderHistory();}
 
 /* ─── REPORT ─────────────────────────────── */
 function renderReport(){
@@ -944,21 +1156,103 @@ function renderReport(){
   const passRate=(((total-r.failed)/total)*100).toFixed(1);
   const confNum=parseFloat(r.conf)||0;
   const allRuns=runHistory.length;
+  const avgPassRate=(runHistory.reduce((a,x)=>{const t=x.steps||1;return a+((t-x.failed)/t);},0)/allRuns*100).toFixed(1);
   const avgHealRate=(runHistory.reduce((a,x)=>a+(x.healed/(x.steps||1)),0)/allRuns*100).toFixed(1);
+  const healthScore=Math.round((parseFloat(avgPassRate)*0.6)+(100-parseFloat(avgHealRate)*0.1)*0.4);
+  const healthColor=healthScore>=80?'var(--green)':healthScore>=50?'var(--amber)':'var(--red)';
+
+  // Per-spec breakdown
+  const specMap={};
+  runHistory.forEach(run=>{
+    if(!specMap[run.file])specMap[run.file]={runs:0,steps:0,healed:0,failed:0};
+    specMap[run.file].runs++;
+    specMap[run.file].steps+=run.steps;
+    specMap[run.file].healed+=run.healed;
+    specMap[run.file].failed+=run.failed;
+  });
+
+  // Failure timeline
+  const failTimeline=runHistory.filter(x=>x.failed>0||x.healed>0).slice(0,8).reverse();
+
+  // Recommended fixes from flaky map
+  const recommendations=Object.entries(flakyMap).sort((a,b)=>b[1].count-a[1].count).slice(0,5);
 
   el.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div style="font-size:10px;color:var(--txt2);font-family:var(--mono)">${fmtTime(r.ts)} · <span style="color:var(--txt0)">${r.file}</span></div>
-      ${runHistory.length>1?`<span style="font-size:9.5px;color:var(--txt2);font-family:var(--mono)">${allRuns} total runs recorded</span>`:''}
+    <!-- Executive Summary -->
+    <div class="stat-panel" style="padding:20px 24px;flex-direction:column;align-items:stretch;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-size:10px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;font-weight:600;">Executive Summary</div>
+        <div style="font-size:9px;font-family:var(--mono);color:var(--txt2)">${allRuns} total runs · ${fmtTime(r.ts)}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
+        <div style="text-align:center;">
+          <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:${healthColor};line-height:1;">${healthScore}</div>
+          <div style="font-size:8.5px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;">Health Score</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--txt0);line-height:1;">${allRuns}</div>
+          <div style="font-size:8.5px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;">Total Runs</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--green);line-height:1;">${avgPassRate}%</div>
+          <div style="font-size:8.5px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;">Avg Pass Rate</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--amber);line-height:1;">${avgHealRate}%</div>
+          <div style="font-size:8.5px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;">Avg Heal Rate</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--txt0);line-height:1;">${r.duration}</div>
+          <div style="font-size:8.5px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;">Last Duration</div>
+        </div>
+      </div>
     </div>
-    <div class="report-metric-grid">
-      <div class="report-metric"><div class="report-metric-num" style="color:var(--txt0)">${r.steps}</div><div class="report-metric-label">Total Steps</div></div>
-      <div class="report-metric"><div class="report-metric-num" style="color:var(--amber)">${r.healed}</div><div class="report-metric-label">Auto-Healed</div></div>
-      <div class="report-metric"><div class="report-metric-num" style="color:${r.failed>0?'var(--red)':'var(--green)'}">${r.failed}</div><div class="report-metric-label">Unresolved</div></div>
-      <div class="report-metric"><div class="report-metric-num" style="color:var(--green)">${r.duration}</div><div class="report-metric-label">Duration</div></div>
+
+    <!-- Per-Spec Breakdown + Failure Timeline -->
+    <div style="display:flex;gap:16px;margin-bottom:16px;">
+      <div class="stat-panel" style="flex:1.5;padding:0;flex-direction:column;align-items:stretch;">
+        <div style="padding:12px 18px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;font-weight:600;">Per-Spec Breakdown</span>
+        </div>
+        <div style="padding:4px 0;">
+          <table class="log" style="width:100%">
+            <thead><tr><th>Spec File</th><th style="text-align:center">Runs</th><th style="text-align:center">Steps</th><th style="text-align:center">Healed</th><th style="text-align:center">Failed</th><th style="text-align:center">Pass Rate</th></tr></thead>
+            <tbody>${Object.entries(specMap).map(([file,d])=>{
+              const pr=(((d.steps-d.failed)/d.steps)*100).toFixed(0);
+              return `<tr>
+                <td style="color:var(--txt0)">${file}</td>
+                <td style="text-align:center">${d.runs}</td>
+                <td style="text-align:center">${d.steps}</td>
+                <td style="text-align:center;color:var(--amber)">${d.healed}</td>
+                <td style="text-align:center;color:${d.failed>0?'var(--red)':'var(--txt2)'}">${d.failed}</td>
+                <td style="text-align:center;color:var(--green)">${pr}%</td>
+              </tr>`;}).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="stat-panel" style="flex:1;padding:0;flex-direction:column;align-items:stretch;">
+        <div style="padding:12px 18px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;font-weight:600;">Failure Timeline</span>
+        </div>
+        <div style="padding:12px 18px;overflow-y:auto;">
+          ${failTimeline.length?failTimeline.map(ft=>`
+            <div style="display:flex;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+              <div style="width:3px;flex-shrink:0;border-radius:2px;background:${ft.failed>0?'var(--red)':'var(--amber)'}"></div>
+              <div style="flex:1;">
+                <div style="font-size:10px;color:var(--txt0);font-weight:600;">${ft.file}</div>
+                <div style="font-size:9px;color:var(--txt2);margin-top:2px;">${new Date(ft.ts).toLocaleString()} · ${ft.failed} failed · ${ft.healed} healed</div>
+              </div>
+            </div>
+          `).join(''):'<div style="font-size:10px;color:var(--txt2);font-style:italic;text-align:center;padding:16px;">No failures recorded</div>'}
+        </div>
+      </div>
     </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);padding:14px;margin-bottom:12px">
-      <div style="font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--txt2);margin-bottom:10px">Performance Breakdown</div>
+
+    <!-- Performance Breakdown -->
+    <div class="stat-panel" style="padding:14px 18px;flex-direction:column;align-items:stretch;margin-bottom:16px;">
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--txt2);margin-bottom:12px">Performance Breakdown (Latest Run)</div>
       <div class="report-bar-row">
         <div class="report-bar-label"><span>Pass Rate</span><span style="color:var(--green)">${passRate}%</span></div>
         <div class="report-bar-track"><div class="report-bar-fill" style="width:${passRate}%;background:var(--green)"></div></div>
@@ -971,31 +1265,75 @@ function renderReport(){
         <div class="report-bar-label"><span>Avg Confidence</span><span style="color:var(--green)">${r.conf}</span></div>
         <div class="report-bar-track"><div class="report-bar-fill" style="width:${confNum}%;background:linear-gradient(90deg,var(--green3),var(--green))"></div></div>
       </div>
-      ${runHistory.length>1?`<div class="report-bar-row" style="margin-top:4px;padding-top:8px;border-top:1px solid var(--border)">
-        <div class="report-bar-label"><span style="color:var(--txt2)">Avg Heal Rate (all runs)</span><span style="color:var(--blue)">${avgHealRate}%</span></div>
-        <div class="report-bar-track"><div class="report-bar-fill" style="width:${avgHealRate}%;background:var(--blue)"></div></div>
-      </div>`:''}
     </div>
-    <div class="report-summary-card">
-      <div style="font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--txt2);margin-bottom:8px">Summary</div>
-      <div style="font-size:10.5px;color:var(--txt1);line-height:1.8">
-        Outcome: <span class="spill ${r.status}" style="vertical-align:middle"><span class="sdot"></span>${r.status.toUpperCase()}</span><br>
-        SelfHeal auto-recovered <span style="color:var(--amber);font-weight:700">${r.healed}</span> broken selector(s) without manual intervention.
-        ${r.failed>0?`<br><span style="color:var(--red)">${r.failed} step(s) could not be healed</span> — inspect selectors manually.`:'<br><span style="color:var(--green)">All failures resolved automatically.</span>'}
+
+    <!-- Recommended Fixes -->
+    <div class="stat-panel" style="padding:0;flex-direction:column;align-items:stretch;">
+      <div style="padding:12px 18px;border-bottom:1px solid var(--border);">
+        <span style="font-size:10px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;font-weight:600;">Recommended Fixes</span>
       </div>
-    </div>`;
+      <div style="padding:12px 18px;">
+        ${recommendations.length?recommendations.map(([sel,d])=>`
+          <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-family:var(--mono);font-size:10px;color:var(--red);">${sel}</span>
+              <span style="font-family:var(--mono);font-size:9px;color:var(--amber);font-weight:700;">${d.count}x failures</span>
+            </div>
+            <div style="font-size:10px;color:var(--txt1);line-height:1.6;">
+              → Replace <code style="color:var(--red);background:var(--rdim);padding:1px 4px;border-radius:3px;font-size:9px;">${sel}</code> with a stable <code style="color:var(--green);background:var(--gdim);padding:1px 4px;border-radius:3px;font-size:9px;">data-testid</code> attribute to reduce fragility.
+            </div>
+          </div>
+        `).join(''):`
+          <div style="font-size:10px;color:var(--txt2);font-style:italic;text-align:center;padding:16px;">No recommendations yet — complete more runs to generate actionable suggestions.</div>
+        `}
+      </div>
+    </div>
+  `;
 }
 
 function exportReport(fmt){
   if(!runHistory.length){feed('Nothing to export','Complete a run first','fail');return;}
   const r=runHistory[0];
   let content,mime,ext;
-  if(fmt==='json'){content=JSON.stringify(r,null,2);mime='application/json';ext='json';}
-  else{const k=Object.keys(r);content=k.join(',')+'\n'+k.map(key=>`"${r[key]}"`).join(',');mime='text/csv';ext='csv';}
+  if(fmt==='json'){content=JSON.stringify({latestRun:r,allRuns:runHistory,flakySelectors:flakyMap},null,2);mime='application/json';ext='json';}
+  else{
+    const headers='timestamp,file,steps,healed,failed,confidence,duration,status';
+    const rows=runHistory.map(x=>`"${fmtTime(x.ts)}","${x.file}",${x.steps},${x.healed},${x.failed},"${x.conf}","${x.duration}","${x.status}"`);
+    content=headers+'\n'+rows.join('\n');mime='text/csv';ext='csv';
+  }
   const blob=new Blob([content],{type:mime});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`heal-report.${ext}`;a.click();
   feed(`Exported heal-report.${ext}`,null,'pass');
 }
+
+/* ─── CONFIG: API KEY MANAGEMENT ─────────── */
+const apiKeys=[{key:'(loaded from .env)',status:'active',label:'Primary (.env)'}];
+function renderApiKeys(){
+  const el=$('apiKeyList');
+  el.innerHTML=apiKeys.map((k,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r4);">
+      <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${k.status==='active'?'var(--green)':k.status==='exhausted'?'var(--red)':'var(--txt2)'};"></span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--txt0);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${k.label||k.key.slice(0,12)+'...'}</span>
+      <span style="font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:${k.status==='active'?'var(--green)':k.status==='exhausted'?'var(--red)':'var(--txt2)'};font-weight:700;">${k.status}</span>
+      ${i>0?`<button class="btn-ghost" onclick="removeApiKey(${i})" style="font-size:12px;color:var(--red);padding:0 4px;" title="Remove">✕</button>`:''}
+    </div>
+  `).join('');
+}
+function addApiKey(){
+  const inp=$('cfgNewKey');
+  const key=inp.value.trim();
+  if(!key||!key.startsWith('AIza')){feed('Invalid key','Must start with AIza...','fail');return;}
+  apiKeys.push({key,status:'active',label:key.slice(0,12)+'...'+key.slice(-4)});
+  inp.value='';
+  renderApiKeys();
+  feed('API Key added',key.slice(0,12)+'... registered','pass');
+}
+function removeApiKey(i){
+  const removed=apiKeys.splice(i,1);
+  renderApiKeys();
+  feed('API Key removed',removed[0]?.label||'Key removed','info');
+}
+renderApiKeys();
 
 /* ─── TAB SWITCHING ──────────────────────── */
 function switchTab(tab, btn){
@@ -1062,7 +1400,17 @@ try{
   socket.on('step:pass',d=>{S.passed++;addRow(d.action||'action',d.selector,'pass','+1');feed(`PASS: ${d.selector}`,null,'pass');pushChart();});
   socket.on('step:fail',d=>{S.failed++;addRow(d.action||'action',d.selector,'fail',d.error?.slice(0,30)||'timeout');feed(`FAIL: ${d.selector}`,d.error?.slice(0,60)||null,'fail');pushChart();});
   socket.on('heal:start',d=>{feed(`Healing: ${d.selector}`,'Calling Gemini...','heal');});
-  socket.on('heal:result',d=>{if(d.newSelector&&d.confidence!=null){S.confs.push(d.confidence);setHeal(d.brokenSelector||'?',d.newSelector,d.rootCause||'Selector changed',d.confidence);}});
+  socket.on('heal:result',d=>{
+    if(d.newSelector && d.confidence!=null){
+      S.confs.push(d.confidence);
+      setHeal(d.brokenSelector||'?',d.newSelector,d.rootCause||'Selector changed',d.confidence);
+    } else {
+      feed(`Heal Failed: ${d.brokenSelector||'?'}`, d.rootCause||'Gemini API Error / Rate Limited', 'fail');
+      $('confVal').textContent = 'ERR';
+      $('confFill').style.width = '0%';
+      $('healCard').innerHTML = `<div style="font-size:10.5px;color:var(--red);font-style:italic">❌ ${d.rootCause||'API failed to retrieve heal'}</div>`;
+    }
+  });
   socket.on('step:healed',d=>{S.heals++;const conf=d.extra?.confidence||0;S.confs.push(conf);addRow(d.action||'click',d.selector,'healed',Math.round(conf*100)+'%');feed(`HEALED -> ${d.selector}`,`Confidence: ${Math.round(conf*100)}%`,'heal');pushChart();});
   socket.on('heal:confirm',d=>{$('approveConf').textContent=Math.round(d.confidence*100);$('approveOld').textContent=d.brokenSelector;$('approveNew').textContent=d.suggestedSelector;$('approveBox').classList.add('show');$('approveEmpty').style.display='none';S.interventions++;feed('[!] Human review needed',`Confidence: ${Math.round(d.confidence*100)}%`,'heal');});
   socket.on('fragility:data',setFragility);
