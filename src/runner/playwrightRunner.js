@@ -18,6 +18,10 @@ export function setRunnerContext(ctx) {
     runnerContext = { ...runnerContext, ...ctx };
 }
 
+export function resetRunnerContext() {
+    runnerContext = { testFile: null, io: null, runId: null, stepIndex: 0 };
+}
+
 export function getRunnerContext() {
     return runnerContext;
 }

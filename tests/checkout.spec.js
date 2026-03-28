@@ -33,31 +33,31 @@ export default async function checkoutTest(page, { serverUrl }) {
 
     // ── Step 2: Fill email (BROKEN: was #email-input) ──────────
     console.log('\n  ▸ Step 2/6 — Fill email address');
-    await healFill(page, '#email-input', 'alex@example.com', {
+    await healFill(page, '#contact-email', 'alex@example.com', {
         intent: 'Fill the contact email address for order notifications',
     });
 
     // ── Step 3: Fill first name (BROKEN: was #first-name) ────
     console.log('\n  ▸ Step 3/6 — Fill first name');
-    await healFill(page, '#first-name', 'Alex', {
+    await healFill(page, '#shipping-first', 'Alex', {
         intent: 'Fill the first name field in the shipping address section',
     });
 
     // ── Step 4: Fill card number (BROKEN: was #credit-card-num) ──────────
     console.log('\n  ▸ Step 4/6 — Fill credit card number');
-    await healFill(page, '#credit-card-num', '4242424242424242', {
+    await healFill(page, '#card-number', '4242424242424242', {
         intent: 'Enter the 16-digit credit card number in the payment details',
     });
 
     // ── Step 5: Fill voucher (BROKEN: was #promo-input) ────────────
     console.log('\n  ▸ Step 5/6 — Apply discount promo');
-    await healFill(page, '#promo-input', 'SAVE20', {
+    await healFill(page, '#voucher-code', 'SAVE20', {
         intent: 'Enter the promo voucher code to apply a discount',
     });
 
     // ── Step 6: Place order (BROKEN: was .submit-order-btn) ─────────
     console.log('\n  ▸ Step 6/6 — Place order');
-    await healClick(page, '.submit-order-btn', {
+    await healClick(page, '#btn-place-order', {
         intent: 'Complete the purchase by clicking the main place order submit button',
     });
 

@@ -1,0 +1,61 @@
+{
+  "name": "selfheal-vscode",
+  "displayName": "SelfHeal – AI Test Healer",
+  "description": "AI-Powered Test Self-Healing for Playwright. Detect, diagnose, and auto-fix broken selectors.",
+  "version": "1.0.0",
+  "publisher": "selfheal",
+  "icon": "images/icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Testing",
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/*.spec.js",
+    "workspaceContains:**/*.spec.ts"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "selfheal.runCurrentTest",
+        "title": "SelfHeal: Run Current Test",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "selfheal.openDashboard",
+        "title": "SelfHeal: Open Dashboard",
+        "icon": "$(dashboard)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "selfheal.runCurrentTest",
+        "key": "ctrl+shift+h",
+        "mac": "cmd+shift+h",
+        "when": "editorTextFocus"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "selfheal.runCurrentTest",
+          "when": "resourceExtname == .js || resourceExtname == .ts",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "18.x",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.1.6"
+  }
+}

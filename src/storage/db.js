@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DB_PATH = path.join(__dirname, '..', '..', 'data', 'selfheal.db');
+const DB_PATH = path.join(process.cwd(), '.selfheal', 'heals.db');
 
 // Ensure data directory exists
 const dataDir = path.dirname(DB_PATH);

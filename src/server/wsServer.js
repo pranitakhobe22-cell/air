@@ -3,17 +3,20 @@ import { WebSocketServer } from 'ws';
 let wss;
 
 export function createWsServer(server, port = 3001) {
-    // If a server is provided, we could attach it, 
-    // but the spec says port 3001 specifically.
-    wss = new WebSocketServer({ port });
-
-    console.log(`  📡 WebSocket Server: ws://localhost:${port}`);
+    if (server) {
+        wss = new WebSocketServer({ server });
+        console.log(`  📡 WebSocket Server bound to HTTP server`);
+    } else {
+        wss = new WebSocketServer({ port });
+        console.log(`  📡 WebSocket Server: ws://localhost:${port}`);
+    }
 
     wss.on('connection', (ws) => {
-        console.log(`  📡 Dashboard connected to ws://${port}`);
+        const actualPort = server ? server.address().port : port;
+        console.log(`  📡 Dashboard connected on port ${actualPort}`);
         
         ws.on('close', () => {
-            console.log(`  📡 Dashboard disconnected from ws://${port}`);
+            console.log(`  📡 Dashboard disconnected from port ${actualPort}`);
         });
 
         // Error handling

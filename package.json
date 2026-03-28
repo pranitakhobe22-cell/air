@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node bin/selfheal.js",
     "dev": "node bin/selfheal.js run tests/checkout.spec.js --dashboard",
-    "test": "playwright test"
+    "test": "playwright test",
+    "postinstall": "echo \"\\nNote: better-sqlite3 requires Python and C++ build tools on Windows. If install fails, run: npm install --global windows-build-tools\\n\""
   },
   "keywords": [
     "playwright",
@@ -20,7 +21,18 @@
     "ai",
     "gemini"
   ],
-  "author": "",
+  "author": "srujakwarbhuvan",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/srujakwarbhuvan/SelfHeal"
+  },
+  "homepage": "https://github.com/srujakwarbhuvan/SelfHeal#readme",
+  "files": [
+    "src",
+    "bin",
+    "dashboard",
+    "selfheal.config.js"
+  ],
   "license": "MIT",
   "dependencies": {
     "@google/genai": "^1.0.0",

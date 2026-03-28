@@ -1,5 +1,5 @@
 import { chromium } from '@playwright/test';
-import { setRunnerContext } from '../src/runner/playwrightRunner.js';
+import { setRunnerContext, resetRunnerContext } from '../src/runner/playwrightRunner.js';
 import { createHttpServer } from '../src/server/httpServer.js';
 import { createWsServer, broadcast } from '../src/server/wsServer.js';
 import db, { closeDb } from '../src/storage/db.js';
@@ -10,6 +10,7 @@ import path from 'path';
 import { generateReport } from '../src/reporter/healReporter.js';
 
 export async function executeCLI(testFile, dashboard) {
+    resetRunnerContext();
     const absFile = path.resolve(testFile);
     if (!fs.existsSync(absFile)) {
         console.error('File not found:', absFile);
@@ -30,8 +31,9 @@ export async function executeCLI(testFile, dashboard) {
     const runId = runResult.lastInsertRowid;
 
     // 3. Start Servers
-    const { server, port } = createHttpServer(3000);
-    const io = createWsServer(server, 3001); // Standard WS on 3001
+    const portToUse = process.env.PORT || 3000;
+    const { server, port } = createHttpServer(portToUse);
+    const io = createWsServer(server); // Bind WS to the Express port
     
     // Phase 4 Fragility Event
     const fragilityResults = scores.map(s => ({

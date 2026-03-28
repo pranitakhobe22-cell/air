@@ -1,11 +1,12 @@
 /* ================================================================
    ws-client.js
-   Connects to ws://localhost:3001
+   Connects to the hosting server dynamically based on origin.
    Handles the Phase 3 WebSocket event contract and delegates
    every event to the matching ui.js function.
    ================================================================ */
 
-const WS_URL = 'ws://localhost:3001';
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const WS_URL = `${wsProtocol}//${window.location.host}`;
 const RECONNECT_DELAY_MS = 3000;
 
 let ws = null;

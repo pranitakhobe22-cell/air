@@ -1,5 +1,16 @@
 node_modules/
 .env
 data/heals.db*
+data/selfheal.db*
+data/
 heal-report.json
 app_log.txt
+.selfheal/
+selfheal-*.tgz
+
+# VS Code extension build output
+vscode-extension/node_modules/
+vscode-extension/out/
+
+# OS files
+.DS_Store

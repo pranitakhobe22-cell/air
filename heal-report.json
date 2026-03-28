@@ -1,23 +1,81 @@
 {
-  "testFile": "/Users/sangharshgedekar/web-healer/Web-Healer/tests/checkout.spec.js",
-  "timestamp": "2026-03-28T13:39:50.891Z",
-  "totalSteps": 3,
-  "healsApplied": 0,
+  "testFile": "checkout.spec.js",
+  "startTime": "2026-03-28 17:26:26",
+  "endTime": "2026-03-28 17:26:53",
+  "status": "passed",
+  "summary": {
+    "total": 6,
+    "passed": 1,
+    "healed": 5,
+    "failed": 0
+  },
   "steps": [
     {
-      "action": "goto",
-      "selector": "http://localhost:3000/pages/checkout-page.html",
-      "status": "pass"
+      "index": 0,
+      "name": "goto http://localhost:3005/pages/checkout-page.html",
+      "status": "pass",
+      "error": null,
+      "heal": null
     },
     {
-      "action": "fill",
-      "selector": "#auth-user-email",
-      "status": "pass"
+      "index": 1,
+      "name": "fill #email-input",
+      "status": "healed",
+      "error": "locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#email-input')\u001b[22m\n",
+      "heal": {
+        "rootCause": "Intent keyword \"contact\" matched id=\"contact-email\"",
+        "originalSelector": "#email-input",
+        "healedSelector": "#contact-email",
+        "confidence": 0.95
+      }
     },
     {
-      "action": "fill",
-      "selector": "#login-password",
-      "status": "fail"
+      "index": 2,
+      "name": "fill #first-name",
+      "status": "healed",
+      "error": "locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#first-name')\u001b[22m\n",
+      "heal": {
+        "rootCause": "Intent keyword \"first\" matched id=\"shipping-first\"",
+        "originalSelector": "#first-name",
+        "healedSelector": "#shipping-first",
+        "confidence": 0.95
+      }
+    },
+    {
+      "index": 3,
+      "name": "fill #credit-card-num",
+      "status": "healed",
+      "error": "locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#credit-card-num')\u001b[22m\n",
+      "heal": {
+        "rootCause": "Intent keyword \"card\" matched id=\"card-number\"",
+        "originalSelector": "#credit-card-num",
+        "healedSelector": "#card-number",
+        "confidence": 0.95
+      }
+    },
+    {
+      "index": 4,
+      "name": "fill #promo-input",
+      "status": "healed",
+      "error": "locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#promo-input')\u001b[22m\n",
+      "heal": {
+        "rootCause": "Intent keyword \"voucher\" matched id=\"voucher-code\"",
+        "originalSelector": "#promo-input",
+        "healedSelector": "#voucher-code",
+        "confidence": 0.95
+      }
+    },
+    {
+      "index": 5,
+      "name": "click .submit-order-btn",
+      "status": "healed",
+      "error": "locator.click: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.submit-order-btn')\u001b[22m\n",
+      "heal": {
+        "rootCause": "Intent keyword \"place\" matched id=\"btn-place-order\"",
+        "originalSelector": ".submit-order-btn",
+        "healedSelector": "#btn-place-order",
+        "confidence": 0.95
+      }
     }
   ]
 }
