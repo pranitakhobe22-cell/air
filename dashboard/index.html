@@ -3,166 +3,843 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SelfHeal Dashboard (10/10 Edition)</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/socket.io/socket.io.js"></script>
+  <title>SelfHeal — Live Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; background-color: #0b1120; color: #f8fafc; }
-    .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-    pre { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.85rem; }
-    .log-line { margin-bottom: 0.2rem; }
-    .log-time { color: #64748b; margin-right: 0.5rem; }
-    @keyframes pulse-ring {
-      0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.7); }
-      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(20, 184, 166, 0); }
-      100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
+    /* ── Reset & Base ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #080d17;
+      --surface:     #0f1929;
+      --surface2:    #162033;
+      --border:      rgba(255,255,255,0.08);
+      --text:        #f0f4ff;
+      --muted:       #5a6a8a;
+
+      --green:       #22c55e;
+      --green-bg:    rgba(34,197,94,0.12);
+      --green-border:rgba(34,197,94,0.35);
+
+      --red:         #ef4444;
+      --red-bg:      rgba(239,68,68,0.12);
+      --red-border:  rgba(239,68,68,0.35);
+
+      --amber:       #f59e0b;
+      --amber-bg:    rgba(245,158,11,0.12);
+      --amber-border:rgba(245,158,11,0.35);
+
+      --blue:        #38bdf8;
+      --blue-bg:     rgba(56,189,248,0.10);
+      --blue-border: rgba(56,189,248,0.30);
+
+      --grey-bg:     rgba(255,255,255,0.05);
+      --grey-border: rgba(255,255,255,0.10);
     }
-    .pulse { animation: pulse-ring 2s infinite; }
-    .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-    .status-running { background: #eab308; }
-    .status-success { background: #10b981; }
-    .status-failed { background: #ef4444; }
-    .step-card { transition: all 0.3s ease; border-left: 4px solid transparent; }
-    .step-pass { border-color: #10b981; background: rgba(16, 185, 129, 0.1) !important; }
-    .step-fail { border-color: #ef4444; background: rgba(239, 68, 68, 0.1) !important; }
-    .step-healed { border-color: #0ea5e9; background: rgba(14, 165, 233, 0.1) !important; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    /* ── Layout Shell ───────────────────────────────────────── */
+    .shell {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: 100vh;
+      padding: 18px;
+      gap: 14px;
+    }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 28px;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1e3a5f 0%, #0ea5e9 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+
+    .brand-name {
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #e2e8f0, #38bdf8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-file {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 2px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .ws-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--grey-bg);
+      border: 1px solid var(--grey-border);
+      color: var(--muted);
+      transition: all 0.3s;
+    }
+    .ws-pill.connected    { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+    .ws-pill.reconnecting { background: var(--amber-bg); border-color: var(--amber-border); color: var(--amber); }
+
+    .ws-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .ws-pill.connected .ws-dot { animation: blink 1.8s infinite; }
+
+    @keyframes blink {
+      0%,100%{ opacity: 1; } 50%{ opacity: 0.25; }
+    }
+
+    /* ── Main 2-column grid ─────────────────────────────────── */
+    .main {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    /* ── Panel base ─────────────────────────────────────────── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .panel-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--grey-bg);
+      border: 1px solid var(--grey-border);
+      color: var(--muted);
+    }
+
+    /* ── Left: Step List ────────────────────────────────────── */
+    .step-list {
+      padding: 14px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .step-list::-webkit-scrollbar { width: 4px; }
+    .step-list::-webkit-scrollbar-track { background: transparent; }
+    .step-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .step-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+
+    /* Step card */
+    .step-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--grey-border);
+      background: var(--grey-bg);
+      transition: background 0.35s, border-color 0.35s;
+    }
+
+    .step-card.state-running {
+      border-color: var(--amber-border);
+      background: var(--amber-bg);
+      animation: stepPulse 1.2s ease-in-out infinite;
+    }
+    .step-card.state-pass {
+      border-color: var(--green-border);
+      background: var(--green-bg);
+    }
+    .step-card.state-fail {
+      border-color: var(--red-border);
+      background: var(--red-bg);
+    }
+    .step-card.state-healed {
+      border-color: var(--amber-border);
+      background: var(--amber-bg);
+    }
+    .step-card.state-healing {
+      border-color: var(--blue-border);
+      background: var(--blue-bg);
+      animation: stepPulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes stepPulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.65; }
+    }
+
+    .step-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      background: rgba(255,255,255,0.06);
+    }
+
+    .step-card.state-pass    .step-icon { background: var(--green-bg); }
+    .step-card.state-fail    .step-icon { background: var(--red-bg);   }
+    .step-card.state-healed  .step-icon { background: var(--amber-bg); }
+    .step-card.state-healing .step-icon { background: var(--blue-bg);  }
+    .step-card.state-running .step-icon { background: var(--amber-bg); }
+
+    .step-info { flex: 1; min-width: 0; }
+
+    .step-index {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .step-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .step-state-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .step-card.state-pending  .step-state-label { color: var(--muted); }
+    .step-card.state-running  .step-state-label { color: var(--amber); }
+    .step-card.state-pass     .step-state-label { color: var(--green); }
+    .step-card.state-fail     .step-state-label { color: var(--red);   }
+    .step-card.state-healed   .step-state-label { color: var(--amber); }
+    .step-card.state-healing  .step-state-label { color: var(--blue);  }
+
+    /* ── Right: Heal Reasoning Panel ───────────────────────── */
+    .heal-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    /* idle state */
+    .heal-idle {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      color: var(--muted);
+    }
+    .heal-idle-icon { font-size: 52px; opacity: 0.4; }
+    .heal-idle-text { font-size: 1rem; font-weight: 600; }
+
+    /* active heal content */
+    .heal-content {
+      flex: 1;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      overflow-y: auto;
+    }
+
+    .heal-content::-webkit-scrollbar { width: 4px; }
+    .heal-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* Section label */
+    .heal-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    /* Root cause block */
+    .root-cause-block {
+      background: var(--surface2);
+      border: 1px solid var(--red-border);
+      border-radius: 12px;
+      padding: 20px 22px;
+    }
+
+    .root-cause-text {
+      font-size: 1.65rem;
+      font-weight: 800;
+      line-height: 1.35;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+
+    /* Selector bar */
+    .selector-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .selector-box {
+      flex: 1;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .selector-box.old {
+      background: var(--red-bg);
+      border: 1px solid var(--red-border);
+      color: var(--red);
+      text-decoration: line-through;
+    }
+
+    .selector-box.new {
+      background: var(--green-bg);
+      border: 1px solid var(--green-border);
+      color: var(--green);
+    }
+
+    .selector-arrow {
+      font-size: 1.4rem;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    /* Confidence block */
+    .confidence-block {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .conf-number {
+      font-size: 5.5rem;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -3px;
+      transition: color 0.4s;
+      min-width: 130px;
+    }
+    .conf-number.high { color: var(--green); }
+    .conf-number.low  { color: var(--red);   }
+
+    .conf-bar-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .conf-bar-track {
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.07);
+      overflow: hidden;
+    }
+
+    .conf-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--green);
+      width: 0%;
+      transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.4s;
+    }
+    .conf-bar-fill.low { background: var(--red); }
+
+    .conf-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .conf-label.high { color: var(--green); }
+    .conf-label.low  { color: var(--red);   }
+
+    /* healing spinner */
+    .healing-spinner {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 22px 28px;
+    }
+
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid rgba(56,189,248,0.2);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .spinner-text {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--blue);
+    }
+
+    /* Heal timer */
+    .heal-timer {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--blue);
+      letter-spacing: 0.05em;
+      margin-left: auto;
+    }
+
+    /* HEALED flash on step card */
+    .step-card.state-healed .step-healed-flash {
+      display: block;
+    }
+    .step-healed-flash {
+      display: none;
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      color: var(--amber);
+      text-transform: uppercase;
+    }
+
+    /* Full-screen run:done overlay */
+    #run-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8,13,23,0.96);
+      backdrop-filter: blur(12px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.4s ease;
+    }
+    #run-overlay.show { display: flex; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+
+    .overlay-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 60px 80px;
+      text-align: center;
+      max-width: 620px;
+      width: 90%;
+      box-shadow: 0 40px 120px rgba(0,0,0,0.6);
+    }
+
+    .overlay-icon { font-size: 64px; margin-bottom: 24px; display: block; }
+
+    .overlay-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 40px;
+    }
+
+    .overlay-stats {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+
+    .overlay-stat .val {
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -2px;
+      display: block;
+    }
+    .overlay-stat .lbl {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 6px;
+      display: block;
+    }
+    .overlay-stat.v-total  .val { color: var(--text); }
+    .overlay-stat.v-healed .val { color: var(--amber); }
+    .overlay-stat.v-interv .val { color: var(--blue); }
+
+    .overlay-time {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 28px;
+    }
+    .overlay-time span { color: var(--text); }
+
+    .overlay-close {
+      margin-top: 32px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+    }
+    .overlay-close:hover { color: var(--text); }
+
+    /* ── Bottom Summary Bar ─────────────────────────────────── */
+    .summary-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .summ-stats {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+    }
+
+    .summ-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .summ-value {
+      font-size: 2.4rem;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    .summ-value.total   { color: var(--text); }
+    .summ-value.passed  { color: var(--green); }
+    .summ-value.healed  { color: var(--amber); }
+    .summ-value.failed  { color: var(--red);   }
+    .summ-value.interv  { color: var(--blue);  }
+
+    .summ-key {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .summ-divider {
+      width: 1px;
+      height: 40px;
+      background: var(--border);
+    }
+
+    .run-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .run-status.running { color: var(--amber); }
+    .run-status.done    { color: var(--green); }
+
+    .run-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .run-status.running .run-dot { animation: blink 1.2s infinite; }
+
+    /* Fragility Panel Styles */
+    .fragility-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 0 40px 30px;
+      padding: 20px 25px;
+    }
+    .fragility-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .fragility-row {
+      display: grid;
+      grid-template-columns: 1fr 200px 100px;
+      align-items: center;
+      gap: 30px;
+      padding: 12px 0;
+      border-top: 1px solid var(--border);
+    }
+    .fragility-row:first-of-type { border-top: none; }
+    .frag-sel { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text); }
+    .frag-bar-wrap { height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; }
+    .frag-bar-fill { height: 100%; border-radius: 3px; }
+    .risk-badge { font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; text-align: center; }
+    
+    .risk-high   { background: rgba(255, 68, 68, 0.15); color: #ff4444; border: 1px solid rgba(255, 68, 68, 0.3); }
+    .risk-medium { background: rgba(255, 187, 51, 0.15); color: #ffbb33; border: 1px solid rgba(255, 187, 51, 0.3); }
+    .risk-low    { background: rgba(0, 200, 81, 0.15); color: #00c851; border: 1px solid rgba(0, 200, 81, 0.3); }
+
+    .risk-high .frag-bar-fill   { background: #ff4444; }
+    .risk-medium .frag-bar-fill { background: #ffbb33; }
+    .risk-low .frag-bar-fill    { background: #00c851; }
   </style>
 </head>
-<body class="min-h-screen p-6">
+<body>
 
-  <div class="max-w-6xl mx-auto space-y-6">
-    <header class="glass-panel p-6 rounded-2xl flex items-center justify-between">
-      <div class="flex items-center space-x-4">
-        <div class="w-12 h-12 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-400">
-          <svg class="w-6 h-6 pulse" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-        </div>
+<div class="shell">
+
+  <!-- ── Header ─────────────────────────────── -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="brand-icon">🛡️</div>
+      <div>
+        <div class="brand-name">SelfHeal</div>
+        <div class="brand-file" id="hdr-file">Waiting for run…</div>
+      </div>
+    </div>
+    <div class="ws-pill" id="ws-pill">
+      <div class="ws-dot"></div>
+      <span id="ws-label">Connecting…</span>
+    </div>
+  </header>
+
+  <!-- ── Main ───────────────────────────────── -->
+  <div id="fragility-panel" class="fragility-panel" style="display: none;">
+    <div class="fragility-title">
+      <span>🛡️</span> Pre-run fragility scan
+    </div>
+    <div id="fragility-list"></div>
+  </div>
+
+  <main class="main">
+
+    <!-- Left: Step List -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Steps</span>
+        <span class="panel-badge" id="step-badge">0 / 0</span>
+      </div>
+      <div class="step-list" id="step-list">
+        <div class="step-empty" id="step-empty">Waiting for run…</div>
+      </div>
+    </div>
+
+    <!-- Right: Heal Reasoning -->
+    <div class="panel heal-panel">
+      <div class="panel-head">
+        <span class="panel-title">AI Heal Reasoning</span>
+        <span class="panel-badge" id="heal-badge">Idle</span>
+      </div>
+
+      <!-- Idle placeholder -->
+      <div class="heal-idle" id="heal-idle">
+        <div class="heal-idle-icon">🤖</div>
+        <div class="heal-idle-text">AI Healer standing by…</div>
+      </div>
+
+      <!-- Healing in progress -->
+      <div class="healing-spinner" id="heal-spinner" style="display:none;">
+        <div class="spinner"></div>
+        <div class="spinner-text">Invoking AI Healer…</div>
+        <div class="heal-timer" id="heal-timer">0.0s</div>
+      </div>
+
+      <!-- Heal result -->
+      <div class="heal-content" id="heal-content" style="display:none;">
+
+        <!-- Root Cause -->
         <div>
-          <h1 class="text-2xl font-bold tracking-tight">SelfHeal Live + Intent</h1>
-          <p class="text-slate-400 text-sm mt-1" id="hdr-testname">Waiting for test run...</p>
-        </div>
-      </div>
-      <div class="flex space-x-8">
-        <div class="text-center">
-          <div class="text-3xl font-bold text-white shadow-sm" id="stat-heals">0</div>
-          <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold mt-1">Heals</div>
-        </div>
-        <div class="text-center">
-          <div class="text-3xl font-bold text-white shadow-sm" id="stat-passed">0</div>
-          <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold mt-1">Passed</div>
-        </div>
-        <div class="text-center">
-          <div class="text-3xl font-bold text-white shadow-sm" id="stat-failed">0</div>
-          <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold mt-1">Failed</div>
-        </div>
-        <div class="text-center">
-          <div class="flex items-center justify-center space-x-2">
-            <span class="status-dot status-running" id="status-indicator"></span>
+          <div class="heal-label">Root Cause</div>
+          <div class="root-cause-block">
+            <div class="root-cause-text" id="heal-root-cause">—</div>
           </div>
-          <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold mt-1" id="status-text">Idle</div>
         </div>
-      </div>
-    </header>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      
-      <div class="space-y-6 flex flex-col h-[600px]">
-        <section class="glass-panel rounded-2xl flex flex-col h-[300px]">
-          <div class="p-4 border-b border-slate-700/50 flex items-center justify-between">
-            <h2 class="font-semibold text-slate-200">Execution Timeline</h2>
-            <span class="text-xs px-2 py-1 bg-slate-800 rounded-md text-slate-400" id="step-count">0 Steps</span>
+        <!-- Selector diff -->
+        <div>
+          <div class="heal-label">Selector Patch</div>
+          <div class="selector-row">
+            <div class="selector-box old" id="heal-old-sel">—</div>
+            <div class="selector-arrow">→</div>
+            <div class="selector-box new" id="heal-new-sel">—</div>
           </div>
-          <div class="p-4 overflow-y-auto flex-1 space-y-3" id="timeline">
-            <div class="text-center text-slate-500 py-10 italic">Waiting for steps...</div>
-          </div>
-        </section>
+        </div>
 
-        <!-- Fragility Scorer Panel (Phase 4) -->
-        <section class="glass-panel rounded-2xl flex flex-col h-[276px]">
-          <div class="p-4 border-b border-slate-700/50 flex items-center justify-between bg-amber-500/10">
-            <h2 class="font-semibold text-amber-400 flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-              Pre-run fragility scan
-            </h2>
-            <span class="text-[10px] uppercase font-bold text-amber-600">Phase 4 Active</span>
-          </div>
-          <div class="p-4 overflow-y-auto flex-1 space-y-2" id="fragility-scans">
-            <div class="text-center text-slate-500 py-6 italic text-sm">Waiting for pre-scan...</div>
-          </div>
-        </section>
-      </div>
-
-      <div class="space-y-6 flex flex-col h-[600px]">
-        
-        <section class="glass-panel rounded-2xl flex-shrink-0 transition-opacity duration-300" id="heal-panel" style="opacity: 0.5;">
-          <div class="p-4 border-b border-slate-700/50 flex items-center justify-between bg-blue-900/20 rounded-t-2xl">
-            <div class="flex items-center space-x-2 text-sky-400 font-semibold">
-               <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-               <span>AI Healer Activity</span>
-            </div>
-            <div id="fragility-warning" class="hidden px-2 py-1 bg-rose-500/20 text-rose-300 text-xs rounded border border-rose-500/50 font-semibold">
-              Fragile Selector Detected
+        <!-- Confidence -->
+        <div>
+          <div class="heal-label">Confidence</div>
+          <div class="confidence-block">
+            <div class="conf-number" id="conf-number">—</div>
+            <div class="dashboard-grid">
+              <div class="conf-bar-track">
+                <div class="conf-bar-fill" id="conf-bar"></div>
+              </div>
+              <div class="conf-label" id="conf-label">—</div>
             </div>
           </div>
-          <div class="p-5 space-y-4">
-             <div id="heal-status" class="text-sm text-slate-300">Quiet. AI is standing by.</div>
-             
-             <div id="approval-box" class="hidden mt-4 p-4 rounded-xl border border-amber-500/50 bg-amber-900/20">
-                <h3 class="text-amber-400 font-bold mb-2">Low Confidence Fix — Human Review</h3>
-                <p class="text-sm text-slate-300 mb-2">Confidence: <span id="approve-conf" class="font-bold text-white"></span>%</p>
-                <div class="text-xs font-mono bg-black/40 p-2 rounded mb-1 text-slate-400">Old: <span id="approve-old" class="line-through"></span></div>
-                <div class="text-xs font-mono bg-black/40 p-2 rounded mb-3 text-sky-400">New: <span id="approve-new"></span></div>
-                <div class="flex space-x-3">
-                  <button id="btn-approve" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 rounded-lg">Approve</button>
-                  <button id="btn-reject" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2 rounded-lg">Reject</button>
-                </div>
-             </div>
-          </div>
-        </section>
+        </div>
 
-        <section class="glass-panel rounded-2xl flex-col flex flex-1 overflow-hidden">
-          <div class="px-4 py-2 bg-black/60 border-b border-slate-700/50 flex gap-2">
-            <div class="w-3 h-3 rounded-full bg-rose-500"></div>
-            <div class="w-3 h-3 rounded-full bg-amber-500"></div>
-            <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-          </div>
-          <pre class="p-4 overflow-y-auto flex-1 text-slate-300" id="terminal-log"></pre>
-        </section>
-        
       </div>
     </div>
-  </div>
 
-  <!-- Phase 4 Full-Screen Overlay (Hidden by Default) -->
-  <div id="run-summary-overlay" class="fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-50 hidden flex flex-col items-center justify-center transition-opacity duration-500">
-    <div class="text-center space-y-8 max-w-2xl w-full p-10 bg-slate-800/50 border border-slate-700 rounded-3xl shadow-2xl">
-      <h1 class="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-sky-400 pb-2">Test Run Complete</h1>
-      
-      <div class="grid grid-cols-2 gap-6 mt-8">
-        <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
-          <div class="text-6xl font-black text-white" id="overlay-steps">0</div>
-          <div class="text-sm text-slate-400 uppercase tracking-widest mt-2 font-semibold">Steps Run</div>
-        </div>
-        <div class="bg-indigo-900/20 p-6 rounded-2xl border border-indigo-500/30">
-          <div class="text-6xl font-black text-amber-400" id="overlay-healed">0</div>
-          <div class="text-sm text-indigo-300 uppercase tracking-widest mt-2 font-semibold">Healed Automatically</div>
-        </div>
-        <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
-          <div class="text-6xl font-black text-white" id="overlay-interventions">0</div>
-          <div class="text-sm text-slate-400 uppercase tracking-widest mt-2 font-semibold">Human Interventions</div>
-        </div>
-        <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
-          <div class="text-6xl font-black text-white" id="overlay-time">0s</div>
-          <div class="text-sm text-slate-400 uppercase tracking-widest mt-2 font-semibold">Total Time</div>
-        </div>
+  </main>
+
+  <!-- ── Summary Bar ────────────────────────── -->
+  <footer class="summary-bar">
+    <div class="summ-stats">
+      <div class="summ-stat">
+        <div class="summ-value total" id="stat-total">0</div>
+        <div class="summ-key">Total</div>
       </div>
-      
-      <p class="mt-8 text-slate-400 italic text-sm border-t border-slate-700 pt-6">The heal-report.json artifact has been generated in the project root.</p>
+      <div class="summ-divider"></div>
+      <div class="summ-stat">
+        <div class="summ-value passed" id="stat-passed">0</div>
+        <div class="summ-key">Passed</div>
+      </div>
+      <div class="summ-divider"></div>
+      <div class="summ-stat">
+        <div class="summ-value healed" id="stat-healed">0</div>
+        <div class="summ-key">Healed</div>
+      </div>
+      <div class="summ-divider"></div>
+      <div class="summ-stat">
+        <div class="summ-value failed" id="stat-failed">0</div>
+        <div class="summ-key">Failed</div>
+      </div>
+      <div class="summ-divider"></div>
+      <div class="summ-stat">
+        <div class="summ-value interv" id="stat-interv">0</div>
+        <div class="summ-key">Interventions</div>
+      </div>
     </div>
-  </div>
 
-  <script src="/ws-client.js"></script>
+    <div class="run-status" id="run-status">
+      <div class="run-dot"></div>
+      <span id="run-status-text">Idle</span>
+    </div>
+  </footer>
+
+</div>
+
+<!-- Full-screen Run Done Overlay -->
+<div id="run-overlay">
+  <div class="overlay-card">
+    <span class="overlay-icon" id="overlay-icon">✦</span>
+    <div class="overlay-title">Run Complete</div>
+    <div class="overlay-stats">
+      <div class="overlay-stat v-total">
+        <span class="val" id="ov-total">0</span>
+        <span class="lbl">Steps Run</span>
+      </div>
+      <div class="overlay-stat v-healed">
+        <span class="val" id="ov-healed">0</span>
+        <span class="lbl">Auto-Healed</span>
+      </div>
+      <div class="overlay-stat v-interv">
+        <span class="val" id="ov-interv">0</span>
+        <span class="lbl">Human Interventions</span>
+      </div>
+    </div>
+    <div class="overlay-time">Total time: <span id="ov-time">—</span></div>
+    <div class="overlay-close" onclick="document.getElementById('run-overlay').classList.remove('show')">Click to dismiss</div>
+  </div>
+</div>
+
+<script src="ui.js"></script>
+<script src="ws-client.js"></script>
 </body>
 </html>

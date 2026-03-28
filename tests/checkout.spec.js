@@ -1,18 +1,17 @@
 /**
- * checkout.spec.js — SelfHeal Demo Test
+ * checkout.spec.js — SelfHeal Demo Test (Phase 3 "ShopFlow" UI Edition)
  * ============================================================
- * This test uses INTENTIONALLY BROKEN selectors from the V1 checkout page.
- * The live page (checkout-page.html) has been updated to V2 with new IDs.
+ * This test uses INTENTIONALLY BROKEN selectors from a hypothetical V1 site.
+ * The live page (checkout-page.html) is "ShopFlow V2" with new IDs.
  *
  * Broken → Real mapping:
- *   #login-email   → #auth-user-email
- *   #login-password→ #auth-user-pass
- *   #login-btn     → #btn-authenticate
- *   #add-cart      → .action-add-item
- *   #place-order   → #checkout-submit
+ *   #email-input      → #contact-email
+ *   #first-name       → #shipping-first
+ *   #credit-card-num  → #card-number
+ *   #promo-input      → #voucher-code
+ *   .submit-order-btn → #btn-place-order
  *
- * Every step includes an `intent` string that flows all the way into
- * the Gemini prompt as:
+ * Every step includes an `intent` string that flows into the Gemini prompt:
  *   "The goal was to [intent]. Find the element that achieves this goal."
  *
  * Run with:  npm run dev
@@ -23,7 +22,7 @@ import { healClick, healFill, healNavigate } from '../src/sdk/index.js';
 
 export default async function checkoutTest(page, { serverUrl }) {
     console.log('\n  ╔══════════════════════════════════════════════════╗');
-    console.log('  ║  🛒  SelfHeal Checkout Demo — Broken Selectors  ║');
+    console.log('  ║  🛒  ShopFlow Checkout Demo — Broken Selectors   ║');
     console.log('  ╚══════════════════════════════════════════════════╝\n');
 
     // ── Step 1: Navigate to the checkout page ────────────────────────
@@ -32,37 +31,37 @@ export default async function checkoutTest(page, { serverUrl }) {
         intent: 'Navigate to the secure checkout page',
     });
 
-    // ── Step 2: Fill email (BROKEN: was #login-email in V1) ──────────
+    // ── Step 2: Fill email (BROKEN: was #email-input) ──────────
     console.log('\n  ▸ Step 2/6 — Fill email address');
-    await healFill(page, '#auth-user-email', 'alex@example.com', {
-        intent: 'Fill the email address field in the login form',
+    await healFill(page, '#email-input', 'alex@example.com', {
+        intent: 'Fill the contact email address for order notifications',
     });
 
-    // ── Step 3: Fill password (BROKEN: was #login-password in V1) ────
-    console.log('\n  ▸ Step 3/6 — Fill password');
-    await healFill(page, '#login-password', 'securepass123', {
-        intent: 'Fill the password field in the login form',
+    // ── Step 3: Fill first name (BROKEN: was #first-name) ────
+    console.log('\n  ▸ Step 3/6 — Fill first name');
+    await healFill(page, '#first-name', 'Alex', {
+        intent: 'Fill the first name field in the shipping address section',
     });
 
-    // ── Step 4: Click login (BROKEN: was #login-btn in V1) ──────────
-    console.log('\n  ▸ Step 4/6 — Click login button');
-    await healClick(page, '#login-btn', {
-        intent: 'Submit the login form to authenticate the user',
+    // ── Step 4: Fill card number (BROKEN: was #credit-card-num) ──────────
+    console.log('\n  ▸ Step 4/6 — Fill credit card number');
+    await healFill(page, '#credit-card-num', '4242424242424242', {
+        intent: 'Enter the 16-digit credit card number in the payment details',
     });
 
-    // ── Step 5: Add to cart (BROKEN: was #add-cart in V1) ────────────
-    console.log('\n  ▸ Step 5/6 — Add item to cart');
-    await healClick(page, '#add-cart', {
-        intent: 'Add the SelfHeal Pro License product to the shopping cart',
+    // ── Step 5: Fill voucher (BROKEN: was #promo-input) ────────────
+    console.log('\n  ▸ Step 5/6 — Apply discount promo');
+    await healFill(page, '#promo-input', 'SAVE20', {
+        intent: 'Enter the promo voucher code to apply a discount',
     });
 
-    // ── Step 6: Place order (BROKEN: was #place-order in V1) ─────────
+    // ── Step 6: Place order (BROKEN: was .submit-order-btn) ─────────
     console.log('\n  ▸ Step 6/6 — Place order');
-    await healClick(page, '#place-order', {
-        intent: 'Complete the purchase by clicking the place order button',
+    await healClick(page, '.submit-order-btn', {
+        intent: 'Complete the purchase by clicking the main place order submit button',
     });
 
     console.log('\n  ╔══════════════════════════════════════════════════╗');
-    console.log('  ║  🎉  All 6 steps healed and completed!           ║');
+    console.log('  ║  🎉  All 6 ShopFlow steps healed and completed!  ║');
     console.log('  ╚══════════════════════════════════════════════════╝\n');
 }

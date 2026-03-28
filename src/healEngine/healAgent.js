@@ -1,6 +1,5 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
-import { findCachedHeal, saveHeal } from '../storage/healHistory.js';
 
 dotenv.config();
 
@@ -18,19 +17,7 @@ const apiKeys = getApiKeys();
 export async function askHealAgent(context) {
   const { brokenSelector, domSnapshot, intent, lastSteps, errorMsg } = context;
 
-  // 1. Check cache via history
-  const cached = findCachedHeal(brokenSelector, intent);
-  if (cached) {
-    console.log(`  💾 Cache hit: ${brokenSelector} → ${cached.healed_selector}`);
-    return {
-      root_cause: cached.root_cause || 'Previously healed',
-      new_selector: cached.healed_selector,
-      confidence: cached.confidence,
-      from_cache: true
-    };
-  }
-
-  // 2. Build Gemini prompt (INTENT Upgrade)
+  // Build Gemini prompt
   const truncatedDom = domSnapshot.slice(0, 8000);
   
   const intentBlock = intent 
@@ -57,22 +44,15 @@ Reply with ONLY JSON exactly like this:
 
   let lastError = null;
 
-  // 3. Round-robin / Fallback through available keys
   for (const key of apiKeys) {
     try {
-      const ai = new GoogleGenAI({ apiKey: key });
-      const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-      let text = res.text.trim().replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+      const genAI = new GoogleGenerativeAI(key);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      
+      const res = await model.generateContent(prompt);
+      const response = await res.response;
+      let text = response.text().trim().replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
       const result = JSON.parse(text);
-
-      saveHeal({
-        original_selector: brokenSelector,
-        healed_selector: result.new_selector,
-        intent,
-        root_cause: result.root_cause,
-        confidence: result.confidence,
-        method: intent ? 'gemini-ai-intent' : 'gemini-ai'
-      });
 
       return { ...result, from_cache: false };
     } catch (err) {

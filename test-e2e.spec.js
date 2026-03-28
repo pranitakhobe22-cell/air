@@ -17,12 +17,12 @@ export default async function run(page) {
     // Load the HTML directly into Playwright
     await page.goto(`data:text/html,${encodeURIComponent(html)}`);
 
-    console.log("    --> Clicking intentionally broken selector: '.broken-buy-button'");
-    
-    // This action will fail because the selector does not exist.
-    // The Heal Engine will catch it, scan the DOM, invoke Gemini if necessary, 
-    // and replace exactly this string pattern right in this file!
-    await healClick(page, '.broken-buy-button', { intent: "Click the Buy Now purchase button" });
+    console.log("    --> Clicking intentionally broken selector: 'button:has-text('Buy Now')'");
+    await healClick(page, 'button:has-text('Buy Now')', { intent: "Click Buy Now" });
+
+    // Fragile selector for testing panel
+    console.log("    --> Clicking a deep fragile selector...");
+    await healClick(page, 'button.new-purchase-btn');
     
     console.log("    --> Test Complete! We clicked the button and survived a broken selector!");
 }
