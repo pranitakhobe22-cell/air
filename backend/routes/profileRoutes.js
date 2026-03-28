@@ -11,3 +11,4 @@ router.get('/', verifyToken, getProfile);
 router.put('/', verifyToken, updateProfile);
 
 module.exports = router;
+

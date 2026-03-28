@@ -68,3 +68,4 @@ export const SIMULATION = {
   HISTORY_LENGTH: 24,      // Keep 24 data points
   SPIKE_PROBABILITY: 0.05, // 5% chance of spike event
 };
+

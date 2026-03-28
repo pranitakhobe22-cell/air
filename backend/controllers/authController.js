@@ -180,3 +180,4 @@ const updateAccount = async (req, res) => {
 };
 
 module.exports = { register, login, me, updateAccount };
+

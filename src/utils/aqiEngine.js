@@ -369,3 +369,4 @@ export function detectTrend(history) {
   if (slope < -threshold) return 'falling';
   return 'stable';
 }
+

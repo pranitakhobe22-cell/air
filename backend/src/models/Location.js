@@ -16,3 +16,4 @@ class Location extends BaseModel {
 }
 
 module.exports = new Location();
+

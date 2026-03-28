@@ -227,3 +227,4 @@ exports.getForecast = async (req, res) => {
     return res.status(502).json({ success: false, message: err.message });
   }
 };
+

@@ -32,3 +32,4 @@ function idw(targetLat, targetLng, anchors, power = 2, maxDistance = 200) {
 }
 
 module.exports = { haversineKm, idw };
+

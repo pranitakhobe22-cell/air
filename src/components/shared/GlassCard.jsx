@@ -18,3 +18,4 @@ const GlassCard = ({ children, className = '', hover = true, glow = false, dange
 };
 
 export default GlassCard;
+

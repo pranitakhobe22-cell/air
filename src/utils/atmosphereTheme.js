@@ -94,3 +94,4 @@ export const getAtmosphereTheme = (aqi, riskLevel = 'Low Risk') => {
 
   return themes[mode];
 };
+

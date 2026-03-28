@@ -140,3 +140,4 @@ const RRIMeter = ({ value = 0, status = 'Safe', trend = 'stable' }) => {
 };
 
 export default RRIMeter;
+

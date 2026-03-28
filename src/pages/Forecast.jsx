@@ -433,3 +433,4 @@ const HeatmapTable = ({ history, activeNode }) => {
 };
 
 export default Forecast;
+

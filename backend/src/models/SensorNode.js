@@ -26,3 +26,4 @@ class SensorNode extends BaseModel {
 }
 
 module.exports = new SensorNode();
+

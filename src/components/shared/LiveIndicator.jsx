@@ -13,3 +13,4 @@ const LiveIndicator = ({ label = 'LIVE', active = true }) => {
 };
 
 export default LiveIndicator;
+

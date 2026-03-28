@@ -106,3 +106,4 @@ export function generateNodeUpdate(nodes) {
 }
 
 export default { generateTick, generateSectorUpdate, generateNodeUpdate };
+

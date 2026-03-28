@@ -241,3 +241,4 @@ async function analyzeRoute({ origin, destination, startLat, startLng, endLat, e
 }
 
 module.exports = { analyzeRoute, geocode };
+

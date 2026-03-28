@@ -12,3 +12,4 @@ router.get('/current', getCurrent);
 router.get('/forecast', getForecast);
 
 module.exports = router;
+

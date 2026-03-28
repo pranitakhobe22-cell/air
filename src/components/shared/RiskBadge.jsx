@@ -22,3 +22,4 @@ const RiskBadge = ({ level = 'safe', size = 'md' }) => {
 };
 
 export default RiskBadge;
+

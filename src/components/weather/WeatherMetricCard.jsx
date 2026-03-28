@@ -43,3 +43,4 @@ export default function WeatherMetricCard({ label, value, unit, icon: Icon, colo
     </div>
   );
 }
+

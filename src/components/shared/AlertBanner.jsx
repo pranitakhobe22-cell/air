@@ -50,3 +50,4 @@ const AlertBanner = ({ alert, onDismiss }) => {
 };
 
 export default AlertBanner;
+

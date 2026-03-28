@@ -30,3 +30,4 @@ export default function ForecastRow({ day }) {
     </div>
   );
 }
+

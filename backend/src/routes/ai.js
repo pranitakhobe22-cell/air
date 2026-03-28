@@ -7,3 +7,4 @@ const router = Router();
 router.post('/chat', chat);
 
 module.exports = router;
+

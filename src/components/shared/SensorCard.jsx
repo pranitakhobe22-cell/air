@@ -49,3 +49,4 @@ const SensorCard = ({ label, value, unit, trend = 'stable', icon, color = 'blue'
 };
 
 export default SensorCard;
+

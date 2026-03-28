@@ -17,3 +17,4 @@ router.get('/me', verifyToken, me);
 router.put('/update', verifyToken, require('../controllers/authController').updateAccount);
 
 module.exports = router;
+

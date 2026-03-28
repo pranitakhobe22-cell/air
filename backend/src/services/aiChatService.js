@@ -104,3 +104,4 @@ async function getChatResponse({ messages, lat, lon, city, persona, activity, se
 }
 
 module.exports = { getChatResponse };
+

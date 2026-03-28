@@ -34,3 +34,4 @@ export const API_ENDPOINTS = {
 
 // Polling interval (in milliseconds)
 export const API_POLLING_INTERVAL = 10000;
+

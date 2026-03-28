@@ -57,3 +57,4 @@ export default function useWeather() {
 
   return { refresh };
 }
+

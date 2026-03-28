@@ -92,3 +92,4 @@ const useWeatherStore = create((set, get) => ({
 }));
 
 export default useWeatherStore;
+

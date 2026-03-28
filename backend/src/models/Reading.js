@@ -26,3 +26,4 @@ class Reading extends BaseModel {
 }
 
 module.exports = new Reading();
+

@@ -175,3 +175,4 @@ export default function AIChatDrawer({ open, onClose }) {
     </AnimatePresence>
   );
 }
+

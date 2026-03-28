@@ -64,3 +64,4 @@ export function timeAgo(iso) {
   if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
   return `${Math.floor(diff / 3600)}h ago`;
 }
+

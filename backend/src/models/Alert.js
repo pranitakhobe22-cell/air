@@ -16,3 +16,4 @@ class Alert extends BaseModel {
 }
 
 module.exports = new Alert();
+

@@ -87,3 +87,4 @@ const initCosmos = async () => {
 const isConfigured = () => !!process.env.COSMOS_CONNECTION_STRING;
 
 module.exports = { getContainer, initCosmos, isConfigured };
+
