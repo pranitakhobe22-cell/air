@@ -1,52 +1,177 @@
-# SelfHeal
+# 🩺 SelfHeal
 
-## What it does
-SelfHeal is an AI-powered Playwright test automation layer that detects broken selectors during a test run and dynamically fixes them in real-time. It uses an intent-aware Gemini reasoning engine to understand the human goal of each step, bypassing brittle UI changes and ensuring test pipelines never fail due to structural DOM updates.
+> **AI-Powered Self-Healing Test Automation for Playwright**
 
-## How to run the demo
+SelfHeal is an intelligent Playwright test automation layer that **detects broken selectors during a test run and dynamically fixes them in real-time**. It uses an intent-aware Gemini reasoning engine to understand the *human goal* of each step, bypassing brittle UI changes and ensuring test pipelines never fail due to structural DOM updates.
+
+---
+
+## 🎬 Quick Start
+
 ```bash
+# 1. Clone & install
+git clone https://github.com/srujakwarbhuvan/SelfHeal.git
+cd SelfHeal
 npm install
 npx playwright install chromium
-npx selfheal run tests/checkout.spec.js --dashboard --report
+
+# 2. Set your Gemini API key
+echo "GEMINI_API_KEY=your_key_here" > .env
+
+# 3. Run the demo
+npx selfheal run tests/checkout.spec.js --dashboard
 ```
+
+The dashboard opens automatically — watch the self-healing engine fix 6 intentionally broken selectors in real time.
+
+---
 
 ## 🛠️ Key Features
 
-1. **Intent-Aware SDK**: Pass human meaning to actions to guarantee high-confidence healing.
-2. **Fragility Scorer**: Pre-test analysis of your CSS/XPath selectors to identify high-risk code before execution.
-3. **Live Dashboard**: Real-time Socket.IO monitoring of test steps, failures, and AI logic chains.
-4. **Persistent History**: SQLite backend ensures that once healed, a selector stays healed forever.
-5. **Zero-Touch Patching**: AST-based code rewriter that updates your `.spec.js` files automatically.
+| Feature | Description |
+|---------|-------------|
+| **🧬 Intent-Aware SDK** | Pass human-readable intent strings to `healClick`, `healFill`, `healNavigate` — the AI uses your description to find the right element even when selectors break |
+| **📊 Fragility Scorer** | Pre-test static analysis of CSS/XPath selectors to identify high-risk, brittle code *before* execution |
+| **📡 Live Dashboard** | Real-time Socket.IO dashboard showing test progress, failures, AI reasoning chains, and heal history |
+| **🧠 Gemini AI Agent** | Sends DOM snapshots + developer intent to Google's Gemini model — gets back confident, working selectors |
+| **💾 Persistent History** | SQLite backend caches healed selectors — once healed, a selector stays healed forever (zero API calls on reruns) |
+| **✏️ Zero-Touch Patching** | AST-based source code rewriter updates your `.spec.js` files automatically with the healed selectors |
+| **⚡ VS Code Extension** | One-click `Cmd+Shift+H` to run the current test file through the healing engine from your editor |
 
-## 🏁 How to Run
+---
 
-1. **Install Dependencies**
-   ```bash
-   npm install
-   npx playwright install chromium
-   ```
+## 🏗️ Architecture
 
-2. **Set API Key**
-   Create a `.env` file with:
-   ```env
-   GEMINI_API_KEY=your_key_here
-   ```
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    VS Code Extension                        │
+│              Cmd+Shift+H → CLI Runner                       │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│                     CLI Runner                               │
+│  bin/selfheal.js → bin/cliRunner.js                         │
+│  Launches Playwright, starts dashboard, orchestrates run    │
+└──────────┬───────────────┬──────────────┬───────────────────┘
+           │               │              │
+  ┌────────▼────────┐ ┌────▼────────┐ ┌───▼──────────────┐
+  │   SDK Wrappers  │ │  Dashboard  │ │  Fragility       │
+  │  healClick()    │ │  Express +  │ │  Scorer          │
+  │  healFill()     │ │  Socket.IO  │ │  Pre-run static  │
+  │  healNavigate() │ │  Live UI    │ │  analysis        │
+  └────────┬────────┘ └─────────────┘ └──────────────────┘
+           │
+  ┌────────▼─────────────────────────────────────────────┐
+  │               Heal Engine Pipeline                    │
+  │                                                       │
+  │  1. failureWatcher — detects selector failures        │
+  │  2. selectorEngine — fuzzy DOM matching (fast path)   │
+  │  3. healAgent → Gemini AI (smart path)                │
+  │  4. healHistory — SQLite cache lookup/save            │
+  │  5. patchWriter — AST rewrite of source files         │
+  └──────────────────────────────────────────────────────┘
+```
 
-3. **Execute the Demo**
-   ```bash
-   npx selfheal run tests/checkout.spec.js --dashboard
-   ```
+---
 
 ## 📂 Project Structure
 
-- `src/healEngine/`: The brain. Contains `healAgent` (Gemini), `selectorEngine` (Fuzzy), and `failureWatcher`.
-- `src/sdk/`: Explicit `healClick`, `healFill` wrappers for Devs.
-- `src/intent/`: The Phase 4 **Fragility Scorer**.
-- `src/storage/`: SQLite caching and JSON reporting.
-- `dashboard/`: Premium Live Status interface.
-
-## 👁️ What you will see
-When you start the command, the dashboard will immediately display a pre-run fragility scan highlighting our intentionally weak, old selectors. As Playwright executes the script and elements inevitably fail to be found, you will see the self-healing engine activate live in the right panel, analyzing the DOM snapshot against the developer's intent string. It will confidently determine the new selector, log its reasoning, and seamlessly patch the test continuing the execution until completion, finally producing a comprehensive `heal-report.json` zero-human-intervention artifact.
+```
+SelfHeal/
+├── bin/                    # CLI entry point
+│   ├── selfheal.js         # npx selfheal command
+│   └── cliRunner.js        # Orchestrator (servers, browser, test)
+├── src/
+│   ├── sdk/                # Developer-facing wrappers
+│   │   ├── healClick.js    # Self-healing page.click()
+│   │   ├── healFill.js     # Self-healing page.fill()
+│   │   └── healNavigate.js # Self-healing page.goto()
+│   ├── healEngine/         # Core healing logic
+│   │   ├── healAgent.js    # Gemini AI integration
+│   │   ├── selectorEngine.js # Fuzzy DOM matching
+│   │   └── failureWatcher.js # Failure detection
+│   ├── intent/             # Phase 4 — Intent layer
+│   │   └── fragilityScorer.js # Static selector risk analysis
+│   ├── patcher/            # AST-based source code patching
+│   ├── storage/            # SQLite database layer
+│   ├── server/             # Express + WebSocket servers
+│   └── reporter/           # JSON report generator
+├── dashboard/              # Real-time web UI
+│   ├── index.html          # Premium dark-mode dashboard
+│   ├── ui.js               # UI rendering logic
+│   └── ws-client.js        # WebSocket client
+├── tests/                  # Demo test with broken selectors
+│   └── checkout.spec.js    # 6-step ShopFlow checkout demo
+├── vscode-extension/       # VS Code integration
+│   ├── src/extension.ts    # Extension source
+│   ├── package.json        # Extension manifest
+│   └── images/icon.png     # Extension icon
+└── selfheal.config.js      # Configuration
+```
 
 ---
+
+## 👁️ What You'll See
+
+When you start the command:
+
+1. **Pre-Run Fragility Scan** — The dashboard highlights intentionally weak selectors with risk scores
+2. **Live Self-Healing** — As Playwright executes and elements fail, watch the healing engine activate in real time
+3. **AI Reasoning** — See Gemini analyze DOM snapshots against developer intent strings
+4. **Auto-Patching** — Source code is rewritten with corrected selectors
+5. **Heal Report** — A comprehensive `heal-report.json` artifact is generated — zero human intervention
+
+---
+
+## ⚡ VS Code Extension
+
+Install the extension for a seamless developer experience:
+
+```bash
+cd vscode-extension
+npm install && npm run compile
+# Press F5 in VS Code to launch Extension Development Host
+```
+
+| Shortcut | Command |
+|----------|---------|
+| `Cmd+Shift+H` | Run current test through SelfHeal |
+| Command Palette | "SelfHeal: Open Dashboard" |
+
+---
+
+## 🔧 Configuration
+
+Create a `.env` file in the project root:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+---
+
+## 📦 CLI Usage
+
+```bash
+# Run a test with self-healing + live dashboard
+npx selfheal run <test-file> --dashboard
+
+# Run without dashboard (CI mode)
+npx selfheal run <test-file>
+```
+
+---
+
+## 🧪 Tech Stack
+
+- **Runtime**: Node.js ≥ 18
+- **Test Framework**: Playwright
+- **AI**: Google Gemini (via `@google/genai`)
+- **Database**: SQLite (via `better-sqlite3`)
+- **Dashboard**: Express + Socket.IO + vanilla JS
+- **Code Patching**: Recast (AST manipulation)
+- **VS Code Extension**: TypeScript
+
+---
+
 *Built for the 2026 AI Agentic Coding Hackathon.*
