@@ -374,6 +374,35 @@ const Health = () => {
         {/* Right */}
         <div className="xl:col-span-4 space-y-5">
 
+          {/* Air Quality Summary */}
+          <div className="glass-card p-5">
+            <h3 className="text-base font-semibold text-(--color-text-primary) mb-4">Air Quality Summary</h3>
+            <div className="space-y-4">
+              {[
+                { label: 'AQI', value: derived.aqi || 0, max: 500, color: (derived.aqi || 0) > 150 ? '#ef4444' : (derived.aqi || 0) > 100 ? '#f97316' : (derived.aqi || 0) > 50 ? '#eab308' : '#22c55e' },
+                { label: 'RRI', value: rri, max: 100, color: rri > 60 ? '#ef4444' : rri > 40 ? '#f97316' : rri > 20 ? '#eab308' : '#22c55e' },
+                { label: 'PM2.5', value: pm25, max: 150, color: pm25 > 55 ? '#ef4444' : pm25 > 35 ? '#f97316' : pm25 > 12 ? '#eab308' : '#22c55e', unit: 'µg/m³' },
+              ].map((item) => (
+                <div key={item.label}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-medium text-(--color-text-secondary)">{item.label}</span>
+                    <span className="text-sm font-bold tabular-nums" style={{ color: item.color }}>
+                      {Number(item.value).toFixed(item.unit ? 1 : 0)} {item.unit || ''}
+                    </span>
+                  </div>
+                  <div className="h-1.5 subtle-surface rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min((item.value / item.max) * 100, 100)}%`, backgroundColor: item.color }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 pt-3 border-t border-(--color-card-border)">
+              <p className="text-xs text-(--color-text-secondary) leading-relaxed">
+                Dominant pollutant: <span className="text-(--color-text-primary) font-semibold">{derived.dominant || 'PM2.5'}</span>
+              </p>
+            </div>
+          </div>
+
           {/* Emergency */}
           <div className="glass-card bg-red-500/5 p-5">
             <div className="flex items-center gap-2 mb-4">
@@ -397,39 +426,28 @@ const Health = () => {
             </div>
           </div>
 
-          {/* WHO Standards */}
+          {/* Protection Tips */}
           <div className="glass-card p-5">
-            <h3 className="text-base font-semibold text-(--color-text-primary) mb-3">WHO Guidelines</h3>
-            <p className="text-sm text-(--color-text-secondary) leading-relaxed mb-4">
-              WHO recommends annual PM2.5 averages below 5 µg/m³ and 24-hour exposures below 15 µg/m³.
-            </p>
-            <div className="p-3 bg-white/10 rounded-xl space-y-2">
-              <div className="flex justify-between">
-                <span className="text-xs text-(--color-text-secondary)">Current PM2.5</span>
-                <span className={`text-xs font-semibold ${pm25 > 15 ? 'text-rose-400' : 'text-emerald-400'}`}>{pm25} µg/m³</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-(--color-text-secondary)">WHO 24hr Limit</span>
-                <span className="text-xs font-semibold text-emerald-400">15 µg/m³</span>
-              </div>
-              <div className="h-1 bg-white/10 rounded-full overflow-hidden mt-1">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-400 to-rose-500 rounded-full"
-                  style={{ width: `${Math.min((pm25 / 15) * 100, 100)}%` }}
-                />
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-(--color-text-secondary)">India NAAQS 24hr</span>
-                <span className="text-xs font-semibold text-sky-400">60 µg/m³</span>
-              </div>
-              <div className="h-1 bg-white/10 rounded-full overflow-hidden mt-1">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-400 to-sky-400 rounded-full"
-                  style={{ width: `${Math.min((pm25 / 60) * 100, 100)}%` }}
-                />
-              </div>
+            <div className="flex items-center gap-2 mb-4">
+              <Shield size={16} className="text-sky-400" />
+              <h3 className="text-base font-semibold text-(--color-text-primary)">Protection Tips</h3>
+            </div>
+            <div className="space-y-2">
+              {[
+                { tip: 'Keep windows closed during high AQI periods', active: pm25 > 35 },
+                { tip: 'Use HEPA air purifiers in living spaces', active: pm25 > 25 },
+                { tip: 'Stay hydrated — increases mucus clearance', active: true },
+                { tip: 'Avoid outdoor exercise when AQI > 100', active: (derived.aqi || 0) > 100 },
+                { tip: 'Monitor symptoms: coughing, eye irritation', active: rri > 40 },
+              ].map((item) => (
+                <div key={item.tip} className={`flex items-start gap-2.5 p-2.5 rounded-xl ${item.active ? 'bg-sky-500/5' : 'bg-white/2'}`}>
+                  <CheckCircle2 size={13} className={`shrink-0 mt-0.5 ${item.active ? 'text-sky-400' : 'text-(--color-text-secondary) opacity-30'}`} />
+                  <span className={`text-sm ${item.active ? 'text-(--color-text-primary)' : 'text-(--color-text-secondary) opacity-50'}`}>{item.tip}</span>
+                </div>
+              ))}
             </div>
           </div>
+
         </div>
       </div>
     </div>

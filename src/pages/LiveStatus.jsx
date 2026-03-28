@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Activity, Clock, MapPin, RefreshCw, Wind, Thermometer, Droplets, Heart, Gauge, Sun
+  Activity, Clock, MapPin, RefreshCw, Wind, Thermometer, Droplets, Heart, Gauge, Sun,
+  AlertTriangle, Flame, Factory, CloudRain, Leaf, ShieldAlert, X
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
 import useActiveNode from '@/hooks/useActiveNode';
@@ -132,9 +133,73 @@ const LiveStatus = () => {
   const riskColor = activeDerived?.risk_color || '#10b981';
   const tileUrl = isDark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 
+  // ── Toxic Event Detection ─────────────────────────────────
+  const toxicAlerts = [];
+  const pm25 = activeSensors.pm25 || 0;
+  const pm10Val = activeSensors.pm10 || Math.round(pm25 * 1.2);
+  const coVal = activeSensors.co || 0;
+  const noxVal = activeSensors.nox || 0;
+  const vocVal = activeSensors.voc_index || 0;
+  const o3Val = activeSensors.o3 || 0;
+  const uvVal = activeSensors.uv ?? 5.2;
+  const tempVal = activeEnv?.temperature || 0;
+  const humVal = activeEnv?.humidity || 0;
+
+  // Dust / Sandstorm: high PM10, PM10 >> PM2.5, low humidity
+  if (pm10Val > 150 && pm10Val > pm25 * 2.5 && humVal < 35) {
+    toxicAlerts.push({ id: 'dust', severity: 'danger', icon: Wind, label: 'Dust Storm', message: `PM10 at ${pm10Val} µg/m³ with low humidity (${humVal}%). Possible dust or sandstorm event detected.` });
+  } else if (pm10Val > 100 && pm10Val > pm25 * 2) {
+    toxicAlerts.push({ id: 'dust', severity: 'warning', icon: Wind, label: 'Elevated Dust', message: `PM10 at ${pm10Val} µg/m³ — elevated coarse particulates suggest dust activity.` });
+  }
+
+  // Fire / Smoke: high PM2.5 + high CO + elevated VOC
+  if (pm25 > 100 && coVal > 9 && vocVal > 200) {
+    toxicAlerts.push({ id: 'fire', severity: 'danger', icon: Flame, label: 'Fire / Smoke', message: `PM2.5 ${pm25}, CO ${coVal} ppm, VOC ${vocVal} — pattern consistent with fire or biomass burning nearby.` });
+  } else if (pm25 > 55 && coVal > 4.5 && vocVal > 150) {
+    toxicAlerts.push({ id: 'fire', severity: 'warning', icon: Flame, label: 'Smoke Detected', message: `Elevated PM2.5 + CO + VOC levels suggest possible smoke or burning activity.` });
+  }
+
+  // Industrial Emission: high NOx + high VOC + moderate PM2.5
+  if (noxVal > 100 && vocVal > 250) {
+    toxicAlerts.push({ id: 'industrial', severity: 'danger', icon: Factory, label: 'Industrial Emission', message: `NOx at ${noxVal} ppb, VOC at ${vocVal} — likely industrial or chemical emission event.` });
+  } else if (noxVal > 53 && vocVal > 150) {
+    toxicAlerts.push({ id: 'industrial', severity: 'warning', icon: Factory, label: 'Industrial Activity', message: `Elevated NOx (${noxVal} ppb) and VOC (${vocVal}) indicate nearby industrial emissions.` });
+  }
+
+  // Seasonal / Photochemical Smog: high O3 + high temp + high UV
+  if (o3Val > 85 && tempVal > 32 && uvVal > 6) {
+    toxicAlerts.push({ id: 'smog', severity: 'danger', icon: Leaf, label: 'Photochemical Smog', message: `Ozone at ${o3Val} ppb with high temp (${tempVal}°C) and UV (${uvVal}) — photochemical smog conditions.` });
+  } else if (o3Val > 70 && tempVal > 28) {
+    toxicAlerts.push({ id: 'smog', severity: 'warning', icon: Leaf, label: 'Seasonal Ozone', message: `Ozone rising to ${o3Val} ppb in warm conditions — typical seasonal pattern.` });
+  }
+
+  // Extreme UV
+  if (uvVal >= 11) {
+    toxicAlerts.push({ id: 'uv', severity: 'danger', icon: Sun, label: 'Extreme UV', message: `UV Index at ${uvVal} — extreme radiation. Avoid all outdoor exposure.` });
+  } else if (uvVal >= 8) {
+    toxicAlerts.push({ id: 'uv', severity: 'warning', icon: Sun, label: 'Very High UV', message: `UV Index at ${uvVal} — very high. Limit outdoor time, use sunscreen and shade.` });
+  }
+
+  // Heavy Rain Washout
+  if (activeEnv?.rain && pm25 < 15) {
+    toxicAlerts.push({ id: 'rain', severity: 'info', icon: CloudRain, label: 'Rain Washout', message: `Rain is clearing particulates — PM2.5 down to ${pm25} µg/m³. Air quality improving.` });
+  }
+
+  // All-clear
+  if (toxicAlerts.length === 0) {
+    toxicAlerts.push({ id: 'clear', severity: 'safe', icon: ShieldAlert, label: 'All Clear', message: 'No toxic events detected. Air quality is within safe parameters.' });
+  }
+
   const eventColors = {
     alert: 'border-red-500/30 bg-red-500/5 text-red-400',
     sync: 'border-(--color-card-border) subtle-surface text-(--color-text-secondary)',
+  };
+
+  const severityConfig = {
+    danger: { bg: 'bg-rose-500/10', border: 'border-rose-500/25', text: 'text-rose-400', badge: 'bg-rose-500/20 text-rose-400', dot: 'bg-rose-500' },
+    warning: { bg: 'bg-amber-500/10', border: 'border-amber-500/25', text: 'text-amber-400', badge: 'bg-amber-500/20 text-amber-400', dot: 'bg-amber-500' },
+    info: { bg: 'bg-sky-500/10', border: 'border-sky-500/25', text: 'text-sky-400', badge: 'bg-sky-500/20 text-sky-400', dot: 'bg-sky-500' },
+    safe: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/25', text: 'text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-400', dot: 'bg-emerald-500' },
   };
 
   return (
@@ -216,6 +281,49 @@ const LiveStatus = () => {
                 </div>
               );
             })}
+          </div>
+
+          {/* ── Toxic Event Detection ──────────────────── */}
+          <div className="glass-card rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={16} className="text-amber-400" />
+                <span className="text-base font-semibold text-(--color-text-primary)">Toxic Event Detection</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${toxicAlerts[0]?.severity === 'danger' ? 'bg-rose-500' : toxicAlerts[0]?.severity === 'warning' ? 'bg-amber-500' : 'bg-emerald-500'} animate-pulse`} />
+                <span className="text-[11px] text-(--color-text-secondary) opacity-60">Real-time</span>
+              </div>
+            </div>
+            <div className="space-y-2.5">
+              <AnimatePresence mode="popLayout">
+                {toxicAlerts.map((alert) => {
+                  const s = severityConfig[alert.severity] || severityConfig.info;
+                  return (
+                    <motion.div
+                      key={alert.id}
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className={`${s.bg} border ${s.border} rounded-xl p-4 flex items-start gap-3`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${s.badge}`}>
+                        <alert.icon size={16} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-xs font-bold ${s.text}`}>{alert.label}</span>
+                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${s.badge}`}>
+                            {alert.severity}
+                          </span>
+                        </div>
+                        <p className={`text-xs leading-relaxed ${s.text} opacity-80`}>{alert.message}</p>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Advisory */}

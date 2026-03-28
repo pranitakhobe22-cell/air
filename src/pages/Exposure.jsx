@@ -208,6 +208,88 @@ const Exposure = () => {
               ))}
             </div>
           </div>
+
+          {/* WHO & NAAQS Guidelines */}
+          <div className="glass-card rounded-2xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Shield size={16} className="text-emerald-400" />
+              <h3 className="text-base font-semibold text-(--color-text-primary)">WHO & NAAQS Guidelines</h3>
+            </div>
+            <p className="text-sm text-(--color-text-secondary) leading-relaxed mb-5">
+              WHO recommends annual PM2.5 averages below 5 µg/m³ and 24-hour exposures below 15 µg/m³.
+              India's NAAQS sets the 24-hour PM2.5 limit at 60 µg/m³.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* WHO Standard */}
+              <div className="p-4 subtle-surface rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-(--color-text-secondary) uppercase tracking-wider">WHO 24-Hour Limit</span>
+                  <span className="text-xs font-bold text-emerald-400">15 µg/m³</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-(--color-text-secondary)">Current PM2.5</span>
+                  <span className={`text-sm font-bold tabular-nums ${pm25 > 15 ? 'text-rose-400' : 'text-emerald-400'}`}>{pm25.toFixed(1)} µg/m³</span>
+                </div>
+                <div className="h-2 subtle-surface rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${Math.min((pm25 / 15) * 100, 100)}%`,
+                      background: pm25 > 15 ? 'linear-gradient(90deg, #22c55e, #f59e0b, #ef4444)' : 'linear-gradient(90deg, #22c55e, #22c55e)',
+                    }}
+                  />
+                </div>
+                <p className={`text-xs font-medium ${pm25 > 15 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                  {pm25 > 15 ? `${(pm25 / 15).toFixed(1)}× above WHO limit` : 'Within WHO safe limits'}
+                </p>
+              </div>
+
+              {/* India NAAQS */}
+              <div className="p-4 subtle-surface rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-(--color-text-secondary) uppercase tracking-wider">India NAAQS 24-Hour</span>
+                  <span className="text-xs font-bold text-sky-400">60 µg/m³</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-(--color-text-secondary)">Current PM2.5</span>
+                  <span className={`text-sm font-bold tabular-nums ${pm25 > 60 ? 'text-rose-400' : 'text-emerald-400'}`}>{pm25.toFixed(1)} µg/m³</span>
+                </div>
+                <div className="h-2 subtle-surface rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${Math.min((pm25 / 60) * 100, 100)}%`,
+                      background: pm25 > 60 ? 'linear-gradient(90deg, #22c55e, #f59e0b, #ef4444)' : 'linear-gradient(90deg, #06b6d4, #06b6d4)',
+                    }}
+                  />
+                </div>
+                <p className={`text-xs font-medium ${pm25 > 60 ? 'text-rose-400' : 'text-sky-400'}`}>
+                  {pm25 > 60 ? `${(pm25 / 60).toFixed(1)}× above NAAQS limit` : 'Within NAAQS safe limits'}
+                </p>
+              </div>
+            </div>
+
+            {/* WHO Annual Standard */}
+            <div className="mt-5 p-4 subtle-surface rounded-xl">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-(--color-text-secondary) uppercase tracking-wider">WHO Annual Average Limit</span>
+                <span className="text-xs font-bold text-emerald-400">5 µg/m³</span>
+              </div>
+              <div className="h-1.5 subtle-surface rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{
+                    width: `${Math.min((pm25 / 5) * 100, 100)}%`,
+                    background: 'linear-gradient(90deg, #22c55e, #f59e0b, #ef4444)',
+                  }}
+                />
+              </div>
+              <p className="text-xs text-(--color-text-secondary) mt-2">
+                Current reading is <span className={`font-semibold ${pm25 > 5 ? 'text-amber-400' : 'text-emerald-400'}`}>{(pm25 / 5).toFixed(1)}×</span> the WHO annual guideline.
+                Sustained exposure at this level increases long-term health risks.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
