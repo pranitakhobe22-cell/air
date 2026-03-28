@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# SelfHeal
-=======
 # SelfHeal 🩺
 ### AI-Powered Test Self-Healing with Intent Matching
 
@@ -57,4 +54,3 @@ Combined with our **Fragility Scorer** which warns you about brittle selectors b
 
 ---
 *Built for the 2026 AI Agentic Coding Hackathon by Dev 1 & Dev 2.*
->>>>>>> cli
