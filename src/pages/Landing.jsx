@@ -22,28 +22,22 @@ const getAqiLabel = (aqi) => {
 };
 
 // Timing constants — single source of truth
-const SPLASH_HOLD_MS  = 2400; // how long splash stays fully visible
+const SPLASH_HOLD_MS  = 1200; // how long splash stays fully visible
 const SPLASH_EXIT_MS  = 3400; // when splash unmounts (after exit anim)
 const HERO_OFFSET_MS  = 200;  // hero AERIS starts slightly before splash gone
 
 const Landing = () => {
   const navigate = useNavigate();
-  // 'intro' → letters animate in
-  // 'exit'  → cinematic handoff begins
-  // 'bloom' → brief flash frame at handoff
-  // 'done'  → splash unmounted
-  const [splashPhase, setSplashPhase] = useState('intro');
+  // We use standard Framer Motion lifecycle (initial, animate, exit)
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    const t1 = setTimeout(() => setSplashPhase('exit'),  SPLASH_HOLD_MS);
-    const t2 = setTimeout(() => setSplashPhase('bloom'), SPLASH_HOLD_MS + 300);
-    const t3 = setTimeout(() => setSplashPhase('done'),  SPLASH_EXIT_MS);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    const t = setTimeout(() => setShowSplash(false), SPLASH_HOLD_MS);
+    return () => clearTimeout(t);
   }, []);
 
-  const showSplash = splashPhase !== 'done';
-  // Hero content starts revealing once exit phase begins
-  const contentReady = splashPhase === 'exit' || splashPhase === 'bloom' || splashPhase === 'done';
+  // Hero content reveals as splash begins its exit crossfade
+  const contentReady = !showSplash;
 
   // Untouched state logic
   const data = useAerisStore((s) => s.data);
@@ -63,160 +57,65 @@ const Landing = () => {
         {showSplash && (
           <motion.div
             key="splash"
-            className="fixed inset-0 z-[200] flex flex-col items-center justify-center"
-            style={{
-              background: '#0d1117',
-              pointerEvents: splashPhase !== 'intro' ? 'none' : 'auto',
-            }}
-            // Slide the entire splash up — AERIS on hero is revealed underneath
-            animate={splashPhase === 'exit' || splashPhase === 'bloom'
-              ? { y: '-100%' }
-              : { y: '0%' }
-            }
+            className="fixed inset-0 z-[200] flex flex-col items-center justify-center font-sans overflow-hidden bg-[#020617]"
             initial={{ y: '0%' }}
-            transition={{ duration: 0.9, ease: [0.76, 0, 0.24, 1] }}
+            animate={{ y: '0%' }}
+            exit={{ y: '-100%', transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } }}
           >
-            {/* Deep radial bg glow — breathes in on load */}
+            {/* Ambient Nebula Behind Text */}
             <motion.div
-              className="absolute inset-0 pointer-events-none"
+              className="absolute pointer-events-none"
               style={{
-                background: 'radial-gradient(ellipse 60% 50% at 50% 55%, rgba(56,189,248,0.12) 0%, transparent 75%)',
+                width: '80vw',
+                height: '40vw',
+                background: 'radial-gradient(ellipse at center, rgba(72,202,228,0.08) 0%, rgba(0,0,0,0) 60%)',
               }}
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: [0, 1, 0.7], scale: [0.6, 1.1, 1] }}
-              transition={{ duration: 2.0, ease: 'easeOut' }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 1.0, ease: 'easeOut' }}
             />
 
-            {/* Expanding ring 1 */}
-            <motion.div
-              className="absolute rounded-full border border-sky-400/15 pointer-events-none"
-              style={{ width: 320, height: 320 }}
-              initial={{ scale: 0.4, opacity: 0 }}
-              animate={{ scale: [0.4, 2.2], opacity: [0.6, 0] }}
-              transition={{ duration: 2.2, delay: 0.3, ease: 'easeOut' }}
-            />
+            {/* Subtitle Top */}
+            <motion.div className="mb-5 overflow-hidden z-10">
+               <motion.span
+                 className="block text-[10px] sm:text-xs font-bold uppercase text-cyan-500/80"
+                 style={{ letterSpacing: '0.4em' }}
+                 initial={{ y: 20, opacity: 0 }}
+                 animate={{ y: 0, opacity: 1 }}
+                 transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+               >
+                 Environmental Intelligence
+               </motion.span>
+            </motion.div>
 
-            {/* Expanding ring 2 — offset timing */}
-            <motion.div
-              className="absolute rounded-full border border-sky-300/10 pointer-events-none"
-              style={{ width: 320, height: 320 }}
-              initial={{ scale: 0.4, opacity: 0 }}
-              animate={{ scale: [0.4, 3.0], opacity: [0.4, 0] }}
-              transition={{ duration: 2.5, delay: 0.7, ease: 'easeOut' }}
-            />
-
-            {/* Tagline */}
+            {/* AERIS Main Text */}
             <motion.span
-              className="text-[10px] font-medium tracking-[0.45em] uppercase mb-10 pointer-events-none"
-              style={{ color: 'rgba(148,163,184,0.6)' }}
-              initial={{ opacity: 0, y: 8 }}
-              animate={
-                splashPhase === 'exit' || splashPhase === 'bloom'
-                  ? { opacity: 0, y: -6 }
-                  : { opacity: 1, y: 0 }
-              }
-              transition={{ delay: splashPhase === 'intro' ? 0.5 : 0, duration: 0.45 }}
-            >
-              Environmental Intelligence
-            </motion.span>
-
-            {/* AERIS on splash — slides away with the panel */}
-            <motion.span
-              className="select-none font-extrabold text-transparent bg-clip-text"
+              className="relative z-10 select-none font-extrabold text-transparent bg-clip-text inline-block drop-shadow-lg"
               style={{
-                backgroundImage: 'linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #38bdf8 100%)',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-                backgroundSize: '200% 100%',
-                fontSize: 'clamp(72px, 9vw, 110px)',
+                backgroundImage: 'linear-gradient(135deg, #E8F4FD 0%, #48CAE4 50%, #0096C7 100%)',
+                backgroundSize: '200% auto',
+                fontSize: 'clamp(80px, 12vw, 140px)',
                 lineHeight: 1,
-                letterSpacing: '0.05em',
+                letterSpacing: '0.08em',
               }}
-              initial={{ opacity: 0, filter: 'blur(20px)', scale: 0.8 }}
-              animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
-              transition={{ duration: 0.85, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ opacity: 0, scale: 1.15, filter: 'blur(20px)' }}
+              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             >
               AERIS
             </motion.span>
 
-            {/* Subtitle line */}
-            <motion.span
-              className="text-[13px] font-light mt-5 tracking-widest pointer-events-none"
-              style={{ color: 'rgba(148,163,184,0.5)' }}
-              initial={{ opacity: 0, y: -6 }}
-              animate={
-                splashPhase === 'exit' || splashPhase === 'bloom'
-                  ? { opacity: 0, y: -14 }
-                  : { opacity: 1, y: 0 }
-              }
-              transition={{ delay: splashPhase === 'intro' ? 1.0 : 0, duration: 0.35 }}
-            >
-              Breathe smarter.
-            </motion.span>
-
-            {/* Loading bar — fills then dissolves */}
+            {/* Sleek Underline Accent */}
             <motion.div
-              className="absolute bottom-14 rounded-full overflow-hidden"
-              style={{ width: 160, height: 2, background: 'rgba(255,255,255,0.06)' }}
-              initial={{ opacity: 0, scaleX: 0.5 }}
-              animate={
-                splashPhase === 'exit' || splashPhase === 'bloom'
-                  ? { opacity: 0, scaleX: 1 }
-                  : { opacity: 1, scaleX: 1 }
-              }
-              transition={{ delay: 0.3, duration: 0.4 }}
+              className="mt-10 h-[1px] bg-gradient-to-r from-transparent via-cyan-500/60 to-transparent relative z-10"
+              style={{ width: '280px' }}
+              initial={{ scaleX: 0, opacity: 0 }}
+              animate={{ scaleX: 1, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
-              <motion.div
-                className="h-full rounded-full"
-                style={{ background: 'linear-gradient(90deg, #38bdf8, #818cf8, #38bdf8)', backgroundSize: '200% 100%' }}
-                initial={{ width: '0%' }}
-                animate={{ width: '100%', backgroundPosition: ['0% 50%', '100% 50%'] }}
-                transition={{ duration: 2.0, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-              />
+              {/* Glowing core in the center of the line */}
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-[2px] bg-cyan-300 rounded-full shadow-[0_0_14px_rgba(72,202,228,0.9)]" />
             </motion.div>
-
-            {/* Radial particles — varied sizes, orbit-like spread */}
-            {[
-              { angle: 0,   r: 110, size: 3, delay: 0.7 },
-              { angle: 52,  r: 140, size: 2, delay: 0.9 },
-              { angle: 110, r: 100, size: 4, delay: 0.8 },
-              { angle: 175, r: 130, size: 2, delay: 1.0 },
-              { angle: 230, r: 115, size: 3, delay: 0.75 },
-              { angle: 295, r: 145, size: 2, delay: 0.95 },
-              { angle: 340, r: 105, size: 3, delay: 1.1 },
-              { angle: 80,  r: 160, size: 1.5, delay: 1.2 },
-            ].map(({ angle, r, size, delay }, i) => {
-              const rad = (angle * Math.PI) / 180;
-              const x0 = Math.cos(rad) * (r * 0.3);
-              const y0 = Math.sin(rad) * (r * 0.3);
-              const x1 = Math.cos(rad) * r;
-              const y1 = Math.sin(rad) * r;
-              return (
-                <motion.div
-                  key={`p-${i}`}
-                  className="absolute rounded-full pointer-events-none"
-                  style={{
-                    width: size, height: size,
-                    background: i % 2 === 0 ? 'rgba(56,189,248,0.7)' : 'rgba(129,140,248,0.6)',
-                    boxShadow: `0 0 ${size * 3}px ${i % 2 === 0 ? 'rgba(56,189,248,0.5)' : 'rgba(129,140,248,0.4)'}`,
-                  }}
-                  initial={{ x: x0, y: y0, opacity: 0, scale: 0 }}
-                  animate={{ x: x1, y: y1, opacity: [0, 0.9, 0], scale: [0, 1, 0.5] }}
-                  transition={{ duration: 1.8, delay, ease: 'easeOut' }}
-                />
-              );
-            })}
-
-            {/* Bloom flash — fires at the handoff moment */}
-            {splashPhase === 'bloom' && (
-              <motion.div
-                className="absolute inset-0 pointer-events-none"
-                style={{ background: 'radial-gradient(ellipse 40% 30% at 50% 50%, rgba(255,255,255,0.08) 0%, transparent 70%)' }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0, 1, 0] }}
-                transition={{ duration: 0.5, ease: 'easeInOut' }}
-              />
-            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -276,7 +175,7 @@ const Landing = () => {
               <motion.span
                 className="select-none font-extrabold text-transparent bg-clip-text"
                 style={{
-                  backgroundImage: 'linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #38bdf8 100%)',
+                  backgroundImage: 'linear-gradient(135deg, #48CAE4 0%, #0096C7 50%, #48CAE4 100%)',
                   WebkitBackgroundClip: 'text',
                   backgroundClip: 'text',
                   backgroundSize: '200% 100%',
@@ -284,9 +183,9 @@ const Landing = () => {
                   lineHeight: 1.05,
                   letterSpacing: '0.05em',
                 }}
-                initial={{ opacity: 0, scale: 1.5, filter: 'blur(6px)' }}
-                animate={contentReady ? { opacity: 1, scale: 1, filter: 'blur(0px)' } : {}}
-                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                initial={{ opacity: 0, y: 20, filter: 'blur(6px)' }}
+                animate={contentReady ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
+                transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
               >
                 AERIS
               </motion.span>
