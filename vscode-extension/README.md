@@ -1,57 +1,132 @@
-# SelfHeal – VS Code Extension
+# 🛡️ SelfHeal AI — VS Code Extension
 
-> AI-Powered Test Self-Healing for Playwright
+**AI-Powered Dev Assistant with Debugging Intelligence — embedded in your editor.**
 
-## Features
+SelfHeal AI is a VS Code sidebar extension that gives you an intelligent AI assistant that reads your code, understands your diagnostics, and helps you debug, explain, and fix issues — all through simple slash commands.
 
-- **🩹 One-Click Healing** — Press `Cmd+Shift+H` (Mac) / `Ctrl+Shift+H` (Win/Linux) to run the currently open test file through the SelfHeal engine.
-- **📊 Instant Dashboard** — Automatically launches the Web-Healer dashboard showing heal history, fragility scores, and AI-generated fixes.
-- **⚡ Status Bar Integration** — A persistent `$(beaker) SelfHeal` button in your status bar for one-click access.
-- **🖥️ Dedicated Terminal** — Runs in a named "SelfHeal Runner" terminal so your other terminals stay clean.
-- **📝 Output Channel** — All SelfHeal activity is logged to the "SelfHeal" output channel for debugging.
+---
 
-## Commands
+## ✨ Features
 
-| Command | Keybinding | Description |
-|---------|-----------|-------------|
-| `SelfHeal: Run Current Test` | `Cmd+Shift+H` | Runs the active test file through the self-healing engine |
-| `SelfHeal: Open Dashboard` | — | Opens the SelfHeal dashboard in your browser |
+### 💬 AI Chat Sidebar
+An always-available AI chat panel in your VS Code sidebar. Ask questions about your code, get explanations, or just have a conversation — with full context from your editor.
 
-## Getting Started
+### ⌨️ CLI-Style Slash Commands
 
-1. Open the `vscode-extension` folder in VS Code
-2. Run `npm install` in the terminal
-3. Press **F5** to launch the Extension Development Host
-4. Open any `.spec.js` or `.spec.ts` test file
-5. Press `Cmd+Shift+H` or use the Command Palette → "SelfHeal: Run Current Test"
+| Command | What It Does |
+|---------|-------------|
+| `/debug` | 🔍 Deep root-cause analysis — finds error patterns, explains why, suggests a fix |
+| `/heal` | 🩹 Analyze broken test selectors/code and suggest a healed version |
+| `/fix` | 🔧 Fix the bug at your cursor position |
+| `/explain` | 📖 Explain selected code or the entire active file |
+| `/analyze` | 📊 Code quality, performance, security, and potential bugs review |
+| `/run` | ▶️ Run current test file through the SelfHeal engine |
+| `/scan` | 🛡️ Static fragility scan for selector brittleness |
+| `/clear` | 🗑️ Clear conversation history |
 
-## Requirements
+### 🔍 Code Awareness
+- Reads your **active file** automatically
+- Understands **selected code** for targeted analysis
+- Pulls **diagnostics** (errors/warnings from ESLint, TypeScript, etc.)
+- Knows your **cursor position** for precise `/fix` targeting
 
-- Node.js ≥ 18
-- The `selfheal` CLI must be available (install from the parent project: `npm link` in the root)
-- Playwright installed in your project
+### 📊 Live Test Dashboard
+Built-in real-time dashboard for Playwright test runs:
+- Step-by-step execution tracking
+- AI heal reasoning (root cause → selector patch → confidence)
+- Pre-run fragility scan
+- Run summary overlay
 
-## How It Works
+### 🧠 Debugging Intelligence (The USP)
+Not just another AI chat. SelfHeal AI specializes in **debugging**:
+- Finds error patterns in your code
+- Identifies the **root cause**, not just symptoms
+- Suggests **precise, minimal fixes**
+- Streams responses in real-time with formatted code blocks
+
+---
+
+## 🚀 Quick Start
+
+1. **Install** the extension from the VS Code Marketplace (or install the `.vsix` manually)
+2. **Set your Gemini API Key** (one of these methods):
+   - VS Code Settings → search `selfheal` → paste your key
+   - Add `GEMINI_API_KEY=your-key` in your workspace `.env` file
+3. **Click the 🧪 beaker icon** in the activity bar
+4. **Type `/debug`** to analyze your current file
+
+> 💡 Get a free Gemini API key at [aistudio.google.com](https://aistudio.google.com/apikey)
+
+---
+
+## ⌨️ Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd+Shift+H` / `Ctrl+Shift+H` | Run current test |
+| `Cmd+Shift+D` / `Ctrl+Shift+D` | Debug current file |
+| `Cmd+Shift+A` / `Ctrl+Shift+A` | Open chat panel |
+
+---
+
+## 🔑 API Key Setup
+
+SelfHeal AI uses **Google Gemini 2.0 Flash** for fast, intelligent responses. The API key is resolved from:
+
+1. **VS Code Settings** → `Extensions → SelfHeal AI → Gemini Api Key`
+2. **Workspace `.env`** → `GEMINI_API_KEY=your-key`
+3. **Environment variable** → `export GEMINI_API_KEY=your-key`
+
+Your API key stays **local and secure** — it's read only by the extension host (Node.js), never exposed to the browser or any third party.
+
+---
+
+## 📦 Manual Installation
+
+If you downloaded the `.vsix` file:
+
+```bash
+code --install-extension selfheal-vscode-3.0.0.vsix
+```
+
+Or in VS Code: `Cmd+Shift+P` → `Extensions: Install from VSIX...` → select the file.
+
+---
+
+## 🏗️ Architecture
 
 ```
-You open a test file ──► Press Cmd+Shift+H
-                              │
-                    ┌─────────▼──────────┐
-                    │  VS Code Extension  │
-                    │  saves file, opens  │
-                    │  terminal, runs CLI │
-                    └─────────┬──────────┘
-                              │
-                    ┌─────────▼──────────┐
-                    │   SelfHeal Engine   │
-                    │  Runs Playwright    │
-                    │  Detects failures   │
-                    │  AI generates fix   │
-                    │  Patches source     │
-                    └─────────┬──────────┘
-                              │
-                    ┌─────────▼──────────┐
-                    │   Dashboard opens   │
-                    │  Shows heal report  │
-                    └────────────────────┘
+User types in Sidebar Chat
+    ↓
+chat.js (Webview) → postMessage
+    ↓
+extension.ts (Extension Host) → commandParser
+    ↓
+codeContext.ts → reads active file, selection, diagnostics
+    ↓
+aiService.ts → Gemini API (SSE streaming)
+    ↓
+Streams response chunks back to webview
+    ↓
+Renders markdown with code blocks
 ```
+
+---
+
+## 🤝 Contributing
+
+1. Clone the repo
+2. `cd vscode-extension && npm install`
+3. Open the folder in VS Code
+4. Press `F5` to launch Extension Development Host
+5. Make changes → test in the dev host
+
+---
+
+## 📄 License
+
+MIT
+
+---
+
+**Built with ❤️ by the SelfHeal team**

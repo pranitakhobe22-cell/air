@@ -1,6 +1,6 @@
 /* ================================================================
    ui.js
-   Pure DOM manipulation — no framework, no state library.
+   Dashboard DOM manipulation + Tab system.
    Called by ws-client.js on every WebSocket event.
    ================================================================ */
 
@@ -10,9 +10,7 @@ const UI = (() => {
   const $ = id => document.getElementById(id);
 
   const els = {
-    wsPill:       $('ws-pill'),
-    wsLabel:      $('ws-label'),
-    hdrFile:      $('hdr-file'),
+    wsDot:        $('ws-dot'),
     stepList:     $('step-list'),
     stepEmpty:    $('step-empty'),
     stepBadge:    $('step-badge'),
@@ -53,17 +51,35 @@ const UI = (() => {
     currentHealOldSel: null,
   };
 
-  let _runStartTime   = null;  // Date.now() at run:start
-  let _healStartTime  = null;  // Date.now() at heal:start
-  let _healTimerRaf   = null;  // requestAnimationFrame id
+  let _runStartTime   = null;
+  let _healStartTime  = null;
+  let _healTimerRaf   = null;
+
+  /* ── Tab System ─────────────────────────────────────────── */
+
+  function initTabs() {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        switchTab(btn.dataset.tab);
+      });
+    });
+  }
+
+  function switchTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+    document.querySelectorAll('.tab-panel').forEach(panel => {
+      panel.classList.toggle('active', panel.id === `tab-${tabName}`);
+    });
+  }
 
   /* ── Helpers ────────────────────────────────────────────── */
 
   function setHealView(mode) {
-    // mode: 'idle' | 'spinning' | 'result'
-    els.healIdle.style.display    = mode === 'idle'    ? 'flex' : 'none';
-    els.healSpinner.style.display = mode === 'spinning'? 'flex' : 'none';
-    els.healContent.style.display = mode === 'result'  ? 'flex' : 'none';
+    if (els.healIdle)    els.healIdle.style.display    = mode === 'idle'    ? 'flex' : 'none';
+    if (els.healSpinner) els.healSpinner.style.display = mode === 'spinning'? 'flex' : 'none';
+    if (els.healContent) els.healContent.style.display = mode === 'result'  ? 'flex' : 'none';
   }
 
   function renderStepCard(index) {
@@ -97,12 +113,10 @@ const UI = (() => {
     `;
 
     if (!existing) {
-      // Remove the "empty" placeholder if first real card
       if (els.stepEmpty) els.stepEmpty.style.display = 'none';
       els.stepList.appendChild(card);
     }
 
-    // Scroll newly-active card into view
     if (s.state === 'running' || s.state === 'healing') {
       card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -111,88 +125,65 @@ const UI = (() => {
   function updateStepBadge() {
     const done = Object.values(state.steps)
       .filter(s => ['pass','fail','healed'].includes(s.state)).length;
-    els.stepBadge.textContent = `${done} / ${state.totalSteps}`;
+    if (els.stepBadge) els.stepBadge.textContent = `${done} / ${state.totalSteps}`;
   }
 
   function updateSummaryStats({ total, passed, healed, failed, interventions } = {}) {
-    if (total        !== undefined) els.statTotal.textContent  = total;
-    if (passed       !== undefined) els.statPassed.textContent = passed;
-    if (healed       !== undefined) els.statHealed.textContent = healed;
-    if (failed       !== undefined) els.statFailed.textContent = failed;
-    if (interventions!== undefined) els.statInterv.textContent = interventions;
+    if (total        !== undefined && els.statTotal)  els.statTotal.textContent  = total;
+    if (passed       !== undefined && els.statPassed) els.statPassed.textContent = passed;
+    if (healed       !== undefined && els.statHealed) els.statHealed.textContent = healed;
+    if (failed       !== undefined && els.statFailed) els.statFailed.textContent = failed;
+    if (interventions!== undefined && els.statInterv) els.statInterv.textContent = interventions;
   }
 
   /* ── WS connection state ────────────────────────────────── */
   function setWsState(wsState) {
-    const pill = els.wsPill;
-    pill.classList.remove('connected', 'reconnecting');
-    const map = {
-      connecting:   { label: 'Connecting…',   cls: '' },
-      connected:    { label: 'Live',           cls: 'connected' },
-      reconnecting: { label: 'Reconnecting…', cls: 'reconnecting' },
-      disconnected: { label: 'Disconnected',  cls: '' },
-    };
-    const { label, cls } = map[wsState] || map.connecting;
-    els.wsLabel.textContent = label;
-    if (cls) pill.classList.add(cls);
+    if (!els.wsDot) return;
+    els.wsDot.classList.remove('connected', 'reconnecting');
+    if (wsState === 'connected') els.wsDot.classList.add('connected');
+    if (wsState === 'reconnecting') els.wsDot.classList.add('reconnecting');
   }
 
-  /* ── Event handlers ─────────────────────────────────────── */
+  /* ── Event handlers (Dashboard) ─────────────────────────── */
 
-  /**
-   * { type:'run:start', file:'checkout.spec.js', totalSteps:6 }
-   */
   function onRunStart(msg) {
     _runStartTime = Date.now();
-    
+
+    // Auto-switch to dashboard tab
+    switchTab('dashboard');
+
     // Toggle controls
     const btnRun = document.getElementById('btn-run');
     const btnStop = document.getElementById('btn-stop');
     if (btnRun) btnRun.style.display = 'none';
     if (btnStop) btnStop.style.display = 'flex';
 
-    // Reset state
-    state = {
-      totalSteps:       msg.totalSteps || 0,
-      steps:            {},
-      completedSteps:   0,
-      currentHealIndex: null,
-      currentHealOldSel: null,
-    };
+    state = { totalSteps: msg.totalSteps || 0, steps: {}, completedSteps: 0, currentHealIndex: null, currentHealOldSel: null };
 
-    // Reset step list UI
-    els.stepList.innerHTML = '';
-    const emptyEl = document.createElement('div');
-    emptyEl.id = 'step-empty';
-    emptyEl.className = 'step-empty';
-    emptyEl.style.display = 'none';
-    els.stepList.appendChild(emptyEl);
+    if (els.stepList) {
+      els.stepList.innerHTML = '';
+      const emptyEl = document.createElement('div');
+      emptyEl.id = 'step-empty';
+      emptyEl.className = 'step-empty';
+      emptyEl.style.display = 'none';
+      els.stepList.appendChild(emptyEl);
+    }
 
-    // Pre-populate all step slots as "pending"
     for (let i = 0; i < state.totalSteps; i++) {
       state.steps[i] = { name: `Step ${i + 1}`, state: 'pending' };
       renderStepCard(i);
     }
 
-    // Reset header
-    els.hdrFile.textContent = msg.file || 'Unknown file';
-
-    // Reset stats
     updateSummaryStats({ total: state.totalSteps, passed: 0, healed: 0, failed: 0, interventions: 0 });
-    els.stepBadge.textContent = `0 / ${state.totalSteps}`;
+    if (els.stepBadge) els.stepBadge.textContent = `0 / ${state.totalSteps}`;
 
-    // Reset heal panel
     setHealView('idle');
-    els.healBadge.textContent = 'Idle';
+    if (els.healBadge) els.healBadge.textContent = 'Idle';
 
-    // Run status
-    els.runStatus.className = 'run-status running';
-    els.runStatusTxt.textContent = 'Running';
+    if (els.runStatus) els.runStatus.className = 'run-status running';
+    if (els.runStatusTxt) els.runStatusTxt.textContent = 'Running';
   }
 
-  /**
-   * { type:'step:start', index:2, name:'healClick #view-cart' }
-   */
   function onStepStart(msg) {
     const { index, name } = msg;
     state.steps[index] = state.steps[index] || { name, state: 'pending' };
@@ -202,63 +193,39 @@ const UI = (() => {
     updateStepBadge();
   }
 
-  /**
-   * { type:'step:pass', index:2 }
-   * { type:'step:pass', index:2, healed:true }
-   */
   function onStepPass(msg) {
     const { index, healed } = msg;
     const s = state.steps[index];
     if (!s) return;
-
-    // If this was a healed step, keep it amber (healed state is already set by heal:done)
-    if (!healed) {
-      s.state = 'pass';
-    }
+    if (!healed) s.state = 'pass';
     renderStepCard(index);
     updateStepBadge();
-
-    // Update pass counter in summary (non-healed only — healed already counted separately)
     if (!healed) {
-      const current = parseInt(els.statPassed.textContent, 10) || 0;
+      const current = parseInt(els.statPassed?.textContent || '0', 10);
       updateSummaryStats({ passed: current + 1 });
     }
   }
 
-  /**
-   * { type:'step:fail', index:2, error:'Element not found: #view-cart' }
-   */
   function onStepFail(msg) {
     const { index, error } = msg;
     const s = state.steps[index];
     if (!s) return;
-
     s.state = 'fail';
-    // Capture the old selector from the error message for heal display
     const selectorMatch = error && error.match(/:\s*(.+)$/);
     state.currentHealOldSel = selectorMatch ? selectorMatch[1].trim() : (error || '?');
-
     renderStepCard(index);
     updateStepBadge();
-
-    const current = parseInt(els.statFailed.textContent, 10) || 0;
+    const current = parseInt(els.statFailed?.textContent || '0', 10);
     updateSummaryStats({ failed: current + 1 });
   }
 
-  /**
-   * { type:'heal:start', index:2 }
-   */
   function onHealStart(msg) {
     const { index } = msg;
     state.currentHealIndex = index;
-
     const s = state.steps[index];
     if (s) { s.state = 'healing'; renderStepCard(index); }
-
     setHealView('spinning');
-    els.healBadge.textContent = `Step ${index + 1}`;
-
-    // Start live timer
+    if (els.healBadge) els.healBadge.textContent = `Step ${index + 1}`;
     _healStartTime = Date.now();
     const tick = () => {
       if (!_healStartTime) return;
@@ -270,106 +237,82 @@ const UI = (() => {
     _healTimerRaf = requestAnimationFrame(tick);
   }
 
-  /**
-   * { type:'heal:reason', rootCause:'...', newSelector:'...', confidence:0.94 }
-   */
   function onHealReason(msg) {
     const { rootCause, newSelector, confidence } = msg;
     const pct = Math.round((confidence || 0) * 100);
     const isHigh = confidence >= 0.8;
 
-    // Root cause
-    els.healRootCause.textContent = rootCause || '—';
-
-    // Selectors
-    els.healOldSel.textContent = state.currentHealOldSel || '—';
-    els.healNewSel.textContent = newSelector || '—';
-
-    // Confidence number
-    els.confNumber.textContent = `${pct}%`;
-    els.confNumber.className   = `conf-number ${isHigh ? 'high' : 'low'}`;
-
-    // Bar
-    els.confBar.style.width = `${pct}%`;
-    els.confBar.className   = `conf-bar-fill ${isHigh ? '' : 'low'}`;
-
-    // Label
-    els.confLabel.textContent = isHigh ? '✓ High confidence — auto-applying' : '⚠ Low confidence — review recommended';
-    els.confLabel.className   = `conf-label ${isHigh ? 'high' : 'low'}`;
-
+    if (els.healRootCause) els.healRootCause.textContent = rootCause || '—';
+    if (els.healOldSel) els.healOldSel.textContent = state.currentHealOldSel || '—';
+    if (els.healNewSel) els.healNewSel.textContent = newSelector || '—';
+    if (els.confNumber) {
+      els.confNumber.textContent = `${pct}%`;
+      els.confNumber.className = `conf-number ${isHigh ? 'high' : 'low'}`;
+    }
+    if (els.confBar) {
+      els.confBar.style.width = `${pct}%`;
+      els.confBar.className = `conf-bar-fill ${isHigh ? '' : 'low'}`;
+    }
+    if (els.confLabel) {
+      els.confLabel.textContent = isHigh ? '✓ High confidence — auto-applying' : '⚠ Low confidence — review recommended';
+      els.confLabel.className = `conf-label ${isHigh ? 'high' : 'low'}`;
+    }
     setHealView('result');
   }
 
-  /**
-   * { type:'heal:done', index:2, newSelector:'#cart-icon', healed:true }
-   */
   function onHealDone(msg) {
     const { index, healed } = msg;
-
-    // Stop timer
     cancelAnimationFrame(_healTimerRaf);
     _healStartTime = null;
-
     if (healed) {
       const s = state.steps[index];
       if (s) { s.state = 'healed'; renderStepCard(index); }
-
-      const hCurrent = parseInt(els.statHealed.textContent, 10) || 0;
+      const hCurrent = parseInt(els.statHealed?.textContent || '0', 10);
       updateSummaryStats({ healed: hCurrent + 1 });
-
-      // Decrement the fail count that was added in step:fail
-      const fCurrent = parseInt(els.statFailed.textContent, 10) || 0;
+      const fCurrent = parseInt(els.statFailed?.textContent || '0', 10);
       if (fCurrent > 0) updateSummaryStats({ failed: fCurrent - 1 });
-
-      els.healBadge.textContent = `Healed ✦`;
+      if (els.healBadge) els.healBadge.textContent = `Healed ✦`;
     } else {
-      els.healBadge.textContent = 'Failed to heal';
+      if (els.healBadge) els.healBadge.textContent = 'Failed to heal';
     }
   }
 
-  /**
-   * { type:'run:done', passed:5, healed:2, failed:0, interventions:0 }
-   */
   function onRunDone(msg) {
     const { passed, healed, failed, interventions } = msg;
-
-    // Toggle controls
     const btnRun = document.getElementById('btn-run');
     const btnStop = document.getElementById('btn-stop');
     if (btnRun) btnRun.style.display = 'flex';
     if (btnStop) btnStop.style.display = 'none';
-
     updateSummaryStats({
       total:         state.totalSteps,
-      passed:        passed        ?? parseInt(els.statPassed.textContent, 10),
-      healed:        healed        ?? parseInt(els.statHealed.textContent, 10),
-      failed:        failed        ?? parseInt(els.statFailed.textContent, 10),
+      passed:        passed        ?? parseInt(els.statPassed?.textContent || '0', 10),
+      healed:        healed        ?? parseInt(els.statHealed?.textContent || '0', 10),
+      failed:        failed        ?? parseInt(els.statFailed?.textContent || '0', 10),
       interventions: interventions ?? 0,
     });
-
     const allOk = (failed === 0 || failed === undefined);
-    els.runStatus.className  = `run-status done`;
-    els.runStatusTxt.textContent = allOk ? '✓ Run Complete' : '✕ Run Complete (failures)';
-    if (!allOk) els.runStatus.style.color = 'var(--red)';
+    if (els.runStatus) els.runStatus.className = `run-status done`;
+    if (els.runStatusTxt) els.runStatusTxt.textContent = allOk ? '✓ Run Complete' : '✕ Run Complete (failures)';
+    if (!allOk && els.runStatus) els.runStatus.style.color = 'var(--red)';
+    if (els.stepBadge) els.stepBadge.textContent = `${state.totalSteps} / ${state.totalSteps}`;
 
-    els.stepBadge.textContent = `${state.totalSteps} / ${state.totalSteps}`;
-
-    // Show full-screen overlay
     const totalSec = _runStartTime ? (((Date.now() - _runStartTime) / 1000).toFixed(1) + 's') : '—';
-    const h = healed ?? parseInt(els.statHealed.textContent, 10) ?? 0;
+    const h = healed ?? parseInt(els.statHealed?.textContent || '0', 10);
     const t = state.totalSteps;
     const iv = interventions ?? 0;
 
-    els.ovTotal.textContent  = t;
-    els.ovHealed.textContent = h;
-    els.ovInterv.textContent = iv;
-    els.ovTime.textContent   = totalSec;
-    els.ovIcon.textContent   = allOk ? '✦' : '✕';
-    els.runOverlay.classList.add('show');
+    if (els.ovTotal)  els.ovTotal.textContent  = t;
+    if (els.ovHealed) els.ovHealed.textContent = h;
+    if (els.ovInterv) els.ovInterv.textContent = iv;
+    if (els.ovTime)   els.ovTime.textContent   = totalSec;
+    if (els.ovIcon)   els.ovIcon.textContent   = allOk ? '✦' : '✕';
+    if (els.runOverlay) els.runOverlay.classList.add('show');
   }
 
   /* ── Public API ─────────────────────────────────────────── */
   return {
+    initTabs,
+    switchTab,
     setWsState,
     onRunStart,
     onStepStart,
@@ -382,17 +325,18 @@ const UI = (() => {
     onFragilityScan: (msg) => {
       const results = msg.results || [];
       if (results.length === 0) return;
-      
-      els.fragilityPanel.style.display = 'block';
-      els.fragilityList.innerHTML = results.map(r => `
-        <div class="fragility-row">
-          <div class="frag-sel">${r.selector}</div>
-          <div class="frag-bar-wrap">
-            <div class="frag-bar-fill risk-${r.risk}" style="width: ${Math.round(r.score * 100)}%"></div>
+      if (els.fragilityPanel) els.fragilityPanel.style.display = 'block';
+      if (els.fragilityList) {
+        els.fragilityList.innerHTML = results.map(r => `
+          <div class="fragility-row">
+            <div class="frag-sel">${r.selector}</div>
+            <div class="frag-bar-wrap">
+              <div class="frag-bar-fill risk-${r.risk}" style="width: ${Math.round(r.score * 100)}%"></div>
+            </div>
+            <div class="risk-badge risk-${r.risk}">${r.risk}</div>
           </div>
-          <div class="risk-badge risk-${r.risk}">${r.risk}</div>
-        </div>
-      `).join('');
+        `).join('');
+      }
     }
   };
 

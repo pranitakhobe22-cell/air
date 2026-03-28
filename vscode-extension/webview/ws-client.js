@@ -1,32 +1,44 @@
 /* ================================================================
    ws-client.js (Webview Edition)
-   Connects to the hosting server dynamically based on the port 
-   passed down from the VS Code Extension Host.
+   
+   1. Routes extension-host messages to Chat and UI modules.
+   2. Connects to the SelfHeal CLI WebSocket for live test runs.
    ================================================================ */
 
 let ws = null;
 const RECONNECT_DELAY_MS = 3000;
 let __currentWsUrl = null;
 
-// Listen for the dynamic port from the VS Code extension host
+// ── Listen for ALL messages from the VS Code Extension Host ─────
 window.addEventListener('message', event => {
   const message = event.data;
+
+  // Route to Chat module
+  if (Chat && typeof Chat.handleMessage === 'function') {
+    Chat.handleMessage(message);
+  }
+
+  // Tab switching (from extension host)
+  if (message.type === 'switchTab') {
+    UI.switchTab(message.tab);
+  }
+
+  // WebSocket port allocation (for dashboard live connection)
   if (message.type === 'PORT_ALLOCATED') {
-    console.log('[webview] Received port:', message.port);
+    console.log('[webview] Received WS port:', message.port);
     __currentWsUrl = `ws://localhost:${message.port}`;
     connect();
   }
 });
 
+// ── WebSocket connection to CLI runner ──────────────────────────
 function connect() {
   if (!__currentWsUrl) return;
 
   UI.setWsState('connecting');
 
   try {
-    if (ws) {
-        ws.close(); // close any existing before reconnecting
-    }
+    if (ws) ws.close();
     ws = new WebSocket(__currentWsUrl);
   } catch (err) {
     console.error('[ws-client] WebSocket construction failed:', err);
@@ -48,16 +60,13 @@ function connect() {
       console.warn('[ws-client] Non-JSON message ignored:', event.data);
       return;
     }
-
     console.log('[ws-client] ←', msg.type, msg);
     dispatch(msg);
   });
 
   ws.addEventListener('close', () => {
-    console.warn('[ws-client] Connection closed. Auto-reconnect is handled per session.');
+    console.warn('[ws-client] Connection closed.');
     UI.setWsState('disconnected');
-    // We do NOT infinite loop reconnect here, because the CLI runner ends and the port vanishes.
-    // The next test run will send a new PORT_ALLOCATED event to trigger connection.
   });
 
   ws.addEventListener('error', (err) => {
@@ -65,7 +74,7 @@ function connect() {
   });
 }
 
-/* ── Event router ──────────────────────────────────────────── */
+/* ── Event router (dashboard events from CLI runner) ──────────── */
 function dispatch(msg) {
   switch (msg.type) {
     case 'run:start':      UI.onRunStart(msg);      break;
@@ -81,21 +90,21 @@ function dispatch(msg) {
   }
 }
 
-// Ensure the UI starts in a disconnected/waiting state
+// ── DOM Ready ──────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
-   UI.setWsState('disconnected'); 
-   document.getElementById('hdr-file').textContent = 'Ready for next run…';
+  UI.setWsState('disconnected');
+  UI.initTabs();
 
-   // Bind to UI controls
-   document.getElementById('btn-run')?.addEventListener('click', () => {
-       vscode.postMessage({ type: 'runTest' });
-       document.getElementById('btn-run').style.display = 'none';
-       document.getElementById('btn-stop').style.display = 'flex';
-   });
+  // Bind dashboard control buttons
+  document.getElementById('btn-run')?.addEventListener('click', () => {
+    vscode.postMessage({ type: 'runTest' });
+    document.getElementById('btn-run').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'flex';
+  });
 
-   document.getElementById('btn-stop')?.addEventListener('click', () => {
-       vscode.postMessage({ type: 'stopTest' });
-       document.getElementById('btn-stop').style.display = 'none';
-       document.getElementById('btn-run').style.display = 'flex';
-   });
+  document.getElementById('btn-stop')?.addEventListener('click', () => {
+    vscode.postMessage({ type: 'stopTest' });
+    document.getElementById('btn-stop').style.display = 'none';
+    document.getElementById('btn-run').style.display = 'flex';
+  });
 });

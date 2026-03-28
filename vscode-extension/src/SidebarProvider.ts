@@ -1,12 +1,18 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { StateManager } from './stateManager';
+import { handleChatMessage } from './extension';
+import { COMMANDS } from './commandParser';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'selfheal.agentView';
     private _view?: vscode.WebviewView;
 
-    constructor(private readonly _extensionUri: vscode.Uri) {}
+    constructor(
+        private readonly _extensionUri: vscode.Uri,
+        private readonly _state: StateManager
+    ) {}
 
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
@@ -33,18 +39,48 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     vscode.commands.executeCommand('selfheal.stopRun');
                     break;
                 }
+                case 'chatMessage': {
+                    // User sent a message from the chat input
+                    if (data.text && typeof data.text === 'string') {
+                        handleChatMessage(data.text.trim());
+                    }
+                    break;
+                }
+                case 'getCommands': {
+                    // Webview requests the command list for autocomplete
+                    this.postMessage({
+                        type: 'commandList',
+                        commands: COMMANDS,
+                    });
+                    break;
+                }
+                case 'requestHistory': {
+                    // Webview requests full chat history (after re-render)
+                    const messages = this._state.getAllMessages();
+                    this.postMessage({ type: 'chatHistory', messages });
+                    break;
+                }
                 case 'onInfo': {
-                    if (!data.value) return;
+                    if (!data.value) { return; }
                     vscode.window.showInformationMessage(data.value);
                     break;
                 }
                 case 'onError': {
-                    if (!data.value) return;
+                    if (!data.value) { return; }
                     vscode.window.showErrorMessage(data.value);
                     break;
                 }
             }
         });
+    }
+
+    /**
+     * Post a message to the webview.
+     */
+    public postMessage(message: any) {
+        if (this._view) {
+            this._view.webview.postMessage(message);
+        }
     }
 
     /**
@@ -63,13 +99,15 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         const htmlPath = path.join(this._extensionUri.fsPath, 'webview', 'index.html');
         let html = fs.readFileSync(htmlPath, 'utf-8');
 
-        // We must translate standard <script src="ui.js"> into VS Code Webview URIs
+        // Build Webview URIs for all scripts
         const uiJsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'webview', 'ui.js'));
         const wsClientJsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'webview', 'ws-client.js'));
+        const chatJsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'webview', 'chat.js'));
 
         // Replace the script tags with the webview-safe URIs
         html = html.replace('<script src="ui.js"></script>', `<script src="${uiJsUri}"></script>`);
         html = html.replace('<script src="ws-client.js"></script>', `<script src="${wsClientJsUri}"></script>`);
+        html = html.replace('<script src="chat.js"></script>', `<script src="${chatJsUri}"></script>`);
         
         // Add the VS Code API acquisition script so the webview can talk to the host
         const vscodeApiScript = `<script>const vscode = acquireVsCodeApi();</script>`;
