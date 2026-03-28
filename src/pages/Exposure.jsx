@@ -188,27 +188,6 @@ const Exposure = () => {
             </div>
           </div>
 
-          {/* Model Info */}
-          <div className="glass-card rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Activity size={14} className="text-purple-400" />
-              <h3 className="text-base font-semibold text-(--color-text-primary)">Model Parameters</h3>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { label: 'PM2.5 Conc.', value: `${pm25.toFixed(1)} µg/m³` },
-                { label: 'Hill Coefficient', value: '2.2' },
-                { label: 'EC50 Threshold', value: '55 µg/m³' },
-                { label: 'Vuln. Modifier', value: `×${activeDemo.multiplier.toFixed(1)}` },
-              ].map(p => (
-                <div key={p.label} className="p-3 subtle-surface rounded-xl">
-                  <p className="text-xs text-(--color-text-secondary) mb-1">{p.label}</p>
-                  <p className="text-sm font-semibold text-(--color-text-primary)">{p.value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* WHO & NAAQS Guidelines */}
           <div className="glass-card rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-4">
