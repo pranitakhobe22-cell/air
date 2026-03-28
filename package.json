@@ -1,0 +1,24 @@
+{
+  "name": "selfheal",
+  "version": "1.0.0",
+  "description": "A self-healing Playwright test automation CLI tool",
+  "main": "src/runner/index.js",
+  "bin": {
+    "selfheal": "./bin/selfheal.js"
+  },
+  "scripts": {
+    "start": "node bin/selfheal.js",
+    "test": "playwright test",
+    "dev": "node bin/selfheal.js"
+  },
+  "keywords": [
+    "playwright",
+    "self-healing",
+    "test-automation",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}
