@@ -1,33 +1,38 @@
 {
-  "testFile": "/Users/sangharshgedekar/web-healer/Web-Healer/tests/checkout.spec.js",
-  "timestamp": "2026-03-28T09:32:15.346Z",
-  "totalSteps": 5,
-  "healsApplied": 4,
+  "testFile": "test-e2e.spec.js",
+  "startTime": "2026-03-28 13:41:43",
+  "endTime": "2026-03-28 13:42:00",
+  "status": "passed",
+  "summary": {
+    "total": 2,
+    "passed": 0,
+    "healed": 2,
+    "failed": 0
+  },
   "steps": [
     {
-      "action": "goto",
-      "selector": "http://localhost:3000/pages/checkout-page.html",
-      "status": "pass"
+      "index": 0,
+      "name": "click .broken-buy-button",
+      "status": "healed",
+      "error": "locator.click: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.broken-buy-button')\u001b[22m\n",
+      "heal": {
+        "rootCause": null,
+        "originalSelector": ".broken-buy-button",
+        "healedSelector": "button:has-text('Buy Now')",
+        "confidence": 0.95
+      }
     },
     {
-      "action": "fill",
-      "selector": "#email-input",
-      "status": "healed"
-    },
-    {
-      "action": "fill",
-      "selector": "#promo-input",
-      "status": "healed"
-    },
-    {
-      "action": "click",
-      "selector": "body > div.form-group:nth-child(4) > button",
-      "status": "healed"
-    },
-    {
-      "action": "click",
-      "selector": "#success-msg",
-      "status": "healed"
+      "index": 1,
+      "name": "click html > body > div.panel-head > span:nth-child(1)",
+      "status": "healed",
+      "error": "locator.click: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('html > body > div.panel-head > span:nth-child(1)')\u001b[22m\n",
+      "heal": {
+        "rootCause": "The page structure has changed significantly. The 'div.panel-head' element and its child 'span' are no longer present in the DOM. The target element has been replaced by a 'button' element with a different class ('new-purchase-btn') and text ('Buy Now').",
+        "originalSelector": "html > body > div.panel-head > span:nth-child(1)",
+        "healedSelector": "button.new-purchase-btn",
+        "confidence": 0.95
+      }
     }
   ]
 }

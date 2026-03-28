@@ -1,79 +1,121 @@
 import { watchFailure } from '../watcher/failureWatcher.js';
 import { patchTestFile } from '../patcher/patchWriter.js';
 import config from '../../selfheal.config.js';
+import db from '../storage/db.js';
+import * as healHistory from '../db/healHistory.js';
 
 const CONFIDENCE_THRESHOLD = config.healer?.confidenceThreshold ?? 0.80;
-const stepHistory = [];
+
+// Global runner context
+let runnerContext = { 
+    testFile: null, 
+    io: null, 
+    runId: null, 
+    stepIndex: 0 
+};
+
+export function setRunnerContext(ctx) {
+    runnerContext = { ...runnerContext, ...ctx };
+}
+
+export function getRunnerContext() {
+    return runnerContext;
+}
 
 export function emitEvent(io, event, data) {
     if (io) io.emit(event, data);
 }
 
-export async function executeStep(page, action, selector, performPlaywrightAction, intent, testFile, io) {
-    emitEvent(io, 'step:start', { action, selector, testFile });
+export async function executeStep(page, action, selector, performPlaywrightAction, intent) {
+    const { testFile, io, runId } = runnerContext;
+    const stepIndex = runnerContext.stepIndex++;
+
+    emitEvent(io, 'step:start', { index: stepIndex, name: `${action} ${selector}` });
+
+    // Save step to DB
+    const stepStmt = db.prepare('INSERT INTO steps (run_id, step_index, name, status) VALUES (?, ?, ?, ?)');
+    const stepResult = stepStmt.run(runId, stepIndex, `${action} ${selector}`, 'running');
+    const stepId = stepResult.lastInsertRowid;
 
     try {
         await performPlaywrightAction(selector);
-        stepHistory.push({ action, selector, status: 'pass' });
-        emitEvent(io, 'step:pass', { action, selector });
+        
+        // Update DB
+        db.prepare('UPDATE steps SET status = ? WHERE id = ?').run('pass', stepId);
+        
+        emitEvent(io, 'step:pass', { index: stepIndex });
     } catch (error) {
         console.log(`\n  ❌ [PlaywrightRunner] Action failed: ${action}('${selector}')`);
-        stepHistory.push({ action, selector, status: 'fail' });
-        emitEvent(io, 'step:fail', { action, selector, error: error.message });
+        
+        // Update DB
+        db.prepare('UPDATE steps SET status = ?, error = ? WHERE id = ?').run('fail', error.message, stepId);
+        
+        emitEvent(io, 'step:fail', { index: stepIndex, error: error.message });
 
-        // Use Dev 1's Failure Watcher
-        emitEvent(io, 'heal:start', { action, selector });
+        // Phase 3 Heal Cache Check
+        const cachedHeal = healHistory.getPastHeal({ file: testFile, selector });
+        let healResult;
 
-        const healResult = await watchFailure(page, error, selector, intent, stepHistory);
-        emitEvent(io, 'heal:result', healResult);
-
+        if (cachedHeal && cachedHeal.confidence >= CONFIDENCE_THRESHOLD) {
+            console.log(`  ⚡ [PlaywrightRunner] Found cached fix for ${selector} → ${cachedHeal.newSelector}`);
+            healResult = cachedHeal;
+        } else {
+            emitEvent(io, 'heal:start', { index: stepIndex });
+            healResult = await watchFailure(page, error, selector, intent, []);
+            
+            if (healResult.newSelector && healResult.confidence >= CONFIDENCE_THRESHOLD) {
+                healHistory.saveHeal({
+                    file: testFile,
+                    originalSelector: selector,
+                    newSelector: healResult.newSelector,
+                    confidence: healResult.confidence
+                });
+            }
+        }
+        
         if (!healResult.newSelector) {
-            emitEvent(io, 'step:heal_failed', { selector });
+            emitEvent(io, 'heal:done', { index: stepIndex, healed: false });
             throw error;
         }
 
-        // Confidence Logic — threshold from selfheal.config.js
+        // emit heal:reason
+        emitEvent(io, 'heal:reason', {
+            rootCause: healResult.rootCause || 'Cached fix applied',
+            newSelector: healResult.newSelector,
+            confidence: healResult.confidence
+        });
+
+        // Confidence Logic
         if (healResult.confidence >= CONFIDENCE_THRESHOLD) {
             console.log(`  ✅ [PlaywrightRunner] Auto-healing: ${selector} → ${healResult.newSelector}`);
 
-            // Use Dev 2's Patch Writer
             if (testFile) patchTestFile(testFile, selector, healResult.newSelector);
 
-            // Retry with the healed selector
+            // Retry
             await performPlaywrightAction(healResult.newSelector);
 
-            // Bug 5 fix: Mark step as healed so healReport counts it
-            const lastStep = stepHistory[stepHistory.length - 1];
-            if (lastStep) lastStep.status = 'healed';
+            // Update DB for Step
+            db.prepare('UPDATE steps SET status = ? WHERE id = ?').run('healed', stepId);
+            
+            // Save Heal to DB
+            db.prepare(`
+                INSERT INTO heals (step_id, run_id, original_selector, healed_selector, root_cause, confidence, healed)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `).run(stepId, runId, selector, healResult.newSelector, healResult.rootCause, healResult.confidence, 1);
 
-            emitEvent(io, 'step:healed', {
-                action,
-                selector: healResult.newSelector,
-                extra: { rootCause: healResult.rootCause, confidence: healResult.confidence }
-            });
+            emitEvent(io, 'heal:done', { index: stepIndex, newSelector: healResult.newSelector, healed: true });
+            emitEvent(io, 'step:pass', { index: stepIndex, healed: true });
         } else {
-            console.log(`  ⚠️  Low confidence (${healResult.confidence} < ${CONFIDENCE_THRESHOLD}), human approval required for ${selector}`);
-            emitEvent(io, 'heal:confirm', {
-                brokenSelector: selector,
-                suggestedSelector: healResult.newSelector,
-                confidence: healResult.confidence,
-                rootCause: healResult.rootCause
-            });
-            // We would await human approval here
-            throw new Error(`Unresolved heal for '${selector}': confidence ${healResult.confidence} < ${CONFIDENCE_THRESHOLD}. Reason: ${healResult.rootCause || 'Unknown'}`);
+            console.log(`  ⚠️  Low confidence (${healResult.confidence} < ${CONFIDENCE_THRESHOLD}), human approval required`);
+            
+            // Update DB
+            db.prepare(`
+                INSERT INTO heals (step_id, run_id, original_selector, healed_selector, root_cause, confidence, healed)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `).run(stepId, runId, selector, healResult.newSelector, healResult.rootCause, healResult.confidence, 0);
+
+            emitEvent(io, 'heal:done', { index: stepIndex, healed: false });
+            throw new Error(`Unresolved heal: low confidence`);
         }
     }
-}
-
-export function getStepHistory() { return stepHistory; }
-
-let runnerContext = { testFile: null, io: null };
-
-export function setRunnerContext({ testFile, io }) {
-    runnerContext.testFile = testFile;
-    runnerContext.io = io;
-}
-
-export function getRunnerContext() {
-    return runnerContext;
 }
