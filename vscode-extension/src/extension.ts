@@ -1,48 +1,45 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { spawn, ChildProcess } from 'child_process';
+import { SidebarProvider } from './SidebarProvider';
 
-let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
+let activeRunProcess: ChildProcess | null = null;
+let currentSidebarProvider: SidebarProvider | null = null;
 
 export function activate(context: vscode.ExtensionContext) {
-    outputChannel = vscode.window.createOutputChannel('SelfHeal');
-    outputChannel.appendLine('🩹 SelfHeal extension activated.');
+    outputChannel = vscode.window.createOutputChannel('SelfHeal Agent');
+    outputChannel.appendLine('🩹 SelfHeal extension activated in Agent Panel mode.');
 
-    // ── Status Bar Button ──────────────────────────────────────────
-    statusBarItem = vscode.window.createStatusBarItem(
-        vscode.StatusBarAlignment.Left,
-        100
+    // ── Register Webview Provider ──────────────────────────────────
+    currentSidebarProvider = new SidebarProvider(context.extensionUri);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(
+            SidebarProvider.viewType,
+            currentSidebarProvider,
+            { webviewOptions: { retainContextWhenHidden: true } }
+        )
     );
-    statusBarItem.text = '$(beaker) SelfHeal';
-    statusBarItem.tooltip = 'Run current test through SelfHeal engine';
-    statusBarItem.command = 'selfheal.runCurrentTest';
-    statusBarItem.show();
-    context.subscriptions.push(statusBarItem);
 
     // ── Command: Run Current Test ──────────────────────────────────
     const runCmd = vscode.commands.registerCommand(
         'selfheal.runCurrentTest',
         async () => {
-            const editor = vscode.window.activeTextEditor;
+            if (activeRunProcess) {
+                vscode.window.showWarningMessage('SelfHeal: A run is already in progress. Please stop it first.');
+                return;
+            }
 
+            const editor = vscode.window.activeTextEditor;
             if (!editor) {
-                vscode.window.showErrorMessage(
-                    'SelfHeal: Please open a Playwright test file first.'
-                );
+                vscode.window.showErrorMessage('SelfHeal: Please open a Playwright test file first.');
                 return;
             }
 
             const filePath = editor.document.fileName;
 
-            // Gate: Only JS/TS files
-            if (
-                !filePath.endsWith('.js') &&
-                !filePath.endsWith('.ts') &&
-                !filePath.endsWith('.mjs')
-            ) {
-                vscode.window.showWarningMessage(
-                    'SelfHeal: The current file does not look like a test script (.js, .ts, .mjs).'
-                );
+            if (!filePath.endsWith('.js') && !filePath.endsWith('.ts') && !filePath.endsWith('.mjs')) {
+                vscode.window.showWarningMessage('SelfHeal: The current file does not look like a test script (.js, .ts, .mjs).');
                 return;
             }
 
@@ -50,93 +47,85 @@ export function activate(context: vscode.ExtensionContext) {
             await editor.document.save();
 
             // Resolve workspace-relative path
-            const workspaceRoot =
-                vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
+            const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
             const relativePath = path.relative(workspaceRoot, filePath);
 
-            outputChannel.appendLine(
-                `\n─── Running SelfHeal on: ${relativePath} ───`
-            );
-            outputChannel.show(true);
+            outputChannel.appendLine(`\n─── 🚀 Starting Background SelfHeal: ${relativePath} ───`);
+            
+            // Pop open the Sidebar Agent Panel so the user sees the dashboard
+            vscode.commands.executeCommand('selfheal.agentView.focus');
 
-            // Update status bar while running
-            statusBarItem.text = '$(sync~spin) SelfHeal…';
-            statusBarItem.tooltip = `Healing: ${path.basename(filePath)}`;
+            // Spawn the CLI in the background
+            activeRunProcess = spawn('npx', ['selfheal', 'run', relativePath, '--panel'], {
+                cwd: workspaceRoot,
+                shell: process.platform === 'win32'
+            });
 
-            // Create or reuse a dedicated terminal
-            const terminalName = 'SelfHeal Runner';
-            let terminal = vscode.window.terminals.find(
-                (t) => t.name === terminalName
-            );
-            if (!terminal) {
-                terminal = vscode.window.createTerminal({
-                    name: terminalName,
-                    cwd: workspaceRoot || undefined,
-                    iconPath: new vscode.ThemeIcon('beaker'),
-                });
-            }
-
-            terminal.show();
-            terminal.sendText(
-                `npx selfheal run "${relativePath}" --dashboard`
-            );
-
-            // Show a progress notification
-            vscode.window.withProgress(
-                {
-                    location: vscode.ProgressLocation.Notification,
-                    title: `SelfHeal: Running ${path.basename(filePath)}…`,
-                    cancellable: false,
-                },
-                async () => {
-                    // Wait a reasonable amount so the user sees the notification
-                    await new Promise((resolve) =>
-                        setTimeout(resolve, 4000)
-                    );
+            // Watch stdout for the WebSocket port
+            activeRunProcess.stdout?.on('data', (data) => {
+                const text = data.toString();
+                outputChannel.append(text);
+                
+                // e.g. "  [VSCODE_WS_PORT=3000]"
+                const match = text.match(/\[VSCODE_WS_PORT=(\d+)\]/);
+                if (match && match[1]) {
+                    const port = parseInt(match[1], 10);
+                    outputChannel.appendLine(`[Agent Link] Connecting Webview to WS Port ${port}...`);
+                    if (currentSidebarProvider) {
+                        currentSidebarProvider.sendPortToWebview(port);
+                    }
                 }
-            );
+            });
 
-            // Reset status bar after a delay
-            setTimeout(() => {
-                statusBarItem.text = '$(beaker) SelfHeal';
-                statusBarItem.tooltip =
-                    'Run current test through SelfHeal engine';
-            }, 8000);
+            activeRunProcess.stderr?.on('data', (data) => {
+                outputChannel.append(`[ERR] ${data.toString()}`);
+            });
+
+            activeRunProcess.on('close', (code) => {
+                outputChannel.appendLine(`\n─── 🏁 Run ended with code ${code} ───`);
+                activeRunProcess = null;
+            });
         }
     );
 
-    // ── Command: Open Dashboard ────────────────────────────────────
-    const dashCmd = vscode.commands.registerCommand(
-        'selfheal.openDashboard',
+    // ── Command: Stop Run ──────────────────────────────────────────
+    const stopCmd = vscode.commands.registerCommand(
+        'selfheal.stopRun',
         () => {
-            const workspaceRoot =
-                vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
-
-            const terminalName = 'SelfHeal Dashboard';
-            let terminal = vscode.window.terminals.find(
-                (t) => t.name === terminalName
-            );
-            if (!terminal) {
-                terminal = vscode.window.createTerminal({
-                    name: terminalName,
-                    cwd: workspaceRoot || undefined,
-                    iconPath: new vscode.ThemeIcon('dashboard'),
-                });
+            if (activeRunProcess) {
+                activeRunProcess.kill('SIGINT');
+                activeRunProcess = null;
+                vscode.window.showInformationMessage('SelfHeal: Run stopped.');
+                outputChannel.appendLine('─── 🛑 Run forced stopped by user ───');
+            } else {
+                vscode.window.showInformationMessage('SelfHeal: No run currently active.');
             }
-
-            terminal.show();
-            terminal.sendText('npx selfheal run --dashboard');
-
-            vscode.window.showInformationMessage(
-                'SelfHeal: Opening dashboard…'
-            );
         }
     );
 
-    context.subscriptions.push(runCmd, dashCmd, outputChannel);
+    // ── Command: Toggle Sidebar ─────────────────────────────────────
+    const toggleCmd = vscode.commands.registerCommand(
+        'selfheal.toggleSidebar',
+        () => {
+            vscode.commands.executeCommand('selfheal.agentView.focus');
+        }
+    );
+
+    // ── Register URI Handler (Deep Linking from CLI) ────────────────
+    const uriHandler = vscode.window.registerUriHandler({
+        handleUri(uri: vscode.Uri) {
+            if (uri.path === '/toggle') {
+                vscode.commands.executeCommand('selfheal.agentView.focus');
+            }
+        }
+    });
+
+    context.subscriptions.push(runCmd, stopCmd, toggleCmd, outputChannel, uriHandler);
 }
 
 export function deactivate() {
-    statusBarItem?.dispose();
+    if (activeRunProcess) {
+        activeRunProcess.kill();
+    }
     outputChannel?.dispose();
 }

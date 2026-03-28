@@ -1,7 +1,7 @@
 {
   "testFile": "checkout.spec.js",
-  "startTime": "2026-03-28 17:26:26",
-  "endTime": "2026-03-28 17:26:53",
+  "startTime": "2026-03-28 18:26:18",
+  "endTime": "2026-03-28 18:26:45",
   "status": "passed",
   "summary": {
     "total": 6,
@@ -12,7 +12,7 @@
   "steps": [
     {
       "index": 0,
-      "name": "goto http://localhost:3005/pages/checkout-page.html",
+      "name": "goto http://localhost:3000/pages/checkout-page.html",
       "status": "pass",
       "error": null,
       "heal": null
@@ -23,7 +23,7 @@
       "status": "healed",
       "error": "locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#email-input')\u001b[22m\n",
       "heal": {
-        "rootCause": "Intent keyword \"contact\" matched id=\"contact-email\"",
+        "rootCause": null,
         "originalSelector": "#email-input",
         "healedSelector": "#contact-email",
         "confidence": 0.95
@@ -35,7 +35,7 @@
       "status": "healed",
       "error": "locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#first-name')\u001b[22m\n",
       "heal": {
-        "rootCause": "Intent keyword \"first\" matched id=\"shipping-first\"",
+        "rootCause": null,
         "originalSelector": "#first-name",
         "healedSelector": "#shipping-first",
         "confidence": 0.95
@@ -47,7 +47,7 @@
       "status": "healed",
       "error": "locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#credit-card-num')\u001b[22m\n",
       "heal": {
-        "rootCause": "Intent keyword \"card\" matched id=\"card-number\"",
+        "rootCause": null,
         "originalSelector": "#credit-card-num",
         "healedSelector": "#card-number",
         "confidence": 0.95
@@ -59,7 +59,7 @@
       "status": "healed",
       "error": "locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#promo-input')\u001b[22m\n",
       "heal": {
-        "rootCause": "Intent keyword \"voucher\" matched id=\"voucher-code\"",
+        "rootCause": null,
         "originalSelector": "#promo-input",
         "healedSelector": "#voucher-code",
         "confidence": 0.95
@@ -71,7 +71,7 @@
       "status": "healed",
       "error": "locator.click: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.submit-order-btn')\u001b[22m\n",
       "heal": {
-        "rootCause": "Intent keyword \"place\" matched id=\"btn-place-order\"",
+        "rootCause": null,
         "originalSelector": ".submit-order-btn",
         "healedSelector": "#btn-place-order",
         "confidence": 0.95

@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { generateReport } from '../src/reporter/healReporter.js';
 
-export async function executeCLI(testFile, dashboard) {
+export async function executeCLI(testFile, dashboard, panel = false) {
     resetRunnerContext();
     const absFile = path.resolve(testFile);
     if (!fs.existsSync(absFile)) {
@@ -57,6 +57,7 @@ export async function executeCLI(testFile, dashboard) {
     });
 
     if (dashboard) open(url);
+    if (panel) console.log(`  [VSCODE_WS_PORT=${port}]`);
 
     // 4. Runner Context
     setRunnerContext({ testFile: absFile, io, runId, stepIndex: 0 });
@@ -99,8 +100,8 @@ export async function executeCLI(testFile, dashboard) {
 
     generateReport(runId);
 
-    if (dashboard) {
-        console.log(`\n  🏁 Run complete. Dashboard active.`);
+    if (dashboard || panel) {
+        console.log(`\n  🏁 Run complete. ${dashboard ? 'Dashboard' : 'Panel'} active.`);
         console.log(`  Press Ctrl+C to exit.`);
     } else {
         await browser.close();

@@ -1,16 +1,15 @@
 {
   "name": "selfheal-vscode",
-  "displayName": "SelfHeal – AI Test Healer",
-  "description": "AI-Powered Test Self-Healing for Playwright. Detect, diagnose, and auto-fix broken selectors.",
-  "version": "1.0.0",
+  "displayName": "SelfHeal",
+  "description": "AI-Powered Self-Healing SDK & CLI for Playwright — embedded in your editor.",
+  "version": "2.2.0",
   "publisher": "selfheal",
   "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.80.0"
   },
   "categories": [
-    "Testing",
-    "Other"
+    "Testing"
   ],
   "activationEvents": [
     "workspaceContains:**/*.spec.js",
@@ -18,16 +17,34 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "selfheal-panel",
+          "title": "SelfHeal",
+          "icon": "$(beaker)"
+        }
+      ]
+    },
+    "views": {
+      "selfheal-panel": [
+        {
+          "type": "webview",
+          "id": "selfheal.agentView",
+          "name": "SelfHeal Agent"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "selfheal.runCurrentTest",
         "title": "SelfHeal: Run Current Test",
-        "icon": "$(beaker)"
+        "icon": "$(play)"
       },
       {
-        "command": "selfheal.openDashboard",
-        "title": "SelfHeal: Open Dashboard",
-        "icon": "$(dashboard)"
+        "command": "selfheal.stopRun",
+        "title": "SelfHeal: Stop Run",
+        "icon": "$(debug-stop)"
       }
     ],
     "keybindings": [
@@ -39,10 +56,15 @@
       }
     ],
     "menus": {
-      "editor/title": [
+      "view/title": [
         {
           "command": "selfheal.runCurrentTest",
-          "when": "resourceExtname == .js || resourceExtname == .ts",
+          "when": "view == selfheal.agentView",
+          "group": "navigation"
+        },
+        {
+          "command": "selfheal.stopRun",
+          "when": "view == selfheal.agentView",
           "group": "navigation"
         }
       ]
