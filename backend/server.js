@@ -39,6 +39,7 @@ const healthRoutes = require('./src/routes/health');
 const apiRoutes = require('./src/routes/api');
 const weatherRoutes = require('./src/routes/weather');
 const routeRoutes = require('./src/routes/route');
+const aiRoutes = require('./src/routes/ai');
 
 const app = express();
 app.set('trust proxy', true); // Railway reverse proxy — needed for real client IP
@@ -70,6 +71,7 @@ app.use('/api/v1', healthRoutes);
 app.use('/api/v1', apiRoutes);
 app.use('/api/v1/weather', weatherRoutes);
 app.use('/api/v1/route', routeRoutes);
+app.use('/api/v1/ai', aiRoutes);
 app.use('/api/v1/ingest', ingestRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/profile', profileRoutes);

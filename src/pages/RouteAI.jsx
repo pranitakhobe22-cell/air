@@ -1,8 +1,9 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Polyline, CircleMarker, Popup, useMap } from 'react-leaflet';
-import { MapPin, Navigation, Clock, Wind, Activity, ShieldAlert, CheckCircle2, Route as RouteIcon, Loader2 } from 'lucide-react';
+import { MapPin, Navigation, Clock, Wind, Activity, ShieldAlert, CheckCircle2, Route as RouteIcon, Loader2, BrainCircuit, Send, User, X, ChevronDown, ChevronUp } from 'lucide-react';
 import axios from 'axios';
+import useAerisStore from '@/store/aerisStore';
 import 'leaflet/dist/leaflet.css';
 
 const routeApi = axios.create({
@@ -37,6 +38,44 @@ function aqiColor(aqi) {
 }
 
 export default function RouteAI() {
+  const [aiOpen, setAiOpen] = useState(false);
+  const storeData = useAerisStore((s) => s.data);
+
+  // ── AI Chat state ──────────────────────────────
+  const [chatMessages, setChatMessages] = useState([
+    { role: 'ai', content: 'Hello! I\'m **AERIS AI** — your environmental intelligence assistant.\n\nI can help with:\n- Current AQI and air quality analysis\n- Route safety recommendations\n- Health advice based on live sensor data\n\nHow can I assist you?' }
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatTyping, setChatTyping] = useState(false);
+  const chatEndRef = useRef(null);
+
+  const handleChat = async (e) => {
+    e.preventDefault();
+    if (!chatInput.trim() || chatTyping) return;
+    const userMsg = { role: 'user', content: chatInput };
+    const updated = [...chatMessages, userMsg];
+    setChatMessages(updated);
+    setChatInput('');
+    setChatTyping(true);
+    try {
+      const { data: res } = await routeApi.post('/ai/chat', {
+        messages: updated.map(m => ({ role: m.role === 'ai' ? 'assistant' : m.role, content: m.content })),
+        sensors: storeData?.sensors || {}, environment: storeData?.environment || {},
+        aqi: storeData?.derived?.aqi || 0, category: storeData?.derived?.aqi_category || '',
+        dominant: storeData?.derived?.dominant || 'PM2.5', city: storeData?.meta?.location || 'Unknown',
+      });
+      setChatMessages(prev => [...prev, { role: 'ai', content: res.data?.content || 'Sorry, I could not process that.' }]);
+    } catch {
+      const aqi = storeData?.derived?.aqi || 0;
+      setChatMessages(prev => [...prev, { role: 'ai', content: aqi > 100
+        ? `Based on current AQI of **${aqi}**, air quality needs attention.\n- Limit outdoor exposure\n- Wear a mask if going out`
+        : `Current AQI is **${aqi}** — conditions are ${aqi <= 50 ? 'good' : 'moderate'}. Safe for most activities.\n\n_AI service unavailable — rule-based response._`
+      }]);
+    } finally { setChatTyping(false); }
+  };
+
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages, chatTyping]);
+
   const [origin, setOrigin] = useState('Connaught Place, New Delhi');
   const [destination, setDestination] = useState('India Gate, New Delhi');
   const [routeAnalysis, setRouteAnalysis] = useState(null);
@@ -85,10 +124,117 @@ export default function RouteAI() {
   return (
     <div className="p-6 sm:p-6 lg:p-8 max-w-[1440px] mx-auto space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-lg sm:text-xl font-semibold text-(--color-text-primary)">Route AI</h1>
-        <p className="text-xs sm:text-sm text-(--color-text-secondary) mt-1">A Path Finding Engine — finds the cleanest-air route between any two locations.</p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-lg sm:text-xl font-semibold text-(--color-text-primary)">Route AI</h1>
+          <p className="text-xs sm:text-sm text-(--color-text-secondary) mt-1">A Path Finding Engine — finds the cleanest-air route between any two locations.</p>
+        </div>
+        <button
+          onClick={() => setAiOpen(!aiOpen)}
+          className="flex items-center gap-2 px-5 py-2.5 bg-linear-to-r from-(--color-primary) to-(--color-secondary) text-white text-sm font-bold rounded-xl shadow-md shadow-(--color-primary)/20 hover:opacity-90 transition-all active:scale-[0.97]"
+        >
+          <BrainCircuit size={16} />
+          {aiOpen ? 'Hide AI' : 'Ask AERIS AI'}
+          {aiOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
       </div>
+
+      {/* ── AERIS AI Chat Section ──────────────────────── */}
+      <AnimatePresence>
+        {aiOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="glass-card rounded-xl border border-(--color-card-border) overflow-hidden">
+              {/* Chat Header */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-(--color-card-border)">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-(--color-accent)/10 flex items-center justify-center">
+                    <BrainCircuit size={14} className="text-(--color-accent)" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-semibold text-(--color-text-primary)">AERIS AI</span>
+                    <span className="text-[10px] text-(--color-text-secondary) ml-2">Environmental Intelligence</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold uppercase tracking-wider border border-emerald-500/20">Live</span>
+                  <span className="text-[10px] text-(--color-text-secondary)">
+                    AQI: <strong className="text-(--color-text-primary)">{storeData?.derived?.aqi || '—'}</strong>
+                    <span className="mx-1.5">|</span>
+                    PM2.5: <strong className="text-(--color-text-primary)">{storeData?.sensors?.pm25?.toFixed?.(1) || '—'}</strong>
+                  </span>
+                  <button onClick={() => setAiOpen(false)} className="p-1 rounded-lg text-(--color-text-secondary) hover:text-(--color-text-primary) transition-colors">
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Chat Messages */}
+              <div className="h-[360px] overflow-y-auto p-5 space-y-4 glass-scrollbar">
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+                      msg.role === 'user'
+                        ? 'bg-(--color-primary) text-white'
+                        : 'bg-(--color-accent)/10 text-(--color-accent) border border-(--color-accent)/20'
+                    }`}>
+                      {msg.role === 'user' ? <User size={12} /> : <BrainCircuit size={12} />}
+                    </div>
+                    <div className={`px-4 py-3 rounded-2xl max-w-[80%] text-[13px] leading-relaxed ${
+                      msg.role === 'user'
+                        ? 'bg-(--color-primary) text-white rounded-tr-sm'
+                        : 'subtle-surface border border-(--color-card-border) rounded-tl-sm text-(--color-text-primary)'
+                    }`}>
+                      {msg.content.split('\n').map((line, j) => {
+                        const html = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/_(.+?)_/g, '<em>$1</em>');
+                        if (line.trim().startsWith('- ') || line.trim().startsWith('• '))
+                          return <li key={j} className="ml-4 list-disc" dangerouslySetInnerHTML={{ __html: html.replace(/^[\s]*[-•]\s*/, '') }} />;
+                        if (line.trim() === '') return <br key={j} />;
+                        return <p key={j} dangerouslySetInnerHTML={{ __html: html }} />;
+                      })}
+                    </div>
+                  </div>
+                ))}
+                {chatTyping && (
+                  <div className="flex gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-(--color-accent)/10 text-(--color-accent) border border-(--color-accent)/20 flex items-center justify-center shrink-0">
+                      <BrainCircuit size={12} />
+                    </div>
+                    <div className="px-4 py-3.5 rounded-2xl subtle-surface border border-(--color-card-border) rounded-tl-sm flex gap-1.5 items-center">
+                      <span className="w-1.5 h-1.5 rounded-full bg-(--color-accent) animate-bounce" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-(--color-accent) animate-bounce" style={{ animationDelay: '0.15s' }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-(--color-accent) animate-bounce" style={{ animationDelay: '0.3s' }} />
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Chat Input */}
+              <div className="px-5 py-3 border-t border-(--color-card-border)">
+                <form onSubmit={handleChat} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ask about air quality, routes, health advice..."
+                    className="flex-1 subtle-surface border border-(--color-card-border) rounded-xl px-4 py-2.5 text-[13px] text-(--color-text-primary) placeholder:text-(--color-text-secondary)/40 focus:outline-none focus:ring-2 focus:ring-(--color-accent)/30 transition-all"
+                  />
+                  <button type="submit" disabled={!chatInput.trim() || chatTyping}
+                    className="px-4 py-2.5 rounded-xl bg-(--color-primary) text-white disabled:opacity-40 hover:opacity-90 transition-all">
+                    <Send size={14} />
+                  </button>
+                </form>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
