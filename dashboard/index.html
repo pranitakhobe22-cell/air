@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SelfHeal — Live Dashboard</title>
+  <meta name="description" content="Real-time Playwright test healing dashboard powered by SelfHeal AI" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & tokens ──────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:          #0d1117;
+      --surface:     #161b22;
+      --surface-2:   #1c2128;
+      --border:      #30363d;
+      --text:        #e6edf3;
+      --text-muted:  #8b949e;
+      --blue:        #58a6ff;
+      --green:       #3fb950;
+      --red:         #f85149;
+      --purple:      #d2a8ff;
+      --orange:      #ffa657;
+      --yellow:      #e3b341;
+      --radius:      8px;
+      --font-mono:   'JetBrains Mono', 'Cascadia Code', monospace;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .layout { display: grid; grid-template-rows: 56px 1fr; min-height: 100vh; }
+
+    /* ── Top bar ──────────────────────────────────────────── */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.5rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar-brand { display: flex; align-items: center; gap: 0.6rem; font-weight: 600; font-size: 1rem; }
+    .topbar-brand .logo { font-size: 1.3rem; }
+    .topbar-right { display: flex; align-items: center; gap: 1rem; }
+
+    /* WS status badge */
+    .ws-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 0.75rem; color: var(--text-muted);
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 0.25rem 0.75rem;
+    }
+    .ws-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); transition: background 0.3s; }
+    .ws-badge .dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+    /* ── Main content ─────────────────────────────────────── */
+    .main { display: grid; grid-template-columns: 280px 1fr; height: calc(100vh - 56px); overflow: hidden; }
+
+    /* ── Sidebar ──────────────────────────────────────────── */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+      padding: 1rem 0;
+    }
+    .sidebar-section { padding: 0 1rem 1rem; }
+    .sidebar-label {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    /* Stats grid */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .stat-card {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 0.75rem;
+      text-align: center;
+    }
+    .stat-card .val { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .stat-card .label { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem; }
+    .stat-card.green .val { color: var(--green); }
+    .stat-card.red   .val { color: var(--red); }
+    .stat-card.blue  .val { color: var(--blue); }
+    .stat-card.purple .val { color: var(--purple); }
+
+    /* Clear button */
+    .btn-clear {
+      width: 100%; margin-top: 0.5rem;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-muted); border-radius: var(--radius);
+      padding: 0.4rem; font-size: 0.78rem; cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-clear:hover { border-color: var(--red); color: var(--red); }
+
+    /* Active test info */
+    .active-test {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 0.75rem;
+      font-size: 0.78rem;
+    }
+    .active-test .name { font-weight: 600; color: var(--blue); word-break: break-all; }
+    .active-test .file { color: var(--text-muted); margin-top: 0.2rem; font-family: var(--font-mono); font-size: 0.7rem; word-break: break-all; }
+    .active-test .idle { color: var(--text-muted); font-style: italic; }
+
+    /* ── Event log ────────────────────────────────────────── */
+    .log-pane {
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .log-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem; color: var(--text-muted);
+    }
+    .log-scroller {
+      flex: 1; overflow-y: auto;
+      padding: 0.5rem 1.25rem 1.25rem;
+      display: flex; flex-direction: column; gap: 0.35rem;
+    }
+    .log-empty {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100%; color: var(--text-muted); gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .log-empty .icon { font-size: 2.5rem; opacity: 0.4; }
+
+    /* Event rows */
+    .event-row {
+      display: grid;
+      grid-template-columns: 130px 68px 1fr;
+      gap: 0.5rem; align-items: start;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; padding: 0.45rem 0.75rem;
+      font-size: 0.78rem;
+      animation: fadeIn 0.15s ease;
+      transition: border-color 0.2s;
+    }
+    .event-row:hover { border-color: #444c56; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    .event-type {
+      font-family: var(--font-mono); font-size: 0.72rem; font-weight: 500;
+      padding: 0.15rem 0.5rem; border-radius: 4px; width: fit-content;
+      white-space: nowrap;
+    }
+    .event-type.step-start  { background: #1f3d6e; color: var(--blue); }
+    .event-type.step-pass   { background: #1a3828; color: var(--green); }
+    .event-type.step-fail   { background: #3b1c1c; color: var(--red); }
+    .event-type.heal-start  { background: #2d1f5e; color: var(--purple); }
+    .event-type.heal-done   { background: #3b2a14; color: var(--orange); }
+    .event-type.run-done    { background: #1a2a3f; color: var(--blue); }
+    .event-type.server      { background: #1a2a1a; color: var(--green); }
+
+    .event-ts { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.68rem; padding-top: 0.15rem; }
+    .event-body { color: var(--text); word-break: break-word; }
+    .event-body .selector { color: var(--yellow); font-family: var(--font-mono); }
+    .event-body .confidence { color: var(--orange); font-weight: 600; }
+    .event-body .err { color: var(--red); }
+
+    /* Step count pill */
+    .step-pill {
+      display: inline-block; font-size: 0.68rem; background: var(--surface-2);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 0.1rem 0.4rem; color: var(--text-muted); margin-right: 0.25rem;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #444c56; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="logo">⚡</span>
+      <span>SelfHeal</span>
+    </div>
+    <div class="topbar-right">
+      <div class="ws-badge" id="ws-badge">
+        <span class="dot" id="ws-dot"></span>
+        <span id="ws-label">Disconnected</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Run Stats</div>
+        <div class="stats-grid">
+          <div class="stat-card green"><div class="val" id="stat-pass">0</div><div class="label">Passed</div></div>
+          <div class="stat-card red">  <div class="val" id="stat-fail">0</div><div class="label">Failed</div></div>
+          <div class="stat-card purple"><div class="val" id="stat-healed">0</div><div class="label">Healed</div></div>
+          <div class="stat-card blue"><div class="val" id="stat-events">0</div><div class="label">Events</div></div>
+        </div>
+        <button class="btn-clear" id="btn-clear">✕ Clear log</button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Active Test</div>
+        <div class="active-test" id="active-test">
+          <div class="idle">No test running</div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Event log pane -->
+    <section class="log-pane">
+      <div class="log-header">
+        <span>Live Event Log</span>
+        <span id="log-count" style="font-family: var(--font-mono);">0 events</span>
+      </div>
+      <div class="log-scroller" id="log-scroller">
+        <div class="log-empty" id="log-empty">
+          <span class="icon">📡</span>
+          <span>Waiting for a test run…</span>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+(function () {
+  // ── Config ──────────────────────────────────────────────
+  // WS server is always dashboardPort + 1 by convention.
+  const WS_PORT = window.location.port
+    ? parseInt(window.location.port) + 1
+    : 3001;
+  const WS_URL = `ws://${window.location.hostname}:${WS_PORT}`;
+
+  // ── State ───────────────────────────────────────────────
+  let stats = { pass: 0, fail: 0, healed: 0, events: 0 };
+  let eventCount = 0;
+
+  // ── DOM refs ────────────────────────────────────────────
+  const wsDot       = document.getElementById('ws-dot');
+  const wsLabel     = document.getElementById('ws-label');
+  const logScroller = document.getElementById('log-scroller');
+  const logEmpty    = document.getElementById('log-empty');
+  const logCount    = document.getElementById('log-count');
+  const activeTest  = document.getElementById('active-test');
+  const statEls     = {
+    pass:   document.getElementById('stat-pass'),
+    fail:   document.getElementById('stat-fail'),
+    healed: document.getElementById('stat-healed'),
+    events: document.getElementById('stat-events'),
+  };
+
+  document.getElementById('btn-clear').addEventListener('click', () => {
+    logScroller.innerHTML = '';
+    logScroller.appendChild(logEmpty);
+    logEmpty.style.display = 'flex';
+    stats = { pass: 0, fail: 0, healed: 0, events: 0 };
+    eventCount = 0;
+    updateStats();
+  });
+
+  // ── Helpers ─────────────────────────────────────────────
+  function updateStats() {
+    statEls.pass.textContent   = stats.pass;
+    statEls.fail.textContent   = stats.fail;
+    statEls.healed.textContent = stats.healed;
+    statEls.events.textContent = stats.events;
+    logCount.textContent = eventCount + ' event' + (eventCount !== 1 ? 's' : '');
+  }
+
+  function ts(isoStr) {
+    return new Date(isoStr).toLocaleTimeString([], { hour12: false });
+  }
+
+  function cssClass(type) {
+    return type.replace(':', '-');
+  }
+
+  function bodyFor(frame) {
+    switch (frame.type) {
+      case 'step:start':
+        return `<span class="step-pill">step ${(frame.stepIndex ?? 0) + 1}</span>${esc(truncate(frame.stepCode ?? '', 90))}`;
+      case 'step:pass':
+        return `<span class="step-pill">step ${(frame.stepIndex ?? 0) + 1}</span>✓ ${frame.durationMs ?? '?'}ms`;
+      case 'step:fail':
+        return `<span class="step-pill">step ${(frame.stepIndex ?? 0) + 1}</span>` +
+               `<span class="err">${esc(truncate(frame.error?.message ?? '', 120))}</span>`;
+      case 'heal:start':
+        return `Healing step ${(frame.stepIndex ?? 0) + 1} — attempt ${frame.attemptNumber ?? 1}`;
+      case 'heal:done': {
+        const hr = frame.healResult ?? {};
+        return `confidence <span class="confidence">${(hr.confidence ?? 0).toFixed(2)}</span>` +
+               ` → <span class="selector">${esc(hr.newSelector ?? '(none)')}</span>`;
+      }
+      case 'run:done':
+        return `✓ ${frame.passed} passed &nbsp;✗ ${frame.failed} failed &nbsp;💊 ${frame.healed} healed` +
+               ` — ${frame.durationMs ?? 0}ms`;
+      case 'server:ready':
+        return `Connected — ${frame.message ?? ''}`;
+      default:
+        return esc(frame.message ?? JSON.stringify(frame).slice(0, 120));
+    }
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function truncate(s, n) { return s.length > n ? s.slice(0, n) + '…' : s; }
+
+  // ── Render one event row ──────────────────────────────
+  function addEvent(frame) {
+    logEmpty.style.display = 'none';
+    eventCount++;
+    stats.events++;
+
+    if (frame.type === 'step:pass')   stats.pass++;
+    if (frame.type === 'step:fail')   stats.fail++;
+    if (frame.type === 'run:done' && frame.healed > 0) stats.healed = frame.healed;
+
+    // Update active test info
+    if (frame.type === 'step:start' && frame.testFile) {
+      activeTest.innerHTML = `
+        <div class="name">${esc(frame.testFile.split(/[\\/]/).pop())}</div>
+        <div class="file">${esc(frame.testFile)}</div>`;
+    }
+    if (frame.type === 'run:done') {
+      setTimeout(() => { activeTest.innerHTML = '<div class="idle">No test running</div>'; }, 2000);
+    }
+
+    const row = document.createElement('div');
+    row.className = 'event-row';
+    row.innerHTML = `
+      <span class="event-type ${cssClass(frame.type)}">${esc(frame.type)}</span>
+      <span class="event-ts">${ts(frame.ts)}</span>
+      <span class="event-body">${bodyFor(frame)}</span>`;
+
+    logScroller.appendChild(row);
+    logScroller.scrollTop = logScroller.scrollHeight;
+    updateStats();
+  }
+
+  // ── WebSocket connection (auto-reconnect) ─────────────
+  function connect() {
+    const ws = new WebSocket(WS_URL);
+
+    ws.addEventListener('open', () => {
+      wsDot.classList.add('live');
+      wsLabel.textContent = 'Live';
+    });
+
+    ws.addEventListener('message', (ev) => {
+      try { addEvent(JSON.parse(ev.data)); } catch { /* ignore */ }
+    });
+
+    ws.addEventListener('close', () => {
+      wsDot.classList.remove('live');
+      wsLabel.textContent = 'Reconnecting…';
+      setTimeout(connect, 3000);
+    });
+
+    ws.addEventListener('error', () => ws.close());
+
+    // Keep-alive ping every 25 s
+    const ping = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN)
+        ws.send(JSON.stringify({ type: 'ping' }));
+    }, 25_000);
+    ws.addEventListener('close', () => clearInterval(ping));
+  }
+
+  connect();
+})();
+</script>
+</body>
+</html>
