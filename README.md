@@ -5,17 +5,6 @@ SelfHeal is a high-performance Playwright wrapper that intercepts test failures,
 
 ---
 
-## 🚀 The 30-Second Stage Pitch
-
-"We’ve all been there: Your frontend team deploys a beautiful V2 update, but your Playwright tests instantly crash because a button ID changed or a div was wrapped. 
-
-**SelfHeal changes that.** 
-
-It doesn't just fail; it **heals**. Using our **Intent Layer**, you tell the SDK your *human goal* (e.g., 'Click the login button'). When the test breaks, our AI doesn't just look for string similarity—it finds the element that satisfies your goal. 
-
-Combined with our **Fragility Scorer** which warns you about brittle selectors before you even hit 'Run', SelfHeal makes 'Flaky Test' a term of the past. One run, zero crashes, auto-patched code. That is the future of QA."
-
----
 
 ## 🛠️ Key Features
 
@@ -44,7 +33,7 @@ Combined with our **Fragility Scorer** which warns you about brittle selectors b
    npx selfheal run tests/checkout.spec.js --dashboard
    ```
 
-## 📂 Project Structure (Hackathon Blueprint)
+## 📂 Project Structure
 
 - `src/healEngine/`: The brain. Contains `healAgent` (Gemini), `selectorEngine` (Fuzzy), and `failureWatcher`.
 - `src/sdk/`: Explicit `healClick`, `healFill` wrappers for Devs.
