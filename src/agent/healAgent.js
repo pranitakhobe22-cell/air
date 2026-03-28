@@ -11,28 +11,46 @@ export async function askHealAgent(failureBundle) {
 
     const keys = keyString.split(',').map(k => k.trim()).filter(Boolean);
 
-    const intentBlock = intent ? `\n-- INTENT --\nThe human intent for this action was: "${intent}"\nYou MUST find the element that achieves this exact human goal, even if the page layout changed.` : '';
+    let prompt;
 
-    const prompt = `You are an AI healing agent for Playwright test automation.
-A UI test failed because the selector no longer matches any element in the DOM.
+    if (intent) {
+        prompt = `The goal of this step was to: ${intent}.
+The selector that was tried: ${selector}
+That selector no longer exists. 
+Look at this DOM and find the element that best achieves the stated goal.
+Do not just find a similar selector — find the element that completes the intent.
+
+-- ERROR --
+${error}
+
+-- DOM SNAPSHOT (Truncated) --
+${domSnapshot.substring(0, 15000)}
+
+Return your response ONLY as a valid JSON object with the following properties, and no other text or explanation. Do not wrap in markdown code fences.
+{
+  "rootCause": "Explanation",
+  "newSelector": "The exact CSS selector",
+  "confidence": 0.95
+}`;
+    } else {
+        prompt = `The selector ${selector} was not found. Look at the DOM and find the new selector.
 
 -- ERROR --
 ${error}
 
 -- BROKEN SELECTOR --
 ${selector}
-${intentBlock}
 
 -- DOM SNAPSHOT (Truncated) --
 ${domSnapshot.substring(0, 15000)}
 
-Your job is to find the exact replacement selector based on the DOM structure and your understanding of standard web layouts.
-Return your response ONLY as a valid JSON object with the following properties, and no other text or explanation. Do not wrap in markdown.
+Return your response ONLY as a valid JSON object with the following properties, and no other text or explanation. Do not wrap in markdown code fences.
 {
-  "rootCause": "Explanation of why the selector broke",
+  "rootCause": "Explanation",
   "newSelector": "The fixed CSS selector",
   "confidence": 0.95
 }`;
+    }
 
     for (const apiKey of keys) {
         try {
@@ -41,7 +59,6 @@ Return your response ONLY as a valid JSON object with the following properties, 
             const result = await model.generateContent(prompt);
             let text = result.response.text().trim();
 
-            // Strip markdown fences before JSON.parse
             text = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
             const parsed = JSON.parse(text);
 
@@ -52,7 +69,6 @@ Return your response ONLY as a valid JSON object with the following properties, 
             };
         } catch (err) {
             console.error(`  ⚠️ Heal Agent AI Error (key ${apiKey.substring(0, 8)}...):`, err.message);
-            // Continue to next key
         }
     }
 

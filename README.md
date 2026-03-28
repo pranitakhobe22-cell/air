@@ -1,10 +1,14 @@
-# SelfHeal 🩺
-### AI-Powered Test Self-Healing with Intent Matching
+# SelfHeal
 
-SelfHeal is a high-performance Playwright wrapper that intercepts test failures, analyzes them using **Gemini 2.5 Flash**, and automatically patches your source code with working selectors.
+## What it does
+SelfHeal is an AI-powered Playwright test automation layer that detects broken selectors during a test run and dynamically fixes them in real-time. It uses an intent-aware Gemini reasoning engine to understand the human goal of each step, bypassing brittle UI changes and ensuring test pipelines never fail due to structural DOM updates.
 
----
-
+## How to run the demo
+```bash
+npm install
+npx playwright install chromium
+npx selfheal run tests/checkout.spec.js --dashboard --report
+```
 
 ## 🛠️ Key Features
 
@@ -41,5 +45,8 @@ SelfHeal is a high-performance Playwright wrapper that intercepts test failures,
 - `src/storage/`: SQLite caching and JSON reporting.
 - `dashboard/`: Premium Live Status interface.
 
+## 👁️ What you will see
+When you start the command, the dashboard will immediately display a pre-run fragility scan highlighting our intentionally weak, old selectors. As Playwright executes the script and elements inevitably fail to be found, you will see the self-healing engine activate live in the right panel, analyzing the DOM snapshot against the developer's intent string. It will confidently determine the new selector, log its reasoning, and seamlessly patch the test continuing the execution until completion, finally producing a comprehensive `heal-report.json` zero-human-intervention artifact.
+
 ---
-*Built for the 2026 AI Agentic Coding Hackathon by Dev 1 & Dev 2.*
+*Built for the 2026 AI Agentic Coding Hackathon.*

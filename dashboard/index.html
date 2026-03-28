@@ -84,7 +84,7 @@
           <div class="p-4 border-b border-slate-700/50 flex items-center justify-between bg-amber-500/10">
             <h2 class="font-semibold text-amber-400 flex items-center gap-2">
               <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-              Fragility Pre-Scan
+              Pre-run fragility scan
             </h2>
             <span class="text-[10px] uppercase font-bold text-amber-600">Phase 4 Active</span>
           </div>
@@ -132,6 +132,34 @@
         </section>
         
       </div>
+    </div>
+  </div>
+
+  <!-- Phase 4 Full-Screen Overlay (Hidden by Default) -->
+  <div id="run-summary-overlay" class="fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-50 hidden flex flex-col items-center justify-center transition-opacity duration-500">
+    <div class="text-center space-y-8 max-w-2xl w-full p-10 bg-slate-800/50 border border-slate-700 rounded-3xl shadow-2xl">
+      <h1 class="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-sky-400 pb-2">Test Run Complete</h1>
+      
+      <div class="grid grid-cols-2 gap-6 mt-8">
+        <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
+          <div class="text-6xl font-black text-white" id="overlay-steps">0</div>
+          <div class="text-sm text-slate-400 uppercase tracking-widest mt-2 font-semibold">Steps Run</div>
+        </div>
+        <div class="bg-indigo-900/20 p-6 rounded-2xl border border-indigo-500/30">
+          <div class="text-6xl font-black text-amber-400" id="overlay-healed">0</div>
+          <div class="text-sm text-indigo-300 uppercase tracking-widest mt-2 font-semibold">Healed Automatically</div>
+        </div>
+        <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
+          <div class="text-6xl font-black text-white" id="overlay-interventions">0</div>
+          <div class="text-sm text-slate-400 uppercase tracking-widest mt-2 font-semibold">Human Interventions</div>
+        </div>
+        <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
+          <div class="text-6xl font-black text-white" id="overlay-time">0s</div>
+          <div class="text-sm text-slate-400 uppercase tracking-widest mt-2 font-semibold">Total Time</div>
+        </div>
+      </div>
+      
+      <p class="mt-8 text-slate-400 italic text-sm border-t border-slate-700 pt-6">The heal-report.json artifact has been generated in the project root.</p>
     </div>
   </div>
 

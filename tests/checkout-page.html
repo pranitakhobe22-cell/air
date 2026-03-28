@@ -22,40 +22,44 @@
         </div>
 
         <div class="space-y-6">
-            <!-- Selector changed from #email-input (V1) to #user-email-field (V2) -->
+            <!-- Selector changed from #login-email (V1) to #auth-user-email (V2) -->
             <div class="input-group">
                 <label class="block text-sm font-medium mb-2 text-slate-300">Email Address</label>
-                <input type="email" id="user-email-field" placeholder="alex@example.com">
+                <input type="email" id="auth-user-email" placeholder="alex@example.com">
             </div>
 
-            <!-- Selector changed from #promo-input (V1) to #discount-code (V2) -->
+            <!-- Selector changed from #login-password (V1) to #auth-user-pass (V2) -->
             <div class="input-group">
-                <label class="block text-sm font-medium mb-2 text-slate-300">Promo Code</label>
-                <input type="text" id="discount-code" placeholder="HACKATHON2026">
+                <label class="block text-sm font-medium mb-2 text-slate-300">Password</label>
+                <input type="password" id="auth-user-pass" placeholder="••••••••">
             </div>
 
-            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 mb-6">
-                <div class="flex justify-between text-sm">
-                    <span>Subtotal</span>
-                    <span>$499.00</span>
+            <!-- Selector changed from #login-btn (V1) to #btn-authenticate (V2) -->
+            <button id="btn-authenticate" class="w-full py-3 rounded-xl font-bold text-lg bg-slate-700 hover:bg-slate-600 transition-colors">
+                Sign In securely
+            </button>
+
+            <div class="border-t border-slate-700/50 my-6"></div>
+
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 mb-6 flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-sky-400">SelfHeal Pro License</h3>
+                    <p class="text-sm text-slate-400">$499.00 / year</p>
                 </div>
-                <div class="flex justify-between font-bold text-lg mt-2 text-sky-400">
-                    <span>Total</span>
-                    <span>$499.00</span>
-                </div>
+                <!-- Selector changed from #add-cart (V1) to .action-add-item (V2) -->
+                <button class="action-add-item px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-bold shadow-lg text-emerald-50">
+                    Add to Cart
+                </button>
             </div>
 
-            <!-- Broken Structural Selector Demo: This was previously body > div:nth-child(2) > button in V1
-                 Now it's wrapped in a new container, breaking the nth-child(2) structural link! -->
-            <div class="new-container-wrap">
+            <!-- Broken Structural Selector Demo: This was previously #place-order in V1 -->
+            <div class="new-container-wrap mt-8">
                 <button id="checkout-submit" class="w-full py-4 rounded-xl font-bold text-lg btn-fancy shadow-lg shadow-blue-500/20">
-                    Place My Order
+                    Complete Purchase
                 </button>
             </div>
             
-            <!-- Success message container (initially hidden) -->
-            <!-- V1 was #success-msg, V2 is #order-confirm-status -->
-            <div id="order-confirm-status" class="hidden mt-6 p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-center text-emerald-400">
+            <div id="order-confirm-status" class="hidden mt-6 p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-center text-emerald-400 font-semibold">
                 🎉 Order placed successfully!
             </div>
         </div>
