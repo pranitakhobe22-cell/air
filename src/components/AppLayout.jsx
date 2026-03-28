@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Radio, Wind, Network, MapPin, Shield, Heart,
-  TrendingUp, User, Radiation, LogOut, WifiOff, Menu, X, Sun, Moon
+  TrendingUp, User, Radiation, LogOut, WifiOff, Menu, X, Sun, Moon, Route as RouteIcon
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
 import useAuthStore from '@/store/useAuthStore';
@@ -17,6 +17,7 @@ const navItems = [
   { path: '/map', label: 'Map', icon: MapPin },
   { path: '/exposure', label: 'Exposure', icon: Radiation },
   { path: '/health', label: 'Health', icon: Heart },
+  { path: '/route-ai', label: 'Route AI', icon: RouteIcon },
   { path: '/forecast', label: 'Forecast', icon: TrendingUp },
   { path: '/profile', label: 'Profile', icon: User },
 ];

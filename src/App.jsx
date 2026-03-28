@@ -24,6 +24,7 @@ const Health = lazy(() => import('@/pages/Health'));
 const Forecast = lazy(() => import('@/pages/Forecast'));
 const Profile = lazy(() => import('@/pages/Profile'));
 const Onboarding = lazy(() => import('@/pages/Onboarding'));
+const RouteAI = lazy(() => import('@/pages/RouteAI'));
 
 const PageLoader = () => (
   <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center">
@@ -96,6 +97,7 @@ function AppInner() {
             <Route path="/health" element={<Health />} />
             <Route path="/forecast" element={<Forecast />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/route-ai" element={<RouteAI />} />
           </Route>
 
           {/* Fallback */}
