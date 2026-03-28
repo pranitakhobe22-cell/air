@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SelfHeal AI — Debugging Intelligence for VS Code</title>
+    <!-- Modern web font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="logo">
+        <span class="icon">🛡️</span>
+        <span class="text">SelfHeal AI</span>
+      </div>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How it Works</a>
+        <a href="https://github.com/srujakwarbhuvan/SelfHeal" target="_blank" class="primary-btn">GitHub</a>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+      <div class="bg-gradient-spot spot-1"></div>
+      <div class="bg-gradient-spot spot-2"></div>
+      
+      <div class="hero-content">
+        <div class="badge">✨ v3.0 Is Now Live</div>
+        <h1>Debugging Intelligence, <br/> <span class="highlight">Embedded in your IDE.</span></h1>
+        <p>Your AI pair programmer that instantly finds root causes, suggests fixes, and auto-heals broken Playwright tests directly inside VS Code.</p>
+        <div class="cta-group">
+          <a href="https://github.com/srujakwarbhuvan/SelfHeal/raw/main/release/selfheal-vscode-3.0.0.vsix" class="primary-btn pulse">Download Extension</a>
+          <a href="#how-it-works" class="secondary-btn">See it in action</a>
+        </div>
+        <div class="terminal-mock">
+          <div class="mac-dots"><span></span><span></span><span></span></div>
+          <p><span class="prompt">❯</span> npx @vscode/vsce package</p>
+          <p><span class="prompt">❯</span> code --install-extension selfheal.vsix</p>
+          <p class="success">🚀 Extension installed successfully!</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+      <h2>Everything you need to <span class="highlight">ship faster</span></h2>
+      <div class="glass-grid">
+        <!-- Feature 1 -->
+        <div class="glass-card">
+          <div class="card-icon">💬</div>
+          <h3>AI Chat Sidebar</h3>
+          <p>Always-available AI assistant in your editor. Ask questions, analyze code, and understand diagnostics without leaving your deep work state.</p>
+        </div>
+        <!-- Feature 2 -->
+        <div class="glass-card">
+          <div class="card-icon">⚡</div>
+          <h3>Slash Commands</h3>
+          <p>Instantly perform complex tasks. Type <code>/debug</code> to find root causes, or <code>/refactor</code> to instantly clean up messy spaghetti code.</p>
+        </div>
+        <!-- Feature 3 -->
+        <div class="glass-card">
+          <div class="card-icon">🩹</div>
+          <h3>Auto-Healing Tests</h3>
+          <p>Tired of fragile E2E tests? SelfHeal tracks execution and automatically heals broken selectors using DOM context and intent reasoning.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Showcase Section -->
+    <section id="how-it-works" class="showcase">
+      <div class="showcase-content">
+        <h2>Powered by <span class="highlight">Gemini 2.0 Flash</span></h2>
+        <p>SelfHeal AI runs exclusively on your local Extension Host, reading your active files and cursor context to pass perfectly tailored prompts to Google's most advanced lightweight model — streaming responses back in milliseconds.</p>
+        
+        <div class="command-pills">
+          <span class="pill">/debug</span>
+          <span class="pill">/fix</span>
+          <span class="pill">/heal</span>
+          <span class="pill">/explain</span>
+          <span class="pill">/generate</span>
+        </div>
+      </div>
+      <div class="showcase-visual glass-panel">
+        <div class="panel-header">
+           <span class="tab active">💬 Chat</span>
+           <span class="tab">📊 Dashboard</span>
+        </div>
+        <div class="panel-body typed-out-container">
+          <p class="user-msg"><strong>You:</strong> /debug</p>
+          <p class="ai-msg"><strong>SelfHeal AI:</strong> I found the root cause! The variable <code>token</code> is deeply nested but undefined here. I recommend adding optional chaining. <br/><br/><code>const auth = req?.headers?.token;</code></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="logo">
+        <span class="icon">🛡️</span>
+        <span class="text">SelfHeal</span>
+      </div>
+      <p>Built with ❤️ for modern developers.</p>
+    </footer>
+
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
