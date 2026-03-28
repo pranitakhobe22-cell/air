@@ -3,3 +3,10 @@ node_modules/
 data/heals.db*
 heal-report.json
 app_log.txt
+
+# SelfHeal Temp & Build Artifacts
+.selfheal/
+release/
+*.tgz
+*.vsix
+vscode-extension/out/
