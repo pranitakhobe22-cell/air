@@ -1,0 +1,18 @@
+{
+  "testFile": "/Users/sangharshgedekar/web-healer/Web-Healer/tests/checkout.spec.js",
+  "timestamp": "2026-03-28T06:44:20.282Z",
+  "totalSteps": 2,
+  "healsApplied": 0,
+  "steps": [
+    {
+      "action": "goto",
+      "selector": "http://localhost:3000/pages/shop_v2.html",
+      "status": "pass"
+    },
+    {
+      "action": "fill",
+      "selector": "#email-input",
+      "status": "fail"
+    }
+  ]
+}
