@@ -235,7 +235,7 @@ export default function Onboarding() {
                                     disabled={saving}
                                     className="flex items-center space-x-3 px-8 py-4 bg-linear-to-r from-(--color-primary) to-(--color-secondary) rounded-xl text-white font-black text-xs uppercase tracking-widest hover:opacity-90 shadow-lg shadow-(--color-primary)/20 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
                                 >
-                                    <span>{saving ? 'Saving...' : 'Explore Dashboard'}</span>
+                                    <span>{saving ? 'Saving...' : 'Start Exploring'}</span>
                                     <ArrowRight size={18} />
                                 </button>
                             ) : (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -12,6 +12,8 @@ import {
 import useAerisStore from '@/store/aerisStore';
 import useAuthStore from '@/store/useAuthStore';
 import useActiveNode from '@/hooks/useActiveNode';
+
+const WeatherSection = lazy(() => import('@/components/weather/WeatherSection'));
 
 // ── Smooth Number Transition ─────────────────────────────────────
 const AnimatedNumber = ({ value, decimals = 0 }) => {
@@ -345,6 +347,11 @@ const Dashboard = () => {
           <MetricCard label="NOx" value={sensors.nox} unit="ppb" icon={Activity} color="#ec4899" sparkData={historyData.map(h => ({ v: h.nox || 0 }))} />
         </div>
       </div>
+
+      {/* ── Weather Parameters ──────────────────────────────── */}
+      <Suspense fallback={<div className="glass-card rounded-xl h-64 animate-pulse" />}>
+        <WeatherSection />
+      </Suspense>
 
       {/* ── Trend Chart + Stations ──────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">

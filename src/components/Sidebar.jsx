@@ -5,7 +5,7 @@ import LiveIndicator from './shared/LiveIndicator';
 import './Sidebar.css';
 
 const navItems = [
-  { path: '/',          label: 'Dashboard',    icon: '📊' },
+  { path: '/',          label: 'Explore',    icon: '📊' },
   { path: '/live',      label: 'Live Status',  icon: '🔴' },
   { path: '/map',       label: 'Sector Map',   icon: '🗺️' },
   { path: '/exposure',  label: 'Exposure',     icon: '🫁' },

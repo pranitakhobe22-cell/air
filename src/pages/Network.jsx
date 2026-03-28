@@ -103,7 +103,7 @@ const Network = () => {
                 { icon: Wifi, name: 'ESP32 Sensors', sub: 'Raw capture', color: 'text-sky-400', bg: 'bg-sky-500/10' },
                 { icon: Server, name: 'Cloud API', sub: 'Ingestion', color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
                 { icon: Database, name: 'Processing', sub: 'AQI/RRI compute', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-                { icon: Activity, name: 'Dashboard', sub: 'Visualization', color: 'text-amber-400', bg: 'bg-amber-500/10' },
+                { icon: Activity, name: 'Explore', sub: 'Visualization', color: 'text-amber-400', bg: 'bg-amber-500/10' },
               ].map((step, i, arr) => (
                 <React.Fragment key={step.name}>
                   <div className="flex flex-col items-center glass-card border-white/10 rounded-2xl p-6 w-full md:w-44 text-center backdrop-blur-md shadow-lg transition-all hover:translate-y-[-2px]">

@@ -10,7 +10,7 @@ import useNodeStore from '@/store/useNodeStore';
 import { logout } from '@/services/auth';
 
 const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/dashboard', label: 'Explore', icon: LayoutDashboard },
   { path: '/live', label: 'Live Status', icon: Radio },
   { path: '/pollutants', label: 'Pollutants', icon: Wind },
   { path: '/network', label: 'Network', icon: Network },

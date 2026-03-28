@@ -7,7 +7,7 @@
  */
 
 // Use environment variable for base URL, default to Railway for dev
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://aeris-backend-production.up.railway.app/api/v1';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://live-aeris.onrender.com/api/v1';
 
 export const API_ENDPOINTS = {
   // Environment and Sensors
