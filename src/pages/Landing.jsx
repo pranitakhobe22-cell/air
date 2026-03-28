@@ -132,9 +132,7 @@ const Landing = () => {
           animate={contentReady ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
           transition={{ duration: 0.7, delay: 0.1, ease: 'easeOut' }}
         >
-          <div className="flex items-center">
-            <img src="/logo-aeris.png" alt="AERIS" className="h-20 w-auto object-contain drop-shadow-md" />
-          </div>
+          <div className="flex items-center" />
           <div className="flex items-center gap-6">
             <button onClick={() => navigate('/login')} className="text-sm font-semibold text-slate-200 hover:text-white transition-colors drop-shadow-md">
               Log in

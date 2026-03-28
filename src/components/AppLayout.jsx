@@ -13,12 +13,12 @@ const navItems = [
   { path: '/dashboard', label: 'Explore', icon: LayoutDashboard },
   { path: '/live', label: 'Live Status', icon: Radio },
   { path: '/pollutants', label: 'Pollutants', icon: Wind },
-  { path: '/network', label: 'Network', icon: Network },
-  { path: '/map', label: 'Map', icon: MapPin },
-  { path: '/exposure', label: 'Exposure', icon: Radiation },
-  { path: '/health', label: 'Health', icon: Heart },
   { path: '/route-ai', label: 'Route AI', icon: RouteIcon },
+  { path: '/exposure', label: 'Exposure', icon: Radiation },
   { path: '/forecast', label: 'Forecast', icon: TrendingUp },
+  { path: '/map', label: 'Map', icon: MapPin },
+  { path: '/network', label: 'Network', icon: Network },
+  { path: '/health', label: 'Health', icon: Heart },
   { path: '/profile', label: 'Profile', icon: User },
 ];
 
