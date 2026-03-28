@@ -18,5 +18,9 @@ export function createHttpServer(port = 3000) {
     const fixturesDir = path.join(__dirname, '..', '..', 'fixtures');
     app.use('/fixtures', express.static(fixturesDir));
 
+    // Serve test pages (e.g. checkout-page.html) at /pages
+    const testsDir = path.join(__dirname, '..', '..', 'tests');
+    app.use('/pages', express.static(testsDir));
+
     return { app, server, port };
 }

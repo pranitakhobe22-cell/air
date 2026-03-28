@@ -220,6 +220,38 @@ def api_scan_page():
         return return_error(str(e), 500)
 
 
+@app.route("/api/heal", methods=["POST"])
+def api_heal():
+    """Takes a broken selector, DOM string, and intent, asks Gemini for a fix."""
+    try:
+        data = request.json or {}
+        broken_selector = data.get("broken_selector")
+        page_html = data.get("page_html")
+        intent = data.get("intent", "No specific intent")
+
+        if not broken_selector or not page_html:
+            return return_error("Missing 'broken_selector' or 'page_html'")
+
+        from agent import WebHealerAgent
+        agent = WebHealerAgent(
+            config_path=CONFIG_FILE,
+            scripts_path=SCRIPTS_FILE,
+            heals_path=HEALS_FILE
+        )
+        
+        new_selector = agent.ask_gemini(broken_selector, page_html, intent)
+        if new_selector:
+            return jsonify({
+                "new_selector": new_selector, 
+                "confidence": 90, 
+                "root_cause": "Resolved via python standalone backend"
+            })
+        else:
+            return return_error("Failed to generate a healed selector", 500)
+    except Exception as e:
+        return return_error(str(e), 500)
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
 

@@ -125,6 +125,28 @@
       log(`Run completed.`, data.status==='passed'?'success':'error');
     });
 
+    socket.on('fragility:data', (scores) => {
+      const container = document.getElementById('fragility-scans');
+      if (!scores || scores.length === 0) return;
+      container.innerHTML = '';
+      scores.forEach(s => {
+        const card = document.createElement('div');
+        const color = s.score > 50 ? 'text-rose-400' : (s.score > 20 ? 'text-amber-400' : 'text-emerald-400');
+        const bg = s.score > 50 ? 'bg-rose-500/10' : (s.score > 20 ? 'bg-amber-500/10' : 'bg-emerald-500/10');
+        
+        card.className = `p-3 rounded-xl border border-white/5 ${bg} space-y-1`;
+        card.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="text-[10px] font-mono text-slate-400 truncate w-3/4">${s.selector}</span>
+            <span class="text-xs font-bold ${color}">${s.score}%</span>
+          </div>
+          <div class="text-[10px] text-slate-500 italic">${s.reasons[0] || 'Good selector'}</div>
+        `;
+        container.appendChild(card);
+      });
+      log(`Received fragility scan for ${scores.length} selectors.`, 'warn');
+    });
+
     document.getElementById('btn-approve').addEventListener('click', () => {
       socket.emit('heal:approve'); approvalBox.classList.add('hidden');
     });

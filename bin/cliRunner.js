@@ -16,16 +16,20 @@ export async function executeCLI(testFile, dashboard) {
         process.exit(1);
     }
 
-    // PHASE 4: INTENT LAYER - FRAGILITY SCORE
     console.log('\n=======================================');
     console.log('       🩺 SelfHeal Test Runner       ');
     console.log('=======================================\n');
 
-    scoreFragility(absFile);
+    const scores = scoreFragility(absFile);
 
     // SERVER / DASHBOARD
     const { app, server, port } = createHttpServer(3000);
     const io = createWsServer(server);
+    
+    // Sync point: Emit fragility once dashboard connects
+    io.on('connection', (socket) => {
+        socket.emit('fragility:data', scores);
+    });
     
     await new Promise(resolve => server.listen(port, resolve));
     const url = `http://localhost:${port}`;
