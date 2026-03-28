@@ -1,0 +1,83 @@
+{
+  "name": "selfheal-vscode",
+  "displayName": "SelfHeal",
+  "description": "AI-Powered Self-Healing SDK & CLI for Playwright — embedded in your editor.",
+  "version": "2.2.0",
+  "publisher": "selfheal",
+  "icon": "images/icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Testing"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/*.spec.js",
+    "workspaceContains:**/*.spec.ts"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "selfheal-panel",
+          "title": "SelfHeal",
+          "icon": "$(beaker)"
+        }
+      ]
+    },
+    "views": {
+      "selfheal-panel": [
+        {
+          "type": "webview",
+          "id": "selfheal.agentView",
+          "name": "SelfHeal Agent"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "selfheal.runCurrentTest",
+        "title": "SelfHeal: Run Current Test",
+        "icon": "$(play)"
+      },
+      {
+        "command": "selfheal.stopRun",
+        "title": "SelfHeal: Stop Run",
+        "icon": "$(debug-stop)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "selfheal.runCurrentTest",
+        "key": "ctrl+shift+h",
+        "mac": "cmd+shift+h",
+        "when": "editorTextFocus"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "selfheal.runCurrentTest",
+          "when": "view == selfheal.agentView",
+          "group": "navigation"
+        },
+        {
+          "command": "selfheal.stopRun",
+          "when": "view == selfheal.agentView",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "18.x",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.1.6"
+  }
+}
