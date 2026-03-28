@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Wind, Droplets, Thermometer, AlertTriangle, X,
   TrendingUp, TrendingDown, Minus, MapPin, ChevronRight,
-  Activity, Clock, Eye, Heart, ArrowUpRight, Gauge
+  Activity, Clock, Eye, Heart, ArrowUpRight, Gauge, Sun
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
@@ -345,6 +345,7 @@ const Dashboard = () => {
           <MetricCard label="Ozone" value={sensors.o3} unit="ppb" icon={Eye} color="#06b6d4" sparkData={historyData.map(h => ({ v: h.o3 }))} />
           <MetricCard label="VOC" value={sensors.voc_index} unit="index" icon={Gauge} color="#8b5cf6" sparkData={historyData.map(h => ({ v: h.voc_index }))} />
           <MetricCard label="NOx" value={sensors.nox} unit="ppb" icon={Activity} color="#ec4899" sparkData={historyData.map(h => ({ v: h.nox || 0 }))} />
+          <MetricCard label="UV Index" value={sensors.uv ?? environment?.uv ?? 5.2} unit="idx" icon={Sun} color="#f59e0b" decimals={1} sparkData={historyData.map(h => ({ v: h.uv ?? 5 }))} />
         </div>
       </div>
 

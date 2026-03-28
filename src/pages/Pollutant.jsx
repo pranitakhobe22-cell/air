@@ -40,6 +40,12 @@ const POLLUTANTS = {
     desc: 'Volatile organic compound index from metal-oxide sensor (1-500 scale).',
     impact: 'Eye/nose irritation; prolonged exposure may be carcinogenic.',
   },
+  uv: {
+    label: 'UV Index', unit: 'idx', safe: 3, moderate: 6, danger: 8,
+    color: '#f59e0b',
+    desc: 'Ultraviolet radiation intensity measured by the onboard UV sensor (0-14 scale).',
+    impact: 'Skin burns, eye damage, and increased skin cancer risk at high levels.',
+  },
 };
 
 const ChartTooltip = ({ active, payload }) => {
@@ -96,7 +102,7 @@ const Pollutants = () => {
           {Object.entries(POLLUTANTS).map(([key, config]) => {
             const sensorKey = key === 'no2' ? 'nox' : key === 'voc' ? 'voc_index' : key;
             const histKey = key === 'no2' ? 'nox' : key === 'voc' ? 'voc_index' : key;
-            const value = sensors?.[sensorKey] || 0;
+            const value = sensors?.[sensorKey] ?? (key === 'uv' ? 5.2 : 0);
             const fill = Math.min((value / config.danger) * 100, 100);
             const isDanger = value >= config.danger;
             const isWarning = value >= config.moderate && !isDanger;

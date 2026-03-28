@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Radio, Wind, Network, MapPin, Shield, Heart,
-  TrendingUp, User, Radiation, LogOut, WifiOff, Menu, X
+  TrendingUp, User, Radiation, LogOut, WifiOff, Menu, X, Sun, Moon
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
 import useAuthStore from '@/store/useAuthStore';
@@ -31,6 +31,7 @@ const AppLayout = () => {
   const detectLocation = useNodeStore((s) => s.detectLocation);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('aeris-theme') === 'dark');
 
   const perNode = data?.perNode || {};
   const espNodeIds = Object.keys(perNode);
@@ -65,6 +66,13 @@ const AppLayout = () => {
     };
   }, []);
 
+  const toggleTheme = () => {
+    const next = !isDark;
+    setIsDark(next);
+    localStorage.setItem('aeris-theme', next ? 'dark' : 'light');
+    document.body.classList.toggle('dark-mode', next);
+  };
+
   const userInitials = user?.name
     ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
     : '?';
@@ -83,7 +91,10 @@ const AppLayout = () => {
         <div className="flex items-center gap-2 py-1">
           <img src="/logo-aeris.png" alt="AERIS Logo" className="h-20 w-auto object-contain scale-110 origin-left" />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <button onClick={toggleTheme} className="p-1.5 rounded-lg text-(--color-text-secondary) hover:text-(--color-text-primary) transition-colors" title={isDark ? 'Light mode' : 'Dark mode'}>
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
           <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
           <span className="text-sm font-bold tabular-nums" style={{ color: riskColor }}>{rri}</span>
         </div>
@@ -163,9 +174,18 @@ const AppLayout = () => {
               <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
               <span className="text-[11px] text-(--color-text-secondary)">{isOnline ? 'Connected' : 'Offline'}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <span className="text-[11px] text-(--color-text-secondary) opacity-60">RRI</span>
-              <span className="text-sm font-bold tabular-nums" style={{ color: riskColor }}>{rri}</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleTheme}
+                className="p-1.5 rounded-lg text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-white/10 transition-colors"
+                title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {isDark ? <Sun size={14} /> : <Moon size={14} />}
+              </button>
+              <div className="flex items-center gap-1">
+                <span className="text-[11px] text-(--color-text-secondary) opacity-60">RRI</span>
+                <span className="text-sm font-bold tabular-nums" style={{ color: riskColor }}>{rri}</span>
+              </div>
             </div>
           </div>
 

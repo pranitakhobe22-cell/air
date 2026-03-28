@@ -99,6 +99,7 @@ const useAerisStore = create((set, get) => ({
         nox: payload.no2_ppb || payload.nox || 0,
         o3: payload.o3 || 0,
         voc_index: payload.voc || payload.voc_index || 0,
+        uv: payload.uv ?? null,
       };
 
       // Use EPA precision engine for AQI + dominant pollutant
@@ -115,6 +116,7 @@ const useAerisStore = create((set, get) => ({
         o3: sensorData.o3,
         nox: sensorData.nox,
         voc_index: sensorData.voc_index,
+        uv: sensorData.uv,
         temperature: payload.temp || 0,
         humidity: payload.hum || 0,
       };
@@ -136,7 +138,7 @@ const useAerisStore = create((set, get) => ({
           aqi, rri,
           pm25: sensorData.pm25,
           co: sensorData.co, o3: sensorData.o3,
-          nox: sensorData.nox, voc_index: sensorData.voc_index,
+          nox: sensorData.nox, voc_index: sensorData.voc_index, uv: sensorData.uv,
           temperature: payload.temp || 0, humidity: payload.hum || 0,
         };
         const geoLocation = payload.geo
@@ -147,7 +149,7 @@ const useAerisStore = create((set, get) => ({
             aqi, rri,
             pm25: sensorData.pm25,
             co: sensorData.co, o3: sensorData.o3,
-            nox: sensorData.nox, voc_index: sensorData.voc_index,
+            nox: sensorData.nox, voc_index: sensorData.voc_index, uv: sensorData.uv,
             temperature: payload.temp || 0, humidity: payload.hum || 0,
             timestamp: payload.timestamp || new Date().toISOString(),
           },

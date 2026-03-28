@@ -78,6 +78,7 @@ const useLiveData = () => {
                 no2_ppb: payload.sensors.no2 || payload.sensors.nox || 0,
                 nox: payload.sensors.nox || payload.sensors.no2 || 0,
                 voc: payload.sensors.vocIndex || payload.sensors.voc || payload.sensors.voc_index || 0,
+                uv: payload.sensors.uv ?? payload.sensors.uvIndex ?? null,
                 temp: payload.sensors.temperature || 0,
                 hum: payload.sensors.humidity || 0,
                 oxygen: payload.sensors.oxygen ?? null,

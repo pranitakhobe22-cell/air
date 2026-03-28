@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Activity, Clock, MapPin, RefreshCw, Wind, Thermometer, Droplets, Heart, Gauge
+  Activity, Clock, MapPin, RefreshCw, Wind, Thermometer, Droplets, Heart, Gauge, Sun
 } from 'lucide-react';
 import useAerisStore from '@/store/aerisStore';
 import useActiveNode from '@/hooks/useActiveNode';
@@ -44,6 +44,7 @@ const sensorStatus = (id, val) => {
     o3: [54, 70, 85, 105],
     nox: [53, 100, 360, 649],
     voc: [100, 200, 300, 400],
+    uv: [3, 6, 8, 11],
     temp: [25, 32, 38, 45],
     hum: [30, 60, 80, 95],
   };
@@ -121,6 +122,7 @@ const LiveStatus = () => {
     { id: 'co', label: 'CO', value: activeSensors.co, unit: 'ppm', icon: Gauge, decimals: 2, max: 15 },
     { id: 'nox', label: 'NOx', value: activeSensors.nox, unit: 'ppb', icon: Activity, decimals: 0, max: 360 },
     { id: 'voc', label: 'VOC Index', value: activeSensors.voc_index, unit: 'index', icon: Activity, decimals: 0, max: 500 },
+    { id: 'uv', label: 'UV Index', value: activeSensors.uv ?? 5.2, unit: 'idx', icon: Sun, decimals: 1, max: 14 },
     { id: 'temp', label: 'Temperature', value: activeEnv?.temperature || activeSensors.temperature, unit: '°C', icon: Thermometer, decimals: 1, max: 50 },
     { id: 'hum', label: 'Humidity', value: activeEnv?.humidity || activeSensors.humidity, unit: '%', icon: Droplets, decimals: 0, max: 100 },
   ];

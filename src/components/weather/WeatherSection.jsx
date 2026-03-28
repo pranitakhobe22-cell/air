@@ -8,7 +8,6 @@ import useWeather from '@/hooks/useWeather';
 import WeatherMetricCard from './WeatherMetricCard';
 import LocationSelector from './LocationSelector';
 import WeatherAlertBanner from './WeatherAlertBanner';
-import FiveDayForecast from './FiveDayForecast';
 import { getOWMIconUrl, timeAgo } from '@/utils/weatherHelpers';
 import {
   getTemperatureColor, getHumidityColor, getPressureColor,
@@ -116,8 +115,6 @@ export default function WeatherSection() {
         <WeatherChart hourlyData={forecast?.hourly} />
       </Suspense>
 
-      {/* ── 5-Day Forecast ─────────────────────────────────── */}
-      <FiveDayForecast days={forecast?.daily} />
     </div>
   );
 }

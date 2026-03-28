@@ -7,7 +7,7 @@ import useNodeStore from '@/store/useNodeStore';
  * All pages use this to display per-node or aggregated data.
  *
  * Returns:
- *   sensors     - { pm25, co, o3, voc_index, pm10, nox }
+ *   sensors     - { pm25, co, o3, voc_index, pm10, nox, uv }
  *   environment - { temperature, humidity, oxygen, pressure }
  *   derived     - { aqi, rri, risk_level, risk_color, ... }
  *   history     - array of history points
@@ -56,6 +56,7 @@ const useActiveNode = () => {
         o3: latest.o3 || 0,
         nox: latest.nox || latest.no2 || 0,
         voc_index: latest.voc_index || latest.voc || 0,
+        uv: latest.uv ?? null,
       },
       environment: {
         temperature: latest.temperature || 0,
@@ -78,6 +79,7 @@ const useActiveNode = () => {
         pm10: h.pm10 || Math.round((h.pm25 || 0) * 1.2),
         nox: h.nox || h.no2 || 0,
         voc_index: h.voc_index || h.voc || 0,
+        uv: h.uv ?? null,
         temperature: h.temperature || 0,
         humidity: h.humidity || 0,
       })),
