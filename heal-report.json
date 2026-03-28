@@ -1,0 +1,81 @@
+{
+  "testFile": "checkout.spec.js",
+  "startTime": "2026-03-28 18:26:18",
+  "endTime": "2026-03-28 18:26:45",
+  "status": "passed",
+  "summary": {
+    "total": 6,
+    "passed": 1,
+    "healed": 5,
+    "failed": 0
+  },
+  "steps": [
+    {
+      "index": 0,
+      "name": "goto http://localhost:3000/pages/checkout-page.html",
+      "status": "pass",
+      "error": null,
+      "heal": null
+    },
+    {
+      "index": 1,
+      "name": "fill #email-input",
+      "status": "healed",
+      "error": "locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#email-input')\u001b[22m\n",
+      "heal": {
+        "rootCause": null,
+        "originalSelector": "#email-input",
+        "healedSelector": "#contact-email",
+        "confidence": 0.95
+      }
+    },
+    {
+      "index": 2,
+      "name": "fill #first-name",
+      "status": "healed",
+      "error": "locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#first-name')\u001b[22m\n",
+      "heal": {
+        "rootCause": null,
+        "originalSelector": "#first-name",
+        "healedSelector": "#shipping-first",
+        "confidence": 0.95
+      }
+    },
+    {
+      "index": 3,
+      "name": "fill #credit-card-num",
+      "status": "healed",
+      "error": "locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#credit-card-num')\u001b[22m\n",
+      "heal": {
+        "rootCause": null,
+        "originalSelector": "#credit-card-num",
+        "healedSelector": "#card-number",
+        "confidence": 0.95
+      }
+    },
+    {
+      "index": 4,
+      "name": "fill #promo-input",
+      "status": "healed",
+      "error": "locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#promo-input')\u001b[22m\n",
+      "heal": {
+        "rootCause": null,
+        "originalSelector": "#promo-input",
+        "healedSelector": "#voucher-code",
+        "confidence": 0.95
+      }
+    },
+    {
+      "index": 5,
+      "name": "click .submit-order-btn",
+      "status": "healed",
+      "error": "locator.click: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.submit-order-btn')\u001b[22m\n",
+      "heal": {
+        "rootCause": null,
+        "originalSelector": ".submit-order-btn",
+        "healedSelector": "#btn-place-order",
+        "confidence": 0.95
+      }
+    }
+  ]
+}
