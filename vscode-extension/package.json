@@ -2,7 +2,7 @@
   "name": "selfheal-vscode",
   "displayName": "SelfHeal AI",
   "description": "AI-Powered Dev Assistant with Debugging Intelligence — embedded in your editor.",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "publisher": "selfheal",
   "icon": "images/icon.png",
   "engines": {
