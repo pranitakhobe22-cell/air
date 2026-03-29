@@ -21,7 +21,7 @@ export async function askHealAgent(context) {
   // 1. Check cache via history
   const cached = findCachedHeal(brokenSelector, intent);
   if (cached) {
-    console.log(`   Cache hit: ${brokenSelector} → ${cached.healed_selector}`);
+    console.log(`  💾 Cache hit: ${brokenSelector} → ${cached.healed_selector}`);
     return {
       root_cause: cached.root_cause || 'Previously healed',
       new_selector: cached.healed_selector,
@@ -52,17 +52,16 @@ Reply with ONLY JSON exactly like this:
 
   if (apiKeys.length === 0) {
     console.error('  ❌ No Gemini API keys found in .env (GEMINI_API_KEYS or GEMINI_API_KEY)');
-    return { root_cause: 'API keys missing', new_selector: null, confidence: 0 };
+    return { rootCause: 'API keys missing', newSelector: null, confidence: 0 };
   }
 
   let lastError = null;
 
-  // 3. Round-robin / Fallback through available keys
   for (const key of apiKeys) {
     try {
       const ai = new GoogleGenAI({ apiKey: key });
       const res = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-      let text = res.text.trim().replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+      let text = res.text.trim().replace(/^```(?:json)?\n?/, '').replace(/\n?$/g, '').replace(/```$/g, '').trim();
       const result = JSON.parse(text);
 
       saveHeal({
@@ -74,7 +73,12 @@ Reply with ONLY JSON exactly like this:
         method: intent ? 'gemini-ai-intent' : 'gemini-ai'
       });
 
-      return { ...result, from_cache: false };
+      return { 
+        rootCause: result.root_cause, 
+        newSelector: result.new_selector, 
+        confidence: result.confidence,
+        from_cache: false 
+      };
     } catch (err) {
       console.warn(`  ⚠️ Gemini API attempt failed with a key: ${err.message}`);
       lastError = err;
@@ -82,5 +86,5 @@ Reply with ONLY JSON exactly like this:
   }
 
   console.error('  ❌ All Gemini API keys failed. Last error:', lastError?.message);
-  return { root_cause: 'Gemini API failed', new_selector: null, confidence: 0 };
+  return { rootCause: 'Gemini API failed', newSelector: null, confidence: 0 };
 }

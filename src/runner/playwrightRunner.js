@@ -11,6 +11,12 @@ export function emitEvent(io, event, data) {
 
 export async function executeStep(page, action, selector, performPlaywrightAction, intent, testFile, io) {
     emitEvent(io, 'step:start', { action, selector, testFile });
+    
+    // Capture logs
+    const consoleErrors = [];
+    const networkLogs = [];
+    page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+    page.on('requestfailed', req => networkLogs.push(`${req.url()}: ${req.failure().errorText}`));
 
     try {
         await performPlaywrightAction(selector);

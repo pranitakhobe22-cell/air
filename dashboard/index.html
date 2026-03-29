@@ -376,7 +376,7 @@ select.inp option{background:var(--bg2)}
 <body>
 <div class="app">
 
-<<<<<<< HEAD
+
 <!-- NAV -->
 <nav class="nav">
   <div class="nav-left">
@@ -386,109 +386,7 @@ select.inp option{background:var(--bg2)}
       <button class="nav-tab" onclick="switchTab('history',this)">History</button>
       <button class="nav-tab" onclick="switchTab('report',this)">Report</button>
       <button class="nav-tab" onclick="switchTab('config',this)">Config</button>
-=======
-  <div class="max-w-6xl mx-auto space-y-6">
-    <header class="glass-panel p-6 rounded-2xl flex items-center justify-between">
-      <div class="flex items-center space-x-4">
-        <div class="w-12 h-12 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-400">
-          <svg class="w-6 h-6 pulse" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-2xl font-bold tracking-tight">SelfHeal Live + Intent</h1>
-          <p class="text-slate-400 text-sm mt-1" id="hdr-testname">Waiting for test run...</p>
-        </div>
-      </div>
-      <div class="flex space-x-8">
-        <div class="text-center">
-          <div class="text-3xl font-bold text-white shadow-sm" id="stat-heals">0</div>
-          <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold mt-1">Heals</div>
-        </div>
-        <div class="text-center">
-          <div class="text-3xl font-bold text-white shadow-sm" id="stat-passed">0</div>
-          <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold mt-1">Passed</div>
-        </div>
-        <div class="text-center">
-          <div class="text-3xl font-bold text-white shadow-sm" id="stat-failed">0</div>
-          <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold mt-1">Failed</div>
-        </div>
-        <div class="text-center">
-          <div class="flex items-center justify-center space-x-2">
-            <span class="status-dot status-running" id="status-indicator"></span>
-          </div>
-          <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold mt-1" id="status-text">Idle</div>
-        </div>
-      </div>
-    </header>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      
-      <div class="space-y-6 flex flex-col h-[600px]">
-        <section class="glass-panel rounded-2xl flex flex-col h-[300px]">
-          <div class="p-4 border-b border-slate-700/50 flex items-center justify-between">
-            <h2 class="font-semibold text-slate-200">Execution Timeline</h2>
-            <span class="text-xs px-2 py-1 bg-slate-800 rounded-md text-slate-400" id="step-count">0 Steps</span>
-          </div>
-          <div class="p-4 overflow-y-auto flex-1 space-y-3" id="timeline">
-            <div class="text-center text-slate-500 py-10 italic">Waiting for steps...</div>
-          </div>
-        </section>
-
-        <!-- Fragility Scorer Panel (Phase 4) -->
-        <section class="glass-panel rounded-2xl flex flex-col h-[276px]">
-          <div class="p-4 border-b border-slate-700/50 flex items-center justify-between bg-amber-500/10">
-            <h2 class="font-semibold text-amber-400 flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-              Pre-run fragility scan
-            </h2>
-            <span class="text-[10px] uppercase font-bold text-amber-600">Phase 4 Active</span>
-          </div>
-          <div class="p-4 overflow-y-auto flex-1 space-y-2" id="fragility-scans">
-            <div class="text-center text-slate-500 py-6 italic text-sm">Waiting for pre-scan...</div>
-          </div>
-        </section>
-      </div>
-
-      <div class="space-y-6 flex flex-col h-[600px]">
-        
-        <section class="glass-panel rounded-2xl flex-shrink-0 transition-opacity duration-300" id="heal-panel" style="opacity: 0.5;">
-          <div class="p-4 border-b border-slate-700/50 flex items-center justify-between bg-blue-900/20 rounded-t-2xl">
-            <div class="flex items-center space-x-2 text-sky-400 font-semibold">
-               <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-               <span>AI Healer Activity</span>
-            </div>
-            <div id="fragility-warning" class="hidden px-2 py-1 bg-rose-500/20 text-rose-300 text-xs rounded border border-rose-500/50 font-semibold">
-              Fragile Selector Detected
-            </div>
-          </div>
-          <div class="p-5 space-y-4">
-             <div id="heal-status" class="text-sm text-slate-300">Quiet. AI is standing by.</div>
-             
-             <div id="approval-box" class="hidden mt-4 p-4 rounded-xl border border-amber-500/50 bg-amber-900/20">
-                <h3 class="text-amber-400 font-bold mb-2">Low Confidence Fix — Human Review</h3>
-                <p class="text-sm text-slate-300 mb-2">Confidence: <span id="approve-conf" class="font-bold text-white"></span>%</p>
-                <div class="text-xs font-mono bg-black/40 p-2 rounded mb-1 text-slate-400">Old: <span id="approve-old" class="line-through"></span></div>
-                <div class="text-xs font-mono bg-black/40 p-2 rounded mb-3 text-sky-400">New: <span id="approve-new"></span></div>
-                <div class="flex space-x-3">
-                  <button id="btn-approve" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 rounded-lg">Approve</button>
-                  <button id="btn-reject" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2 rounded-lg">Reject</button>
-                </div>
-             </div>
-          </div>
-        </section>
-
-        <section class="glass-panel rounded-2xl flex-col flex flex-1 overflow-hidden">
-          <div class="px-4 py-2 bg-black/60 border-b border-slate-700/50 flex gap-2">
-            <div class="w-3 h-3 rounded-full bg-rose-500"></div>
-            <div class="w-3 h-3 rounded-full bg-amber-500"></div>
-            <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-          </div>
-          <pre class="p-4 overflow-y-auto flex-1 text-slate-300" id="terminal-log"></pre>
-        </section>
-        
-      </div>
->>>>>>> origin/phase-4
     </div>
   </div>
   <div class="nav-right">
@@ -500,7 +398,6 @@ select.inp option{background:var(--bg2)}
   </div>
 </nav>
 
-<<<<<<< HEAD
 <!-- LIVE RUN BODY -->
 <div class="body" id="liveBody">
 

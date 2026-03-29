@@ -21,9 +21,17 @@ export function patchTestFile(filePath, oldSelector, newSelector) {
     return { patched: false, file: absPath };
   }
 
+  // Create backup
+  const backupPath = absPath + '.bak';
+  if (!fs.existsSync(backupPath)) {
+      fs.copyFileSync(absPath, backupPath);
+  }
+
+
   content = content.replace(regex, newSelector);
   fs.writeFileSync(absPath, content, 'utf-8');
 
   console.log(`  ✏️  patchWriter rewrote: "${oldSelector}" → "${newSelector}"`);
+  console.log(`  💾 Backup created: ${backupPath}`);
   return { patched: true, file: absPath, replacements: count };
 }
