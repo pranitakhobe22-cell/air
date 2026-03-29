@@ -18,14 +18,14 @@ if (command === 'exec') {
   import('../src/selector/fragilityScorer.js').then(({ scoreFragility }) => {
     const scores = scoreFragility(testFile);
     if (scores && scores.length > 0) {
-        console.log(`\n   Fragility scan — ${testFile}`);
-        console.log('   ----------------------------------------');
-        scores.forEach(s => {
-            const scoreStr = s.fragilityScore.toString().padEnd(5);
-            let riskLabel = s.risk === 'high' ? 'HIGH RISK' : (s.risk === 'low' ? 'stable' : 'moderate');
-            console.log(`   ${s.selector.padEnd(22)} ${scoreStr} ${riskLabel}`);
-        });
-        console.log('');
+      console.log(`\n   Fragility scan — ${testFile}`);
+      console.log('   ----------------------------------------');
+      scores.forEach(s => {
+        const scoreStr = s.fragilityScore.toString().padEnd(5);
+        let riskLabel = s.risk === 'high' ? 'HIGH RISK' : (s.risk === 'low' ? 'stable' : 'moderate');
+        console.log(`   ${s.selector.padEnd(22)} ${scoreStr} ${riskLabel}`);
+      });
+      console.log('');
     }
     import('./cliRunner.js').then(({ executeCLI }) => {
       executeCLI(testFile, dashboard);
@@ -37,26 +37,3 @@ if (command === 'exec') {
   console.log('  npx selfheal exec "<command>"');
   process.exit(1);
 }
-<<<<<<< HEAD
-=======
-
-const testFile = args[1];
-const dashboard = args.includes('--dashboard');
-
-import { scoreFragility } from '../src/selector/fragilityScorer.js';
-
-const scores = scoreFragility(testFile);
-if (scores && scores.length > 0) {
-    console.log(`\n   Fragility scan — ${testFile}`);
-    console.log('   ----------------------------------------');
-    scores.forEach(s => {
-        const scoreStr = s.fragilityScore.toString().padEnd(5);
-        let riskLabel = s.risk === 'high' ? 'HIGH RISK' : (s.risk === 'low' ? 'stable' : 'moderate');
-        console.log(`   ${s.selector.padEnd(22)} ${scoreStr} ${riskLabel}`);
-    });
-    console.log('');
-}
-
-executeCLI(testFile, dashboard);
-
->>>>>>> origin/phase-4

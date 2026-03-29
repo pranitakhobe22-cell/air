@@ -375,30 +375,60 @@
 <body>
 
   <div class="page">
-
     <!-- Header -->
     <div class="page-header">
       <div class="logo-mark">🛒</div>
       <div class="brand">ShopFlow</div>
       <div class="secure-note">🔒 SSL Secured Checkout</div>
     </div>
-
     <!-- LEFT: Form -->
     <div>
-
-      <!-- Contact info -->
       <div class="card" style="margin-bottom: 20px;">
-        <div class="section-label">Contact Information</div>
+        <div class="space-y-6">
+          <!-- Selector changed from #login-email (V1) to #auth-user-email (V2) -->
+          <div class="input-group">
+            <label class="block text-sm font-medium mb-2 text-slate-300">Email Address</label>
+            <input type="email" id="auth-user-email" placeholder="alex@example.com">
+          </div>
 
-        <!-- V2 renamed from #email-input → #contact-email -->
-        <div class="field-group">
-          <label for="contact-email">Email Address</label>
-          <input type="email" id="contact-email" placeholder="you@example.com" autocomplete="email" />
-        </div>
+          <!-- Selector changed from #login-password (V1) to #auth-user-pass (V2) -->
+          <div class="input-group">
+            <label class="block text-sm font-medium mb-2 text-slate-300">Password</label>
+            <input type="password" id="auth-user-pass" placeholder="••••••••">
+          </div>
 
-        <div class="field-group">
-          <label for="phone-number">Phone (optional)</label>
-          <input type="tel" id="phone-number" placeholder="+1 555 000 0000" />
+          <!-- Selector changed from #login-btn (V1) to #btn-authenticate (V2) -->
+          <button id="btn-authenticate"
+            class="w-full py-3 rounded-xl font-bold text-lg bg-slate-700 hover:bg-slate-600 transition-colors">
+            Sign In securely
+          </button>
+
+          <div class="border-t border-slate-700/50 my-6"></div>
+
+          <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 mb-6 flex justify-between items-center">
+            <div>
+              <h3 class="font-bold text-sky-400">SelfHeal Pro License</h3>
+              <p class="text-sm text-slate-400">$499.00 / year</p>
+            </div>
+            <!-- Selector changed from #add-cart (V1) to .action-add-item (V2) -->
+            <button
+              class="action-add-item px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-bold shadow-lg text-emerald-50">
+              Add to Cart
+            </button>
+          </div>
+
+          <!-- Broken Structural Selector Demo: This was previously #place-order in V1 -->
+          <div class="new-container-wrap mt-8">
+            <button id="checkout-submit"
+              class="w-full py-4 rounded-xl font-bold text-lg btn-fancy shadow-lg shadow-blue-500/20">
+              Complete Purchase
+            </button>
+          </div>
+
+          <div id="order-confirm-status"
+            class="hidden mt-6 p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-center text-emerald-400 font-semibold">
+            🎉 Order placed successfully!
+          </div>
         </div>
       </div>
 
@@ -431,74 +461,128 @@
             <label for="shipping-zip">ZIP / Postal</label>
             <input type="text" id="shipping-zip" placeholder="10001" />
           </div>
+        </div>
+      </div>
 
-          <div class="space-y-6">
-            <!-- Selector changed from #email-input (V1) to #user-email-field (V2) -->
-            <div class="input-group">
-              <label class="block text-sm font-medium mb-2 text-slate-300">Email Address</label>
-              <input type="email" id="user-email-field" placeholder="alex@example.com">
-            </div>
+      <!-- Payment -->
+      <div class="card">
+        <div class="section-label">Payment Details</div>
 
-            <!-- Selector changed from #promo-input (V1) to #discount-code (V2) -->
-            <div class="input-group">
-              <label class="block text-sm font-medium mb-2 text-slate-300">Promo Code</label>
-              <input type="text" id="discount-code" placeholder="HACKATHON2026">
-            </div>
-
-            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 mb-6">
-              <div class="flex justify-between text-sm">
-                <span>Subtotal</span>
-                <span>$499.00</span>
-              </div>
-              <div class="flex justify-between font-bold text-lg mt-2 text-sky-400">
-                <span>Total</span>
-                <span>$499.00</span>
-              </div>
-            </div>
-
-            <!-- Broken Structural Selector Demo: This was previously body > div:nth-child(2) > button in V1
-                 Now it's wrapped in a new container, breaking the nth-child(2) structural link! -->
-            <div class="new-container-wrap">
-              <button id="checkout-submit"
-                class="w-full py-4 rounded-xl font-bold text-lg btn-fancy shadow-lg shadow-blue-500/20">
-                Place My Order
-              </button>
-            </div>
-
-            <!-- Success message container (initially hidden) -->
-            <!-- V1 was #success-msg, V2 is #order-confirm-status -->
-            <div id="order-confirm-status"
-              class="hidden mt-6 p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-center text-emerald-400">
-              🎉 Order placed successfully!
-            </div>
-          </div>
+        <div class="card-icons">
+          <div class="card-icon visa">VISA</div>
+          <div class="card-icon mc">MC</div>
+          <div class="card-icon amex">AMEX</div>
         </div>
 
-        <script>
-          function applyPromo() {
-            const code = document.getElementById('voucher-code').value.trim().toUpperCase();
-            const discount = document.getElementById('discount-amount');
-            const total = document.getElementById('order-total');
-            if (code === 'SAVE20') {
-              discount.textContent = '−$99.80';
-              total.textContent = '$399.20';
-            } else if (code) {
-              discount.textContent = 'Invalid code';
-              discount.style.color = 'var(--red)';
-            }
-          }
+        <div class="field-group">
+          <label for="card-number">Card Number</label>
+          <input type="text" id="card-number" placeholder="4242 4242 4242 4242" maxlength="19" />
+        </div>
 
-          function placeOrder() {
-            const btn = document.getElementById('btn-place-order');
-            btn.disabled = true;
-            btn.textContent = 'Processing…';
+        <div class="two-col">
+          <div class="field-group">
+            <label for="card-expiry">Expiry</label>
+            <input type="text" id="card-expiry" placeholder="MM / YY" maxlength="7" />
+          </div>
+          <div class="field-group">
+            <label for="card-cvv">CVV</label>
+            <input type="text" id="card-cvv" placeholder="123" maxlength="4" />
+          </div>
+        </div>
+      </div>
 
-            setTimeout(() => {
-              btn.style.display = 'none';
-              document.getElementById('confirmation-banner').style.display = 'block';
-            }, 800);
-          }
-        </script>
+    </div>
+
+    <!-- RIGHT: Order Summary -->
+    <div>
+      <div class="card">
+        <div class="section-label">Order Summary</div>
+
+        <div class="order-summary">
+
+          <div class="item-row">
+            <div class="item-img item-a">💻</div>
+            <div>
+              <div class="item-name">Pro Dev Bundle</div>
+              <div class="item-qty">Qty: 1</div>
+            </div>
+            <div class="item-price">$399.00</div>
+          </div>
+
+          <div class="item-row">
+            <div class="item-img item-b">🎧</div>
+            <div>
+              <div class="item-name">Studio Headphones</div>
+              <div class="item-qty">Qty: 1</div>
+            </div>
+            <div class="item-price">$100.00</div>
+          </div>
+
+          <!-- V2 renamed from #promo-input → #voucher-code -->
+          <div class="promo-row">
+            <input type="text" id="voucher-code" placeholder="Promo / voucher code" style="flex:1;" />
+            <button class="promo-apply" onclick="applyPromo()">Apply</button>
+          </div>
+
+          <div class="totals-block">
+            <div class="total-row"><span>Subtotal</span><span>$499.00</span></div>
+            <div class="total-row"><span>Shipping</span><span id="shipping-cost">Free</span></div>
+            <div class="total-row"><span>Discount</span><span id="discount-amount" style="color: var(--green);">—</span>
+            </div>
+            <div class="total-row grand"><span>Total</span><span id="order-total">$499.00</span></div>
+          </div>
+
+          <!-- V2 renamed from #place-order-btn → #btn-place-order -->
+          <div class="submit-wrap">
+            <button id="btn-place-order" onclick="placeOrder()">
+              Place Order — $499.00
+            </button>
+          </div>
+
+          <!-- V2 renamed from #success-msg → #confirmation-banner -->
+          <div id="confirmation-banner">
+            <span class="confirm-icon">✅</span>
+            Order placed successfully!<br />
+            <span class="confirm-ref">Ref #SH-20260328-9471</span>
+          </div>
+
+          <div class="trust-bar">
+            <div class="trust-badge">🔒 SSL Encrypted</div>
+            <div class="trust-badge">↩️ Easy Returns</div>
+            <div class="trust-badge">📦 Ships Today</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function applyPromo() {
+      const code = document.getElementById('voucher-code').value.trim().toUpperCase();
+      const discount = document.getElementById('discount-amount');
+      const total = document.getElementById('order-total');
+      if (code === 'SAVE20') {
+        discount.textContent = '−$99.80';
+        total.textContent = '$399.20';
+      } else if (code) {
+        discount.textContent = 'Invalid code';
+        discount.style.color = 'var(--red)';
+      }
+    }
+
+    function placeOrder() {
+      const btn = document.getElementById('btn-place-order');
+      btn.disabled = true;
+      btn.textContent = 'Processing…';
+
+      setTimeout(() => {
+        btn.style.display = 'none';
+        document.getElementById('confirmation-banner').style.display = 'block';
+      }, 800);
+    }
+  </script>
 </body>
 
 </html>
