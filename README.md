@@ -10,6 +10,7 @@ npx playwright install chromium
 npx selfheal run tests/checkout.spec.js --dashboard --report
 ```
 
+<<<<<<< HEAD
 ## 🛠️ Key Features
 
 1. **Intent-Aware SDK**: Pass human meaning to actions to guarantee high-confidence healing.
@@ -50,3 +51,7 @@ When you start the command, the dashboard will immediately display a pre-run fra
 
 ---
 *Built for the 2026 AI Agentic Coding Hackathon.*
+=======
+## What you will see
+When you start the command, the dashboard will immediately display a pre-run fragility scan highlighting our intentionally weak, old selectors. As Playwright executes the script and elements inevitably fail to be found, you will see the self-healing engine activate live in the right panel, analyzing the DOM snapshot against the developer's intent string. It will confidently determine the new selector, log its reasoning, and seamlessly patch the test continuing the execution until completion, finally producing a comprehensive `heal-report.json` zero-human-intervention artifact.
+>>>>>>> origin/phase-4

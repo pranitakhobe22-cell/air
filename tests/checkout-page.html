@@ -1,25 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ShopFlow — Secure Checkout</title>
   <!-- NO external dependencies — fully self-contained for Playwright -->
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     :root {
-      --bg:       #0d1117;
-      --surface:  #161b22;
+      --bg: #0d1117;
+      --surface: #161b22;
       --surface2: #1f2937;
-      --border:   rgba(255,255,255,0.08);
-      --text:     #f0f6fc;
-      --muted:    #8b949e;
-      --blue:     #58a6ff;
-      --green:    #3fb950;
-      --red:      #f85149;
-      --amber:    #d29922;
-      --radius:   12px;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f0f6fc;
+      --muted: #8b949e;
+      --blue: #58a6ff;
+      --green: #3fb950;
+      --red: #f85149;
+      --amber: #d29922;
+      --radius: 12px;
     }
 
     body {
@@ -43,7 +50,9 @@
     }
 
     @media (max-width: 720px) {
-      .page { grid-template-columns: 1fr; }
+      .page {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* ── Cards ──────────────────────────────────────── */
@@ -73,7 +82,9 @@
     }
 
     /* ── Form Fields ─────────────────────────────────── */
-    .field-group { margin-bottom: 18px; }
+    .field-group {
+      margin-bottom: 18px;
+    }
 
     label {
       display: block;
@@ -91,7 +102,7 @@
       width: 100%;
       padding: 11px 14px;
       background: var(--surface2);
-      border: 1px solid rgba(255,255,255,0.12);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: var(--radius);
       color: var(--text);
       font-size: 0.95rem;
@@ -99,27 +110,57 @@
       transition: border-color 0.2s;
     }
 
-    input:focus, select:focus {
+    input:focus,
+    select:focus {
       border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(88,166,255,0.1);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
     }
 
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
 
     /* ── Card number ─────────────────────────────────── */
-    .card-icons { display: flex; gap: 6px; margin-bottom: 10px; }
-    .card-icon {
-      width: 36px; height: 24px;
-      border-radius: 4px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.6rem; font-weight: 800;
+    .card-icons {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
     }
-    .visa  { background: #1a1f71; color: #f0f0f0; }
-    .mc    { background: #eb001b; color: white; }
-    .amex  { background: #007bc1; color: white; }
+
+    .card-icon {
+      width: 36px;
+      height: 24px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      font-weight: 800;
+    }
+
+    .visa {
+      background: #1a1f71;
+      color: #f0f0f0;
+    }
+
+    .mc {
+      background: #eb001b;
+      color: white;
+    }
+
+    .amex {
+      background: #007bc1;
+      color: white;
+    }
 
     /* ── Order Summary ───────────────────────────────── */
-    .order-summary { display: flex; flex-direction: column; gap: 14px; }
+    .order-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
 
     .item-row {
       display: flex;
@@ -130,27 +171,50 @@
     }
 
     .item-img {
-      width: 56px; height: 56px;
+      width: 56px;
+      height: 56px;
       border-radius: 10px;
       flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 26px;
     }
-    .item-a { background: rgba(88,166,255,0.1); }
-    .item-b { background: rgba(63,185,80,0.1); }
 
-    .item-name { font-size: 0.9rem; font-weight: 600; }
-    .item-qty  { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
-    .item-price { margin-left: auto; font-weight: 700; font-size: 0.95rem; }
+    .item-a {
+      background: rgba(88, 166, 255, 0.1);
+    }
+
+    .item-b {
+      background: rgba(63, 185, 80, 0.1);
+    }
+
+    .item-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .item-qty {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .item-price {
+      margin-left: auto;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
 
     .promo-row {
-      display: flex; gap: 10px;
+      display: flex;
+      gap: 10px;
     }
 
     .promo-apply {
       padding: 11px 18px;
       background: var(--surface2);
-      border: 1px solid rgba(255,255,255,0.12);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: var(--radius);
       color: var(--blue);
       font-size: 0.85rem;
@@ -159,9 +223,16 @@
       white-space: nowrap;
       transition: background 0.2s;
     }
-    .promo-apply:hover { background: rgba(88,166,255,0.08); }
 
-    .totals-block { display: flex; flex-direction: column; gap: 8px; }
+    .promo-apply:hover {
+      background: rgba(88, 166, 255, 0.08);
+    }
+
+    .totals-block {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
 
     .total-row {
       display: flex;
@@ -179,7 +250,9 @@
     }
 
     /* ── Submit Button ───────────────────────────────── */
-    .submit-wrap { margin-top: 24px; }
+    .submit-wrap {
+      margin-top: 24px;
+    }
 
     #btn-place-order {
       width: 100%;
@@ -193,34 +266,59 @@
       background: linear-gradient(135deg, #1d6fe8 0%, #0ea5e9 100%);
       color: white;
       transition: opacity 0.2s, transform 0.15s;
-      box-shadow: 0 4px 24px rgba(14,165,233,0.3);
+      box-shadow: 0 4px 24px rgba(14, 165, 233, 0.3);
     }
 
-    #btn-place-order:hover { opacity: 0.9; transform: translateY(-1px); }
-    #btn-place-order:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    #btn-place-order:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    #btn-place-order:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
 
     /* ── Confirmation Banner ─────────────────────────── */
     #confirmation-banner {
       display: none;
       margin-top: 20px;
       padding: 18px 22px;
-      background: rgba(63,185,80,0.12);
-      border: 1px solid rgba(63,185,80,0.4);
+      background: rgba(63, 185, 80, 0.12);
+      border: 1px solid rgba(63, 185, 80, 0.4);
       border-radius: var(--radius);
       text-align: center;
       color: var(--green);
       font-weight: 700;
       font-size: 1rem;
-      animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+      animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
     }
 
     @keyframes popIn {
-      from { transform: scale(0.9); opacity: 0; }
-      to   { transform: scale(1);   opacity: 1; }
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
 
-    .confirm-icon { font-size: 2rem; display: block; margin-bottom: 8px; }
-    .confirm-ref  { font-size: 0.78rem; color: var(--green); opacity: 0.7; margin-top: 4px; }
+    .confirm-icon {
+      font-size: 2rem;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .confirm-ref {
+      font-size: 0.78rem;
+      color: var(--green);
+      opacity: 0.7;
+      margin-top: 4px;
+    }
 
     /* ── Trust badges ────────────────────────────────── */
     .trust-bar {
@@ -232,7 +330,11 @@
       color: var(--muted);
     }
 
-    .trust-badge { display: flex; align-items: center; gap: 5px; }
+    .trust-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
 
     /* ── Page header ─────────────────────────────────── */
     .page-header {
@@ -246,14 +348,21 @@
     }
 
     .logo-mark {
-      width: 38px; height: 38px;
+      width: 38px;
+      height: 38px;
       border-radius: 10px;
       background: linear-gradient(135deg, #1d6fe8, #0ea5e9);
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 20px;
     }
 
-    .brand { font-size: 1.2rem; font-weight: 800; }
+    .brand {
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
     .secure-note {
       margin-left: auto;
       font-size: 0.78rem;
@@ -262,185 +371,134 @@
     }
   </style>
 </head>
+
 <body>
 
-<div class="page">
+  <div class="page">
 
-  <!-- Header -->
-  <div class="page-header">
-    <div class="logo-mark">🛒</div>
-    <div class="brand">ShopFlow</div>
-    <div class="secure-note">🔒 SSL Secured Checkout</div>
-  </div>
-
-  <!-- LEFT: Form -->
-  <div>
-
-    <!-- Contact info -->
-    <div class="card" style="margin-bottom: 20px;">
-      <div class="section-label">Contact Information</div>
-
-      <!-- V2 renamed from #email-input → #contact-email -->
-      <div class="field-group">
-        <label for="contact-email">Email Address</label>
-        <input type="email" id="contact-email" placeholder="you@example.com" autocomplete="email" />
-      </div>
-
-      <div class="field-group">
-        <label for="phone-number">Phone (optional)</label>
-        <input type="tel" id="phone-number" placeholder="+1 555 000 0000" />
-      </div>
+    <!-- Header -->
+    <div class="page-header">
+      <div class="logo-mark">🛒</div>
+      <div class="brand">ShopFlow</div>
+      <div class="secure-note">🔒 SSL Secured Checkout</div>
     </div>
 
-    <!-- Shipping -->
-    <div class="card" style="margin-bottom: 20px;">
-      <div class="section-label">Shipping Address</div>
+    <!-- LEFT: Form -->
+    <div>
 
-      <div class="two-col">
-        <div class="field-group">
-          <label for="shipping-first">First Name</label>
-          <input type="text" id="shipping-first" placeholder="Alex" />
-        </div>
-        <div class="field-group">
-          <label for="shipping-last">Last Name</label>
-          <input type="text" id="shipping-last" placeholder="Smith" />
-        </div>
-      </div>
+      <!-- Contact info -->
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="section-label">Contact Information</div>
 
-      <div class="field-group">
-        <label for="shipping-address">Street Address</label>
-        <input type="text" id="shipping-address" placeholder="123 Main St" />
-      </div>
-
-      <div class="two-col">
+        <!-- V2 renamed from #email-input → #contact-email -->
         <div class="field-group">
-          <label for="shipping-city">City</label>
-          <input type="text" id="shipping-city" placeholder="New York" />
+          <label for="contact-email">Email Address</label>
+          <input type="email" id="contact-email" placeholder="you@example.com" autocomplete="email" />
         </div>
+
         <div class="field-group">
-          <label for="shipping-zip">ZIP / Postal</label>
-          <input type="text" id="shipping-zip" placeholder="10001" />
+          <label for="phone-number">Phone (optional)</label>
+          <input type="tel" id="phone-number" placeholder="+1 555 000 0000" />
         </div>
       </div>
-    </div>
 
-    <!-- Payment -->
-    <div class="card">
-      <div class="section-label">Payment Details</div>
+      <!-- Shipping -->
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="section-label">Shipping Address</div>
 
-      <div class="card-icons">
-        <div class="card-icon visa">VISA</div>
-        <div class="card-icon mc">MC</div>
-        <div class="card-icon amex">AMEX</div>
-      </div>
-
-      <div class="field-group">
-        <label for="card-number">Card Number</label>
-        <input type="text" id="card-number" placeholder="4242 4242 4242 4242" maxlength="19" />
-      </div>
-
-      <div class="two-col">
-        <div class="field-group">
-          <label for="card-expiry">Expiry</label>
-          <input type="text" id="card-expiry" placeholder="MM / YY" maxlength="7" />
-        </div>
-        <div class="field-group">
-          <label for="card-cvv">CVV</label>
-          <input type="text" id="card-cvv" placeholder="123" maxlength="4" />
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- RIGHT: Order Summary -->
-  <div>
-    <div class="card">
-      <div class="section-label">Order Summary</div>
-
-      <div class="order-summary">
-
-        <div class="item-row">
-          <div class="item-img item-a">💻</div>
-          <div>
-            <div class="item-name">Pro Dev Bundle</div>
-            <div class="item-qty">Qty: 1</div>
+        <div class="two-col">
+          <div class="field-group">
+            <label for="shipping-first">First Name</label>
+            <input type="text" id="shipping-first" placeholder="Alex" />
           </div>
-          <div class="item-price">$399.00</div>
-        </div>
-
-        <div class="item-row">
-          <div class="item-img item-b">🎧</div>
-          <div>
-            <div class="item-name">Studio Headphones</div>
-            <div class="item-qty">Qty: 1</div>
+          <div class="field-group">
+            <label for="shipping-last">Last Name</label>
+            <input type="text" id="shipping-last" placeholder="Smith" />
           </div>
-          <div class="item-price">$100.00</div>
         </div>
 
-        <!-- V2 renamed from #promo-input → #voucher-code -->
-        <div class="promo-row">
-          <input type="text" id="voucher-code" placeholder="Promo / voucher code" style="flex:1;" />
-          <button class="promo-apply" onclick="applyPromo()">Apply</button>
+        <div class="field-group">
+          <label for="shipping-address">Street Address</label>
+          <input type="text" id="shipping-address" placeholder="123 Main St" />
         </div>
 
-        <div class="totals-block">
-          <div class="total-row"><span>Subtotal</span><span>$499.00</span></div>
-          <div class="total-row"><span>Shipping</span><span id="shipping-cost">Free</span></div>
-          <div class="total-row"><span>Discount</span><span id="discount-amount" style="color: var(--green);">—</span></div>
-          <div class="total-row grand"><span>Total</span><span id="order-total">$499.00</span></div>
+        <div class="two-col">
+          <div class="field-group">
+            <label for="shipping-city">City</label>
+            <input type="text" id="shipping-city" placeholder="New York" />
+          </div>
+          <div class="field-group">
+            <label for="shipping-zip">ZIP / Postal</label>
+            <input type="text" id="shipping-zip" placeholder="10001" />
+          </div>
+
+          <div class="space-y-6">
+            <!-- Selector changed from #email-input (V1) to #user-email-field (V2) -->
+            <div class="input-group">
+              <label class="block text-sm font-medium mb-2 text-slate-300">Email Address</label>
+              <input type="email" id="user-email-field" placeholder="alex@example.com">
+            </div>
+
+            <!-- Selector changed from #promo-input (V1) to #discount-code (V2) -->
+            <div class="input-group">
+              <label class="block text-sm font-medium mb-2 text-slate-300">Promo Code</label>
+              <input type="text" id="discount-code" placeholder="HACKATHON2026">
+            </div>
+
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 mb-6">
+              <div class="flex justify-between text-sm">
+                <span>Subtotal</span>
+                <span>$499.00</span>
+              </div>
+              <div class="flex justify-between font-bold text-lg mt-2 text-sky-400">
+                <span>Total</span>
+                <span>$499.00</span>
+              </div>
+            </div>
+
+            <!-- Broken Structural Selector Demo: This was previously body > div:nth-child(2) > button in V1
+                 Now it's wrapped in a new container, breaking the nth-child(2) structural link! -->
+            <div class="new-container-wrap">
+              <button id="checkout-submit"
+                class="w-full py-4 rounded-xl font-bold text-lg btn-fancy shadow-lg shadow-blue-500/20">
+                Place My Order
+              </button>
+            </div>
+
+            <!-- Success message container (initially hidden) -->
+            <!-- V1 was #success-msg, V2 is #order-confirm-status -->
+            <div id="order-confirm-status"
+              class="hidden mt-6 p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-center text-emerald-400">
+              🎉 Order placed successfully!
+            </div>
+          </div>
         </div>
 
-        <!-- V2 renamed from #place-order-btn → #btn-place-order -->
-        <div class="submit-wrap">
-          <button id="btn-place-order" onclick="placeOrder()">
-            Place Order — $499.00
-          </button>
-        </div>
+        <script>
+          function applyPromo() {
+            const code = document.getElementById('voucher-code').value.trim().toUpperCase();
+            const discount = document.getElementById('discount-amount');
+            const total = document.getElementById('order-total');
+            if (code === 'SAVE20') {
+              discount.textContent = '−$99.80';
+              total.textContent = '$399.20';
+            } else if (code) {
+              discount.textContent = 'Invalid code';
+              discount.style.color = 'var(--red)';
+            }
+          }
 
-        <!-- V2 renamed from #success-msg → #confirmation-banner -->
-        <div id="confirmation-banner">
-          <span class="confirm-icon">✅</span>
-          Order placed successfully!<br/>
-          <span class="confirm-ref">Ref #SH-20260328-9471</span>
-        </div>
+          function placeOrder() {
+            const btn = document.getElementById('btn-place-order');
+            btn.disabled = true;
+            btn.textContent = 'Processing…';
 
-        <div class="trust-bar">
-          <div class="trust-badge">🔒 SSL Encrypted</div>
-          <div class="trust-badge">↩️ Easy Returns</div>
-          <div class="trust-badge">📦 Ships Today</div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<script>
-  function applyPromo() {
-    const code = document.getElementById('voucher-code').value.trim().toUpperCase();
-    const discount = document.getElementById('discount-amount');
-    const total    = document.getElementById('order-total');
-    if (code === 'SAVE20') {
-      discount.textContent = '−$99.80';
-      total.textContent = '$399.20';
-    } else if (code) {
-      discount.textContent = 'Invalid code';
-      discount.style.color = 'var(--red)';
-    }
-  }
-
-  function placeOrder() {
-    const btn = document.getElementById('btn-place-order');
-    btn.disabled = true;
-    btn.textContent = 'Processing…';
-
-    setTimeout(() => {
-      btn.style.display = 'none';
-      document.getElementById('confirmation-banner').style.display = 'block';
-    }, 800);
-  }
-</script>
+            setTimeout(() => {
+              btn.style.display = 'none';
+              document.getElementById('confirmation-banner').style.display = 'block';
+            }, 800);
+          }
+        </script>
 </body>
+
 </html>

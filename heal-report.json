@@ -1,7 +1,13 @@
 {
+<<<<<<< HEAD
   "testFile": "C:\\Users\\Anom\\Downloads\\SelfHeal-main\\SelfHeal-main\\tests\\generic.spec.js",
   "timestamp": "2026-03-28T23:09:13.836Z",
   "totalSteps": 4,
+=======
+  "testFile": "/Users/sangharshgedekar/web-healer/Web-Healer/tests/checkout.spec.js",
+  "timestamp": "2026-03-28T13:39:50.891Z",
+  "totalSteps": 3,
+>>>>>>> origin/phase-4
   "healsApplied": 0,
   "steps": [
     {
@@ -11,17 +17,25 @@
     },
     {
       "action": "fill",
+<<<<<<< HEAD
       "selector": "input#email",
+=======
+      "selector": "#auth-user-email",
+>>>>>>> origin/phase-4
       "status": "pass"
     },
     {
       "action": "fill",
+<<<<<<< HEAD
       "selector": "input#password",
       "status": "fail"
     },
     {
       "action": "click",
       "selector": "#pt-login-2",
+=======
+      "selector": "#login-password",
+>>>>>>> origin/phase-4
       "status": "fail"
     }
   ]
