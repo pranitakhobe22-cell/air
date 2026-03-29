@@ -47,7 +47,7 @@ const char* AERIS_SERVER = "https://live-aeris.onrender.com";
 const char* AERIS_API_KEY  = "aeris-dev-ingest-key-2026";
 const char* AERIS_NODE_ID  = "ESP32_02";
 unsigned long lastBackendPush = 0;
-const unsigned long BACKEND_INTERVAL = 20000;
+const unsigned long BACKEND_INTERVAL = 5000;
 
 // =============================================
 //  OLED — SH1106 1.3"
@@ -96,6 +96,8 @@ static esp_adc_cal_characteristics_t adc2_chars;
 // =============================================
 //  CALIBRATION
 // =============================================
+const float DUST_CLEAN_VOLTAGE = 0.5;
+
 const float MQ131_RL_KOHM = 10.0, MQ131_VCC = 5.0, MQ131_CLEAN_AIR_FACTOR = 15.0;
 const float MQ7_RL_KOHM   = 10.0, MQ7_VCC   = 5.0, MQ7_CLEAN_AIR_FACTOR   = 27.5;
 const float MQ135_RL_KOHM = 10.0, MQ135_VCC = 5.0, MQ135_CLEAN_AIR_FACTOR = 3.6;
@@ -103,14 +105,49 @@ const float MQ135_RL_KOHM = 10.0, MQ135_VCC = 5.0, MQ135_CLEAN_AIR_FACTOR = 3.6;
 const float SEN0564_RANGE = 1000.0;
 const float SEN0574_RANGE = 10.0;
 const float UV_SCALE      = 10.0;
-const float MEMS_NOISE    = 0.18;  // Raised to reject midday thermal ADC drift
+const float MEMS_NOISE    = 0.08;  // Raised to reject midday thermal ADC drift
 
 float MQ131_Ro = 0, MQ7_Ro = 0, MQ135_Ro = 0;
 float CO_MEMS_BASELINE = 0, NO2_MEMS_BASELINE = 0;
 bool  no2Inverted = false;
 
+// Forward declaration (used by median filter)
+void sortFloats(float* a, int n);
+
 // =============================================
-//  SMOOTHING (EMA)
+//  FILTER 1: MEDIAN (rolling 5-sample window)
+//  Rejects outliers before EMA sees them
+// =============================================
+#define MED_WIN 5
+
+struct MedianFilter {
+  float buf[MED_WIN];
+  int   idx;
+  int   count;
+};
+
+MedianFilter mf_pm25 = {{0},0,0};
+MedianFilter mf_mq131 = {{0},0,0};
+MedianFilter mf_mq7   = {{0},0,0};
+MedianFilter mf_mq135 = {{0},0,0};
+MedianFilter mf_uv    = {{0},0,0};
+MedianFilter mf_co_mems  = {{0},0,0};
+MedianFilter mf_no2_mems = {{0},0,0};
+
+float medianPush(MedianFilter &mf, float val) {
+  mf.buf[mf.idx] = val;
+  mf.idx = (mf.idx + 1) % MED_WIN;
+  if (mf.count < MED_WIN) mf.count++;
+  // Sort a copy to find median
+  float tmp[MED_WIN];
+  for (int i = 0; i < mf.count; i++) tmp[i] = mf.buf[i];
+  sortFloats(tmp, mf.count);
+  return tmp[mf.count / 2];
+}
+
+// =============================================
+//  FILTER 2: EMA (exponential moving average)
+//  Smooths median output over time
 // =============================================
 const float EMA_ALPHA = 0.2;
 
@@ -127,13 +164,32 @@ float applyEMA(float val, float prev) {
   return EMA_ALPHA * val + (1.0 - EMA_ALPHA) * prev;
 }
 
-float stabilize(float current, float previous, float maxStep) {
-  if (previous == 0) return current * 0.8;
-  float diff = current - previous;
-  if (diff > maxStep) diff = maxStep;
-  if (diff < -maxStep) diff = -maxStep;
-  return previous + diff;
+// =============================================
+//  FILTER 3: DEADBAND (suppress jitter)
+//  Global only updates if change > threshold
+// =============================================
+float deadband(float newVal, float oldVal, float threshold) {
+  if (abs(newVal - oldVal) < threshold) return oldVal;
+  return newVal;
 }
+
+// Per-sensor deadband thresholds (tuned to sensor resolution)
+const float DB_PM25 = 0.5;    // ug/m3 — dust sensor noise floor
+const float DB_O3   = 0.5;    // ppb
+const float DB_CO   = 0.05;   // ppm
+const float DB_NO2  = 1.0;    // ppb
+const float DB_CO2  = 5.0;    // ppm
+const float DB_UV   = 0.1;    // index
+const float DB_TEMP = 0.1;    // C
+const float DB_HUM  = 0.5;    // %
+const int   DB_VOC  = 2;      // index
+const int   DB_AQI  = 1;      // index
+
+// =============================================
+//  FILTER 4: DISPLAY RATE CONTROL (dirty flag)
+//  OLED + Serial only redraw when data changes
+// =============================================
+bool displayDirty = true;  // force first draw
 
 // =============================================
 //  TIMING — 7-min boot sequence
@@ -158,7 +214,7 @@ unsigned long lastDisplayUpdate = 0;
 const unsigned long DISPLAY_INTERVAL = 30000;  // show every 30 sec
 
 unsigned long lastADC2Read = 0;
-const unsigned long ADC2_INTERVAL = 120000;     // MEMS every 120 sec
+const unsigned long ADC2_INTERVAL = 30000;     // MEMS every 30 sec
 
 uint16_t g_voc_lastgood = 0;
 
@@ -172,11 +228,6 @@ uint16_t g_voc = 0;
 int g_aqi = 0, g_aqi_pm = 0, g_aqi_o3 = 0, g_aqi_co = 0, g_aqi_no2 = 0;
 float g_co_mems_v  = 0;
 float g_no2_mems_v = 0;
-
-// Display-stabilized values (prevents OLED jitter)
-float disp_pm25 = 0, disp_o3 = 0, disp_co = 0, disp_no2 = 0;
-float disp_co2 = 0, disp_uv = 0, disp_temp = 0, disp_hum = 0;
-int disp_aqi = 0;
 
 // =============================================
 //  HUMAN-READABLE STATUS TAGS
@@ -386,14 +437,8 @@ float readDustPM25() {
   sortFloats(buf, 10);
   float s = 0;
   for (int i = 2; i < 8; i++) s += buf[i];
-  float v = s / 6.0;
-  static float cleanBase = -1;
-  if (cleanBase < 0) cleanBase = v;
-  else cleanBase = cleanBase * 0.995 + v * 0.005;
-  float pm = (v - cleanBase) * 160.0;
-  if (pm < 0) pm = 0;
-  if (pm > 500) pm = 500;
-  return pm;
+  float pm = (s / 6.0 - DUST_CLEAN_VOLTAGE) * 200.0;
+  return max(pm, 0.0f);
 }
 
 float readMQResistance(int pin, float rl, float vcc) {
@@ -447,8 +492,14 @@ void readADC2Sensors() {
     if (WiFi.status() == WL_CONNECTED) applyGoogleDNS();
   }
 
-  co_mems_ema  = applyEMA(co_v, co_mems_ema);
-  no2_mems_ema = applyEMA(no2_v, no2_mems_ema);
+  // Recover I2C after WiFi stop/start (can glitch shared bus)
+  Wire.begin(21, 22);
+  Wire.setClock(100000);
+
+  float co_med  = medianPush(mf_co_mems, co_v);
+  float no2_med = medianPush(mf_no2_mems, no2_v);
+  co_mems_ema  = applyEMA(co_med, co_mems_ema);
+  no2_mems_ema = applyEMA(no2_med, no2_mems_ema);
   g_co_mems_v  = (co_mems_ema >= 0) ? co_mems_ema : co_v;
   g_no2_mems_v = (no2_mems_ema >= 0) ? no2_mems_ema : no2_v;
 }
@@ -499,11 +550,11 @@ float no2PPB_MEMS(float v) {
     d = v - NO2_MEMS_BASELINE;
     rng = 3.3 - NO2_MEMS_BASELINE;
   }
-  if (d < MEMS_NOISE || rng < 0.1) return 0;
-  float val = (d / rng) * 250.0;
-  if (val < 0) val = 0;
-  if (val > 1000) val = 1000;
-  return val;
+  if (d < 0.10 || rng < 0.1) return 0;  // noise floor for NO2 (ADC2 pin 27 noisy)
+  d = d - 0.10;                         // subtract noise floor so clean air reads ~0
+  float ppm = constrain(d / rng * SEN0574_RANGE, 0, SEN0574_RANGE);
+  float ppb = ppm * 1000.0;
+  return constrain(ppb, 0, 2049);  // cap at AQI table max (2049 ppb)
 }
 
 // =============================================
@@ -547,27 +598,38 @@ int aqiFromNO2(float v) {
 // =============================================
 
 void handleData() {
-  char buf[768];
-  snprintf(buf, sizeof(buf),
-    "{\"ready\":%s,\"pm25\":%.1f,\"o3\":%.1f,\"co\":%.2f,\"no2\":%.0f,\"co2\":%.0f,"
-    "\"co_mq\":%.2f,\"voc\":%u,\"uv\":%.1f,\"temp\":%.1f,\"hum\":%.1f,\"aqi\":%d,"
-    "\"aqi_pm\":%d,\"aqi_o3\":%d,\"aqi_co\":%d,\"aqi_no2\":%d,"
-    "\"co_mems_v\":%.3f,\"no2_mems_v\":%.3f,"
-    "\"rain\":%s,\"pm25_rain_delta\":%.1f,"
-    "\"pm25_tag\":\"%s\",\"o3_tag\":\"%s\",\"co_tag\":\"%s\","
-    "\"no2_tag\":\"%s\",\"co2_tag\":\"%s\",\"voc_tag\":\"%s\","
-    "\"uv_tag\":\"%s\",\"label\":\"%s\",\"color\":\"%s\"}",
-    isLive ? "true" : "false",
-    g_pm25, g_o3, g_co, g_no2_ppb, g_co2,
-    g_co_mq, (unsigned int)g_voc, g_uv, g_temp, g_hum, g_aqi,
-    g_aqi_pm, g_aqi_o3, g_aqi_co, g_aqi_no2,
-    g_co_mems_v, g_no2_mems_v,
-    g_raining ? "true" : "false", g_pm25_rain_delta,
-    pm25Tag(g_pm25), o3Tag(g_o3), coTag(g_co),
-    no2Tag(g_no2_ppb), co2Tag(g_co2), vocTag(g_voc),
-    uvTag(g_uv), aqiLabel(g_aqi).c_str(), aqiColor(g_aqi).c_str()
-  );
-  server.send(200, "application/json", buf);
+  String json = "{";
+  json += "\"ready\":" + String(isLive ? "true" : "false") + ",";
+  json += "\"pm25\":" + String(g_pm25, 1) + ",";
+  json += "\"o3\":" + String(g_o3, 1) + ",";
+  json += "\"co\":" + String(g_co, 2) + ",";
+  json += "\"no2\":" + String(g_no2_ppb, 0) + ",";
+  json += "\"co2\":" + String(g_co2, 0) + ",";
+  json += "\"co_mq\":" + String(g_co_mq, 2) + ",";
+  json += "\"voc\":" + String(g_voc) + ",";
+  json += "\"uv\":" + String(g_uv, 1) + ",";
+  json += "\"temp\":" + String(g_temp, 1) + ",";
+  json += "\"hum\":" + String(g_hum, 1) + ",";
+  json += "\"aqi\":" + String(g_aqi) + ",";
+  json += "\"aqi_pm\":" + String(g_aqi_pm) + ",";
+  json += "\"aqi_o3\":" + String(g_aqi_o3) + ",";
+  json += "\"aqi_co\":" + String(g_aqi_co) + ",";
+  json += "\"aqi_no2\":" + String(g_aqi_no2) + ",";
+  json += "\"co_mems_v\":" + String(g_co_mems_v, 3) + ",";
+  json += "\"no2_mems_v\":" + String(g_no2_mems_v, 3) + ",";
+  json += "\"rain\":" + String(g_raining ? "true" : "false") + ",";
+  json += "\"pm25_rain_delta\":" + String(g_pm25_rain_delta, 1) + ",";
+  json += "\"pm25_tag\":\"" + String(pm25Tag(g_pm25)) + "\",";
+  json += "\"o3_tag\":\"" + String(o3Tag(g_o3)) + "\",";
+  json += "\"co_tag\":\"" + String(coTag(g_co)) + "\",";
+  json += "\"no2_tag\":\"" + String(no2Tag(g_no2_ppb)) + "\",";
+  json += "\"co2_tag\":\"" + String(co2Tag(g_co2)) + "\",";
+  json += "\"voc_tag\":\"" + String(vocTag(g_voc)) + "\",";
+  json += "\"uv_tag\":\"" + String(uvTag(g_uv)) + "\",";
+  json += "\"label\":\"" + aqiLabel(g_aqi) + "\",";
+  json += "\"color\":\"" + aqiColor(g_aqi) + "\"";
+  json += "}";
+  server.send(200, "application/json", json);
 }
 
 // =============================================
@@ -575,7 +637,7 @@ void handleData() {
 // =============================================
 
 void handleRoot() {
-  static const char html[] PROGMEM = R"rawliteral(
+  String html = R"rawliteral(
 <!DOCTYPE html>
 <html>
 <head>
@@ -718,18 +780,18 @@ void drawOLED_AQI() {
   display.print("AIR QUALITY");
 
   display.setTextSize(3);
-  String aq = String(disp_aqi);
+  String aq = String(g_aqi);
   int x = 64 - (aq.length() * 9);
   display.setCursor(x, 12);
-  display.print(disp_aqi);
+  display.print(g_aqi);
 
   display.setTextSize(1);
-  String lbl = aqiLabel(disp_aqi);
+  String lbl = aqiLabel(g_aqi);
   display.setCursor(64 - lbl.length() * 3, 38);
   display.print(lbl);
 
   display.drawRect(4, 48, 120, 6, SH110X_WHITE);
-  int fill = map(constrain(disp_aqi, 0, 500), 0, 500, 0, 116);
+  int fill = map(constrain(g_aqi, 0, 500), 0, 500, 0, 116);
   if (fill > 0) display.fillRect(6, 50, fill, 2, SH110X_WHITE);
 
   display.setCursor(0, 57);
@@ -747,26 +809,26 @@ void drawOLED_Gases1() {
   display.setTextSize(1);
   display.setCursor(0, 1);   display.print("PM25");
   display.setTextSize(2);
-  display.setCursor(30, 0);  display.print(disp_pm25, 0);
+  display.setCursor(30, 0);  display.print(g_pm25, 0);
   display.setTextSize(1);
-  display.setCursor(98, 5);  display.print(pm25Tag(disp_pm25));
+  display.setCursor(98, 5);  display.print("ug/m3");
 
   display.setCursor(0, 19);  display.print("O3");
   display.setTextSize(2);
-  display.setCursor(30, 18); display.print(disp_o3, 1);
+  display.setCursor(30, 18); display.print(g_o3, 1);
   display.setTextSize(1);
-  display.setCursor(98, 23); display.print(o3Tag(disp_o3));
+  display.setCursor(98, 23); display.print("ppb");
 
   display.setCursor(0, 37);  display.print("CO");
   display.setTextSize(2);
-  display.setCursor(30, 36); display.print(disp_co, 1);
+  display.setCursor(30, 36); display.print(g_co, 1);
   display.setTextSize(1);
-  display.setCursor(98, 41); display.print(coTag(disp_co));
+  display.setCursor(98, 41); display.print("ppm");
 
   display.drawLine(0, 52, 127, 52, SH110X_WHITE);
   display.setCursor(0, 56);
-  display.print("AQI:");  display.print(disp_aqi);
-  display.print(" [");    display.print(aqiLabel(disp_aqi));
+  display.print("AQI:");  display.print(g_aqi);
+  display.print(" [");    display.print(aqiLabel(g_aqi));
   display.print("]");
   display.display();
 }
@@ -778,15 +840,15 @@ void drawOLED_Gases2() {
   display.setTextSize(1);
   display.setCursor(0, 1);   display.print("NO2");
   display.setTextSize(2);
-  display.setCursor(30, 0);  display.print(disp_no2, 0);
+  display.setCursor(30, 0);  display.print(g_no2_ppb, 0);
   display.setTextSize(1);
-  display.setCursor(98, 5);  display.print(no2Tag(disp_no2));
+  display.setCursor(98, 5);  display.print("ppb");
 
   display.setCursor(0, 19);  display.print("CO2");
   display.setTextSize(2);
-  display.setCursor(30, 18); display.print(disp_co2, 0);
+  display.setCursor(30, 18); display.print(g_co2, 0);
   display.setTextSize(1);
-  display.setCursor(98, 23); display.print(co2Tag(disp_co2));
+  display.setCursor(98, 23); display.print("ppm");
 
   display.setCursor(0, 37);  display.print("VOC");
   display.setTextSize(2);
@@ -794,12 +856,12 @@ void drawOLED_Gases2() {
   if (g_voc > 0) display.print(g_voc);
   else display.print("--");
   display.setTextSize(1);
-  display.setCursor(98, 41); display.print(vocTag(g_voc));
+  display.setCursor(98, 41); display.print("idx");
 
   display.drawLine(0, 52, 127, 52, SH110X_WHITE);
   display.setCursor(0, 56);
-  display.print("AQI:");  display.print(disp_aqi);
-  display.print(" [");    display.print(aqiLabel(disp_aqi));
+  display.print("AQI:");  display.print(g_aqi);
+  display.print(" [");    display.print(aqiLabel(g_aqi));
   display.print("]");
   display.display();
 }
@@ -811,26 +873,26 @@ void drawOLED_Env() {
   display.setTextSize(1);
   display.setCursor(0, 1);   display.print("TEMP");
   display.setTextSize(2);
-  display.setCursor(30, 0);  display.print(disp_temp, 1);
+  display.setCursor(30, 0);  display.print(g_temp, 1);
   display.setTextSize(1);
-  display.setCursor(98, 5);  display.print(tempTag(disp_temp));
+  display.setCursor(98, 5);  display.print("C");
 
   display.setCursor(0, 19);  display.print("HUM");
   display.setTextSize(2);
-  display.setCursor(30, 18); display.print(disp_hum, 0);
+  display.setCursor(30, 18); display.print(g_hum, 0);
   display.setTextSize(1);
-  display.setCursor(98, 23); display.print(humTag(disp_hum));
+  display.setCursor(98, 23); display.print("%");
 
   display.setCursor(0, 37);  display.print("UV");
   display.setTextSize(2);
-  display.setCursor(30, 36); display.print(disp_uv, 1);
+  display.setCursor(30, 36); display.print(g_uv, 1);
   display.setTextSize(1);
-  display.setCursor(98, 41); display.print(uvTag(disp_uv));
+  display.setCursor(98, 41); display.print("idx");
 
   display.drawLine(0, 52, 127, 52, SH110X_WHITE);
   display.setCursor(0, 56);
-  display.print("AQI:");  display.print(disp_aqi);
-  display.print(" [");    display.print(aqiLabel(disp_aqi));
+  display.print("AQI:");  display.print(g_aqi);
+  display.print(" [");    display.print(aqiLabel(g_aqi));
   display.print("]");
   display.display();
 }
@@ -846,7 +908,7 @@ void drawOLED_Rain() {
     display.setCursor(10, 14); display.print("RAINING");
     display.setTextSize(1);
     display.setCursor(0, 34);  display.print("PM2.5 now: ");
-    display.print(disp_pm25, 1);  display.print(" ug/m3");
+    display.print(g_pm25, 1);  display.print(" ug/m3");
     if (g_pm25_rain_delta > 0) {
       display.setCursor(0, 44);
       display.print("Reduced: -");
@@ -860,14 +922,14 @@ void drawOLED_Rain() {
     display.setCursor(20, 16); display.print("DRY");
     display.setTextSize(1);
     display.setCursor(0, 38);  display.print("PM2.5: ");
-    display.print(disp_pm25, 1);  display.print(" ug/m3");
+    display.print(g_pm25, 1);  display.print(" ug/m3");
   }
 
   display.drawLine(0, 52, 127, 52, SH110X_WHITE);
   display.setTextSize(1);
   display.setCursor(0, 56);
-  display.print("AQI:");  display.print(disp_aqi);
-  display.print(" [");    display.print(aqiLabel(disp_aqi));
+  display.print("AQI:");  display.print(g_aqi);
+  display.print(" [");    display.print(aqiLabel(g_aqi));
   display.print("]");
   display.display();
 }
@@ -896,8 +958,7 @@ void drawWarmup(int pct, float temp, float hum) {
 
   display.setCursor(0, 57);
   display.print("PM2.5: "); display.print(g_pm25, 1);
-  display.print(" [");     display.print(pm25Tag(g_pm25));
-  display.print("]");
+  display.print(" ug/m3");
   display.display();
 }
 
@@ -1084,7 +1145,6 @@ void setup() {
     co_b[i]  = esp_adc_cal_raw_to_voltage(analogRead(CO_MEMS_PIN), &adc2_chars) / 1000.0;
     no2_b[i] = esp_adc_cal_raw_to_voltage(analogRead(NO2_MEMS_PIN), &adc2_chars) / 1000.0;
     delay(20);
-    yield();
   }
   sortFloats(co_b, 100);
   sortFloats(no2_b, 100);
@@ -1162,9 +1222,6 @@ void setup() {
     IPAddress dns2(8, 8, 4, 4);
     WiFi.config(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask(), dns1, dns2);
 
-    WiFi.setSleep(false);
-    esp_wifi_set_ps(WIFI_PS_NONE);
-
     server.on("/", handleRoot);
     server.on("/data", handleData);
     server.begin();
@@ -1204,20 +1261,24 @@ void loop() {
   lastSensorRead = now;
   unsigned long elapsed = now - bootTime;
 
-  // ---- Read ADC1 sensors (always work) ----
+  // ---- Read ADC1 sensors (Median → EMA pipeline) ----
   float pm_raw = readDustPM25();
-  if (pm25_ema > 0 && abs(pm_raw - pm25_ema) > 120) pm_raw = pm25_ema;
-  pm25_ema = applyEMA(pm_raw, pm25_ema);
+  float pm_med = medianPush(mf_pm25, pm_raw);
+  pm25_ema = applyEMA(pm_med, pm25_ema);
 
   float rs131 = readMQResistance(MQ131_PIN, MQ131_RL_KOHM, MQ131_VCC);
-  mq131Rs_ema = applyEMA(rs131, mq131Rs_ema);
+  float rs131_med = medianPush(mf_mq131, rs131);
+  mq131Rs_ema = applyEMA(rs131_med, mq131Rs_ema);
   float rs7 = readMQResistance(MQ7_PIN, MQ7_RL_KOHM, MQ7_VCC);
-  mq7Rs_ema = applyEMA(rs7, mq7Rs_ema);
+  float rs7_med = medianPush(mf_mq7, rs7);
+  mq7Rs_ema = applyEMA(rs7_med, mq7Rs_ema);
   float rs135 = readMQResistance(MQ135_PIN, MQ135_RL_KOHM, MQ135_VCC);
-  mq135Rs_ema = applyEMA(rs135, mq135Rs_ema);
+  float rs135_med = medianPush(mf_mq135, rs135);
+  mq135Rs_ema = applyEMA(rs135_med, mq135Rs_ema);
 
   float uv_raw = readUVIndex();
-  uv_ema = applyEMA(uv_raw, uv_ema);
+  float uv_med = medianPush(mf_uv, uv_raw);
+  uv_ema = applyEMA(uv_med, uv_ema);
 
   // ---- Read I2C sensors ----
   float temperature = 0, humidity = 0;
@@ -1245,8 +1306,10 @@ void loop() {
     } else {
       float cv = readV_ADC2(CO_MEMS_PIN, 30);
       float nv = readV_ADC2(NO2_MEMS_PIN, 30);
-      co_mems_ema  = applyEMA(cv, co_mems_ema);
-      no2_mems_ema = applyEMA(nv, no2_mems_ema);
+      float cv_med = medianPush(mf_co_mems, cv);
+      float nv_med = medianPush(mf_no2_mems, nv);
+      co_mems_ema  = applyEMA(cv_med, co_mems_ema);
+      no2_mems_ema = applyEMA(nv_med, no2_mems_ema);
       g_co_mems_v  = (co_mems_ema >= 0) ? co_mems_ema : cv;
       g_no2_mems_v = (no2_mems_ema >= 0) ? no2_mems_ema : nv;
     }
@@ -1254,10 +1317,10 @@ void loop() {
     // DYNAMIC BASELINE TRACKING — adapts to thermal drift over time
     // If current voltage drops below baseline, slowly pull baseline down
     if (g_co_mems_v < CO_MEMS_BASELINE - 0.01) {
-      CO_MEMS_BASELINE = CO_MEMS_BASELINE * 0.9995 + g_co_mems_v * 0.0005;
+      CO_MEMS_BASELINE = CO_MEMS_BASELINE * 0.999 + g_co_mems_v * 0.001;
     }
     if (!no2Inverted && g_no2_mems_v < NO2_MEMS_BASELINE - 0.01) {
-      NO2_MEMS_BASELINE = NO2_MEMS_BASELINE * 0.9995 + g_no2_mems_v * 0.0005;
+      NO2_MEMS_BASELINE = NO2_MEMS_BASELINE * 0.999 + g_no2_mems_v * 0.001;
     }
   }
 
@@ -1278,9 +1341,19 @@ void loop() {
     if (g_pm25_rain_delta < 0) g_pm25_rain_delta = 0;
   }
 
-  // Update basic globals (always, for web)
-  g_pm25 = pm25_ema; g_uv = uv_ema;
-  g_temp = temperature; g_hum = humidity; g_voc = vocIndex;
+  // Update basic globals with deadband (suppress jitter)
+  float new_pm25 = deadband(pm25_ema, g_pm25, DB_PM25);
+  float new_uv   = deadband(uv_ema, g_uv, DB_UV);
+  float new_temp  = deadband(temperature, g_temp, DB_TEMP);
+  float new_hum   = deadband(humidity, g_hum, DB_HUM);
+  int   new_voc   = (abs((int)vocIndex - (int)g_voc) >= DB_VOC) ? vocIndex : g_voc;
+
+  if (new_pm25 != g_pm25 || new_uv != g_uv || new_temp != g_temp ||
+      new_hum != g_hum || new_voc != g_voc) {
+    displayDirty = true;
+  }
+  g_pm25 = new_pm25; g_uv = new_uv;
+  g_temp = new_temp; g_hum = new_hum; g_voc = new_voc;
 
   // ================================================================
   //  PHASE 1: WARMUP (0-3 min) — MQ heaters warming
@@ -1297,20 +1370,12 @@ void loop() {
       Serial.println("========== PHASE 1: WARMING UP ==========");
       Serial.print("  Progress: "); Serial.print(pct); Serial.println("%");
       Serial.println();
-      Serial.print("  PM2.5:     "); Serial.print(g_pm25, 1);
-      Serial.print(" ug/m3    ["); Serial.print(pm25Tag(g_pm25));
-      Serial.print("]  "); Serial.println(pm25Tip(g_pm25));
-      Serial.print("  Temp:      "); Serial.print(temperature, 1);
-      Serial.print(" C        ["); Serial.print(tempTag(temperature)); Serial.println("]");
-      Serial.print("  Humidity:  "); Serial.print(humidity, 1);
-      Serial.print(" %        ["); Serial.print(humTag(humidity)); Serial.println("]");
-      Serial.print("  UV:        "); Serial.print(g_uv, 1);
-      Serial.print("          ["); Serial.print(uvTag(g_uv));
-      Serial.print("]  "); Serial.println(uvTip(g_uv));
+      Serial.print("  PM2.5:     "); Serial.print(g_pm25, 1);  Serial.println(" ug/m3");
+      Serial.print("  Temp:      "); Serial.print(temperature, 1); Serial.println(" C");
+      Serial.print("  Humidity:  "); Serial.print(humidity, 1); Serial.println(" %");
+      Serial.print("  UV:        "); Serial.print(g_uv, 1); Serial.println(" idx");
       if (vocIndex > 0) {
-        Serial.print("  VOC:       "); Serial.print(vocIndex);
-        Serial.print("          ["); Serial.print(vocTag(vocIndex));
-        Serial.print("]  "); Serial.println(vocTip(vocIndex));
+        Serial.print("  VOC:       "); Serial.print(vocIndex); Serial.println(" idx");
       }
       Serial.println();
       int minLeft = (WARMUP_END - elapsed) / 60000 + 1;
@@ -1373,14 +1438,21 @@ void loop() {
   int aqi_co  = aqiFromCO(co_best);
   int aqi_no2 = aqiFromNO2(no2_ppb);
   int totalAQI = max(max(aqi_pm, aqi_o3), max(aqi_co, aqi_no2));
-  static float aqiSmooth = -1;
-  if (aqiSmooth < 0.0f) aqiSmooth = totalAQI;
-  else aqiSmooth = 0.3f * totalAQI + 0.7f * aqiSmooth;
-  totalAQI = (int)(aqiSmooth + 0.5f);
 
-  // Update globals (for web — but web shows warmup screen until live)
-  g_o3 = o3_ppb; g_co = co_best; g_co_mq = co_mq_ppm;
-  g_no2_ppb = no2_ppb; g_co2 = co2_ppm;
+  // Update gas globals with deadband (suppress jitter)
+  float new_o3  = deadband(o3_ppb, g_o3, DB_O3);
+  float new_co  = deadband(co_best, g_co, DB_CO);
+  float new_no2 = deadband(no2_ppb, g_no2_ppb, DB_NO2);
+  float new_co2 = deadband(co2_ppm, g_co2, DB_CO2);
+
+  if (new_o3 != g_o3 || new_co != g_co || new_no2 != g_no2_ppb || new_co2 != g_co2) {
+    displayDirty = true;
+  }
+
+  g_o3 = new_o3; g_co = new_co; g_co_mq = co_mq_ppm;
+  g_no2_ppb = new_no2; g_co2 = new_co2;
+
+  // NaN / bounds cleanup
   if (isnan(g_pm25) || g_pm25 < 0) g_pm25 = 0;
   if (isnan(g_o3) || g_o3 < 0) g_o3 = 0;
   if (isnan(g_co) || g_co < 0) g_co = 0;
@@ -1392,7 +1464,11 @@ void loop() {
   if (g_co < 0.2) g_co = 0;
   if (no2_ppb > 1500) { no2_ppb = 1500; g_no2_ppb = 1500; }
   if (g_pm25 > 500) g_pm25 = 500;
-  g_aqi = totalAQI; g_aqi_pm = aqi_pm; g_aqi_o3 = aqi_o3;
+
+  // AQI with deadband
+  int new_aqi = (abs(totalAQI - g_aqi) >= DB_AQI) ? totalAQI : g_aqi;
+  if (new_aqi != g_aqi) displayDirty = true;
+  g_aqi = new_aqi; g_aqi_pm = aqi_pm; g_aqi_o3 = aqi_o3;
   g_aqi_co = aqi_co; g_aqi_no2 = aqi_no2;
 
   // ================================================================
@@ -1545,30 +1621,21 @@ void loop() {
     pushToBackend();
   }
 
-  // Update stabilized display values
-  disp_pm25 = stabilize(g_pm25, disp_pm25, 5);
-  disp_o3   = stabilize(g_o3, disp_o3, 5);
-  disp_co   = stabilize(g_co, disp_co, 0.3);
-  disp_no2  = stabilize(g_no2_ppb, disp_no2, 40);
-  disp_co2  = stabilize(g_co2, disp_co2, 50);
-  disp_uv   = stabilize(g_uv, disp_uv, 1);
-  disp_temp = stabilize(g_temp, disp_temp, 0.5);
-  disp_hum  = stabilize(g_hum, disp_hum, 2);
-  disp_aqi  = (int)stabilize(g_aqi, disp_aqi, 10);
-
-  // ---- Display every 30 sec ----
+  // ---- Display every 30 sec (only if data changed) ----
   if (now - lastDisplayUpdate < DISPLAY_INTERVAL) return;
+  if (!displayDirty) return;
   lastDisplayUpdate = now;
+  displayDirty = false;
 
   // ---- Serial Report (LIVE) ----
   Serial.println("========== AERIS AIR QUALITY REPORT [LIVE] ==========");
   Serial.println();
   Serial.print("  OVERALL AQI: ");
-  Serial.print(totalAQI);
+  Serial.print(g_aqi);
   Serial.print("  -  ");
-  Serial.println(aqiLabel(totalAQI));
+  Serial.println(aqiLabel(g_aqi));
   Serial.print("  ");
-  Serial.println(aqiAdvice(totalAQI));
+  Serial.println(aqiAdvice(g_aqi));
   Serial.println();
 
   Serial.println("  ---- WHAT YOU'RE BREATHING ----");
@@ -1641,4 +1708,3 @@ void loop() {
     oledPage = (oledPage + 1) % 5;
   }
 }
-
