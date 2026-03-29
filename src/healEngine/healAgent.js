@@ -21,7 +21,7 @@ export async function askHealAgent(context) {
   // 1. Check cache via history
   const cached = findCachedHeal(brokenSelector, intent);
   if (cached) {
-    console.log(`  💾 Cache hit: ${brokenSelector} → ${cached.healed_selector}`);
+    console.log(`   Cache hit: ${brokenSelector} → ${cached.healed_selector}`);
     return {
       root_cause: cached.root_cause || 'Previously healed',
       new_selector: cached.healed_selector,
