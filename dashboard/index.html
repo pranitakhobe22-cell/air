@@ -546,54 +546,15 @@ select.inp option{background:var(--bg2)}
 
 <!-- HISTORY TAB -->
 <div id="tab-history" class="tab-panel" style="display:none">
-  <!-- Header -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
     <span class="tab-section-title" style="margin-bottom:0">Run History</span>
-    <div style="display:flex;gap:8px;align-items:center">
-      <select class="inp" id="histFileFilter" onchange="renderHistory()" style="font-size:10px;padding:4px 8px;min-width:140px;">
-        <option value="all">All Spec Files</option>
-      </select>
-      <button class="btn btn-outline btn-sm" onclick="clearHistory()">Clear All</button>
-    </div>
+    <button class="btn btn-outline btn-sm" onclick="clearHistory()">Clear All</button>
   </div>
-
-  <!-- Trend Charts Row -->
-  <div style="display:flex;gap:16px;margin-bottom:16px;flex-shrink:0;">
-    <div class="stat-panel" style="flex:1;padding:14px 18px;flex-direction:column;align-items:stretch;height:160px;">
-      <div style="font-size:9.5px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;margin-bottom:8px;">Pass Rate Trend (Last 10 Runs)</div>
-      <div style="flex:1;position:relative;"><canvas id="histPassChart"></canvas></div>
-    </div>
-    <div class="stat-panel" style="flex:1;padding:14px 18px;flex-direction:column;align-items:stretch;height:160px;">
-      <div style="font-size:9.5px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;margin-bottom:8px;">Heal Success Rate Over Time</div>
-      <div style="flex:1;position:relative;"><canvas id="histHealChart"></canvas></div>
-    </div>
-  </div>
-
-  <!-- Main Content: Run Log + Flaky Selectors -->
-  <div style="display:flex;gap:16px;flex:1;min-height:0;">
-    <!-- Run Log Table -->
-    <div class="stat-panel" style="flex:2;padding:0;flex-direction:column;min-height:0;overflow:hidden;">
-      <div style="padding:12px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:10px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;font-weight:600;">Run Log</span>
-        <span id="histCount" style="font-size:9px;font-family:var(--mono);color:var(--txt2);">0 runs</span>
-      </div>
-      <div style="flex:1;overflow-y:auto;" id="historyList">
-        <div class="hist-empty-state">
-          <div class="hist-empty-icon">📋</div>
-          <div class="hist-empty-text">No runs recorded yet.<br>Complete a run on the Live tab to see history here.</div>
-          <div class="hist-empty-hint">→ Live Run → Demo Run</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Flaky Selector Tracker -->
-    <div class="stat-panel" style="flex:1;padding:0;flex-direction:column;min-height:0;overflow:hidden;">
-      <div style="padding:12px 18px;border-bottom:1px solid var(--border);flex-shrink:0;">
-        <span style="font-size:10px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;font-weight:600;">Flaky Selector Tracker</span>
-      </div>
-      <div style="flex:1;overflow-y:auto;padding:10px 14px;" id="flakyList">
-        <div style="font-size:10px;color:var(--txt2);text-align:center;padding:20px 0;font-style:italic;">No flaky selectors detected yet</div>
-      </div>
+  <div id="historyList">
+    <div class="hist-empty-state">
+      <div class="hist-empty-icon">📋</div>
+      <div class="hist-empty-text">No runs recorded yet.<br>Complete a run on the Live tab to see history here.</div>
+      <div class="hist-empty-hint">→ Live Run → Demo Run</div>
     </div>
   </div>
 </div>
@@ -618,21 +579,7 @@ select.inp option{background:var(--bg2)}
 
 <!-- CONFIG TAB -->
 <div id="tab-config" class="tab-panel" style="display:none">
-  <div style="max-width:720px">
-    <!-- ─── API Key Management ──────────────── -->
-    <span class="tab-section-title">API Key Management</span>
-    <div class="stat-panel" style="padding:16px 18px;flex-direction:column;align-items:stretch;margin-bottom:20px;">
-      <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <input type="text" class="inp" id="cfgNewKey" placeholder="AIzaSy... (paste Gemini API key)" style="flex:1;font-size:10.5px;"/>
-        <button class="btn btn-green" style="flex:0;padding:6px 16px;font-size:10.5px;" onclick="addApiKey()">Add Key</button>
-      </div>
-      <div id="apiKeyList" style="display:flex;flex-direction:column;gap:6px;">
-        <!-- keys rendered here -->
-      </div>
-      <div class="cfg-desc" style="margin-top:8px;">Manage multiple Gemini API keys for round-robin rotation. Keys are tested on add.</div>
-    </div>
-
-    <!-- ─── Agent Configuration ─────────────── -->
+  <div style="max-width:660px">
     <span class="tab-section-title">Agent Configuration</span>
     <div class="cfg-grid">
 
@@ -651,7 +598,6 @@ select.inp option{background:var(--bg2)}
         <label class="inp-label">AI Model</label>
         <select class="inp" id="cfgModel" onchange="onModelChange(this.value)">
           <option value="gemini-2.5-flash" selected>gemini-2.5-flash</option>
-          <option value="gemini-2.0-flash">gemini-2.0-flash</option>
           <option value="gemini-1.5-flash">gemini-1.5-flash</option>
           <option value="gemini-1.5-pro">gemini-1.5-pro</option>
         </select>
@@ -671,15 +617,9 @@ select.inp option{background:var(--bg2)}
       </div>
 
       <div class="cfg-card">
-        <label class="inp-label">Selector Strategy Preference</label>
-        <select class="inp" id="cfgSelectorStrategy">
-          <option value="auto" selected>Auto (AI decides)</option>
-          <option value="data-testid">Prefer data-testid</option>
-          <option value="id">Prefer #id</option>
-          <option value="css">Prefer CSS class</option>
-          <option value="xpath">Prefer XPath</option>
-        </select>
-        <div class="cfg-desc">Preferred selector type when the AI suggests replacements.</div>
+        <label class="inp-label">Report Output Path</label>
+        <input type="text" class="inp" id="cfgReportPath" value="./heal-report.json"/>
+        <div class="cfg-desc">File path where the JSON report is written after each run.</div>
       </div>
 
       <div class="cfg-card">
@@ -704,31 +644,6 @@ select.inp option{background:var(--bg2)}
         <div class="cfg-desc">Controls when the human approval prompt appears in Live Run.</div>
       </div>
 
-    </div>
-
-    <!-- ─── Test Environment ───────────────── -->
-    <span class="tab-section-title" style="margin-top:20px;display:block;">Test Environment</span>
-    <div class="cfg-grid">
-      <div class="cfg-card">
-        <label class="inp-label">Base URL</label>
-        <input type="text" class="inp" id="cfgBaseUrl" placeholder="https://your-app.com"/>
-        <div class="cfg-desc">Default target URL for test runs.</div>
-      </div>
-      <div class="cfg-card">
-        <label class="inp-label">Report Output Path</label>
-        <input type="text" class="inp" id="cfgReportPath" value="./heal-report.json"/>
-        <div class="cfg-desc">File path where the JSON report is written after each run.</div>
-      </div>
-      <div class="cfg-card">
-        <label class="inp-label">Auth Username</label>
-        <input type="text" class="inp" id="cfgAuthUser" placeholder="testuser@example.com"/>
-        <div class="cfg-desc">Pre-filled username for tests requiring authentication.</div>
-      </div>
-      <div class="cfg-card">
-        <label class="inp-label">Auth Password</label>
-        <input type="password" class="inp" id="cfgAuthPass" placeholder="••••••••"/>
-        <div class="cfg-desc">Pre-filled password used by healFill for auth flows.</div>
-      </div>
     </div>
 
     <div class="cfg-save-row">
@@ -775,7 +690,12 @@ select.inp option{background:var(--bg2)}
 /* ─── STATE ─────────────────────────────── */
 const S = {heals:0,passed:0,failed:0,confs:[],steps:0,interventions:0,startTime:null,runActive:false};
 const cfg = {threshold:80, model:'gemini-2.5-flash', retries:3, timeout:5000, reportPath:'./heal-report.json', port:4000, reviewMode:'auto'};
-const runHistory = [];
+const runHistory = [
+  { ts: Date.now() - 1000 * 60 * 15, file: "tests/checkout.spec.js", steps: 12, healed: 3, failed: 0, conf: "94%", duration: "14.2s", status: "healed", selectors: [] },
+  { ts: Date.now() - 1000 * 60 * 60 * 2, file: "tests/login.spec.js", steps: 6, healed: 0, failed: 1, conf: "—", duration: "4.8s", status: "fail", selectors: [] },
+  { ts: Date.now() - 1000 * 60 * 60 * 24, file: "tests/cart-add.spec.js", steps: 24, healed: 1, failed: 0, conf: "89%", duration: "21.0s", status: "healed", selectors: [] },
+  { ts: Date.now() - 1000 * 60 * 60 * 48, file: "tests/generic.spec.js", steps: 4, healed: 0, failed: 0, conf: "—", duration: "3.2s", status: "pass", selectors: [] }
+];
 const chartHistory = {live:[],all:[]};
 let chartView = 'live';
 let demoRunning = false;
@@ -1010,138 +930,35 @@ function recordHistory(){
   const avgConf=S.confs.length>0?(S.confs.reduce((a,b)=>a+b,0)/S.confs.length*100).toFixed(0)+'%':'—';
   const dur=S.startTime?((Date.now()-S.startTime)/1000).toFixed(1)+'s':'—';
   const status=S.failed===0?'pass':(S.heals>0?'healed':'fail');
-  const failedSels=(S._failedSelectors||[]).slice();
-  runHistory.unshift({ts:Date.now(),file:$('runFile').textContent||'unknown',steps:total,healed:S.heals,failed:S.failed,conf:avgConf,duration:dur,status,selectors:S._healedSelectors||[],failedSelectors:failedSels});
-  trackFlaky();
-  updateHistFileFilter();
+  runHistory.unshift({ts:Date.now(),file:$('runFile').textContent||'unknown',steps:total,healed:S.heals,failed:S.failed,conf:avgConf,duration:dur,status,selectors:S._healedSelectors||[]});
   renderHistory();
 }
 
-function updateHistFileFilter(){
-  const sel=$('histFileFilter');
-  const files=[...new Set(runHistory.map(r=>r.file))];
-  const cur=sel.value;
-  sel.innerHTML='<option value="all">All Spec Files</option>'+files.map(f=>`<option value="${f}">${f}</option>`).join('');
-  sel.value=cur||'all';
-}
-
-function getFilteredHistory(){
-  const f=$('histFileFilter').value;
-  return f==='all'?runHistory:runHistory.filter(r=>r.file===f);
-}
-
 function renderHistory(){
-  const filtered=getFilteredHistory();
   const el=$('historyList');
-  $('histCount').textContent=filtered.length+' runs';
-  if(!filtered.length){
+  if(!runHistory.length){
     el.innerHTML=`<div class="hist-empty-state"><div class="hist-empty-icon">📋</div><div class="hist-empty-text">No runs recorded yet.<br>Complete a run on the Live tab to see history here.</div><div class="hist-empty-hint">→ Live Run → Demo Run</div></div>`;
-  } else {
-    el.innerHTML=`
-      <table class="log" style="width:100%">
-        <thead><tr><th>Date / Time</th><th>File</th><th style="text-align:center">Steps</th><th style="text-align:center">Healed</th><th style="text-align:center">Failed</th><th style="text-align:center">Avg Conf</th><th style="text-align:center">Duration</th><th>Status</th></tr></thead>
-        <tbody>${filtered.map((r,i)=>`
-          <tr style="cursor:pointer" onclick="toggleHistDetail(this,${i})">
-            <td style="color:var(--txt2);font-size:9.5px">${fmtTime(r.ts)}</td>
-            <td style="color:var(--txt0)">${r.file}</td>
-            <td style="text-align:center">${r.steps}</td>
-            <td style="text-align:center;color:var(--amber)">${r.healed}</td>
-            <td style="text-align:center;color:${r.failed>0?'var(--red)':'var(--txt2)'}">${r.failed}</td>
-            <td style="text-align:center;color:var(--green)">${r.conf}</td>
-            <td style="text-align:center">${r.duration}</td>
-            <td><span class="spill ${r.status}"><span class="sdot"></span>${r.status.toUpperCase()}</span></td>
-          </tr>`).join('')}
-        </tbody>
-      </table>`;
-  }
-  renderHistCharts(filtered);
-  renderFlakyList();
-}
-
-function toggleHistDetail(row,idx){
-  const existing=row.nextElementSibling;
-  if(existing && existing.classList.contains('hist-detail-row')){
-    existing.remove(); return;
-  }
-  const r=getFilteredHistory()[idx];
-  if(!r) return;
-  const sels=r.selectors||[];
-  const fails=r.failedSelectors||[];
-  const detailRow=document.createElement('tr');
-  detailRow.className='hist-detail-row';
-  detailRow.innerHTML=`<td colspan="8" style="padding:10px 16px;background:rgba(0,255,136,.02);border-left:2px solid var(--green);">
-    <div style="display:flex;gap:20px;font-size:10px;">
-      <div style="flex:1;">
-        <div style="color:var(--txt2);text-transform:uppercase;font-size:8.5px;letter-spacing:.06em;margin-bottom:6px;font-weight:600;">Healed Selectors</div>
-        ${sels.length?sels.map(s=>`<div style="margin-bottom:3px;"><span style="color:var(--red);text-decoration:line-through;font-family:var(--mono);font-size:9.5px;">${s.from}</span> → <span style="color:var(--green);font-family:var(--mono);font-size:9.5px;">${s.to}</span> <span style="color:var(--txt2);">(${Math.round((s.conf||0)*100)}%)</span></div>`).join(''):'<span style="color:var(--txt2);font-style:italic;">None</span>'}
-      </div>
-      <div style="flex:1;">
-        <div style="color:var(--txt2);text-transform:uppercase;font-size:8.5px;letter-spacing:.06em;margin-bottom:6px;font-weight:600;">Failed Selectors</div>
-        ${fails.length?fails.map(s=>`<div style="margin-bottom:3px;color:var(--red);font-family:var(--mono);font-size:9.5px;">${s}</div>`).join(''):'<span style="color:var(--txt2);font-style:italic;">None</span>'}
-      </div>
-    </div>
-  </td>`;
-  row.after(detailRow);
-}
-
-/* History Trend Charts */
-let histPassChartInst=null, histHealChartInst=null;
-function renderHistCharts(data){
-  const last10=data.slice(0,10).reverse();
-  const labels=last10.map(r=>new Date(r.ts).toLocaleDateString('en',{month:'short',day:'numeric'}));
-  const passRates=last10.map(r=>{const t=r.steps||1;return (((t-r.failed)/t)*100).toFixed(1);});
-  const healRates=last10.map(r=>{const t=r.steps||1;return ((r.healed/t)*100).toFixed(1);});
-  const mkOpts=(color,label)=>({
-    type:'line',data:{labels,datasets:[{label,data:label==='Pass %'?passRates:healRates,borderColor:color,backgroundColor:color+'18',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:color,borderWidth:2}]},
-    options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},plugins:{legend:{display:false},tooltip:{backgroundColor:'#151515',borderColor:'rgba(255,255,255,.1)',borderWidth:1,bodyColor:'#f0f0f0',bodyFont:{family:'JetBrains Mono',size:10},padding:7}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#3a3a3a',font:{family:'JetBrains Mono',size:8},maxTicksLimit:6}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#3a3a3a',font:{family:'JetBrains Mono',size:8}},min:0,max:100}}}
-  });
-  if(histPassChartInst){histPassChartInst.destroy();}
-  if(histHealChartInst){histHealChartInst.destroy();}
-  const c1=document.getElementById('histPassChart');
-  const c2=document.getElementById('histHealChart');
-  if(c1)histPassChartInst=new Chart(c1.getContext('2d'),mkOpts('#00FF88','Pass %'));
-  if(c2)histHealChartInst=new Chart(c2.getContext('2d'),mkOpts('#FFB800','Heal %'));
-}
-
-/* Flaky Selector Tracker */
-const flakyMap={};
-function trackFlaky(){
-  runHistory.forEach(r=>{
-    (r.failedSelectors||[]).forEach(sel=>{
-      if(!flakyMap[sel])flakyMap[sel]={count:0,lastSeen:0,files:new Set()};
-      flakyMap[sel].count++;
-      if(r.ts>flakyMap[sel].lastSeen)flakyMap[sel].lastSeen=r.ts;
-      flakyMap[sel].files.add(r.file);
-    });
-    (r.selectors||[]).forEach(s=>{
-      const sel=s.from;
-      if(!flakyMap[sel])flakyMap[sel]={count:0,lastSeen:0,files:new Set()};
-      flakyMap[sel].count++;
-      if(r.ts>flakyMap[sel].lastSeen)flakyMap[sel].lastSeen=r.ts;
-      flakyMap[sel].files.add(r.file);
-    });
-  });
-}
-function renderFlakyList(){
-  const el=$('flakyList');
-  const entries=Object.entries(flakyMap).sort((a,b)=>b[1].count-a[1].count);
-  if(!entries.length){
-    el.innerHTML='<div style="font-size:10px;color:var(--txt2);text-align:center;padding:20px 0;font-style:italic;">No flaky selectors detected yet</div>';
     return;
   }
-  el.innerHTML=entries.slice(0,15).map(([sel,d])=>{
-    const riskColor=d.count>=3?'var(--red)':d.count>=2?'var(--amber)':'var(--txt2)';
-    return `<div style="padding:8px 0;border-bottom:1px solid var(--border);">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-family:var(--mono);font-size:9.5px;color:var(--txt0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${sel}</span>
-        <span style="font-family:var(--mono);font-size:10px;color:${riskColor};font-weight:700;flex-shrink:0;margin-left:8px;">${d.count}x</span>
-      </div>
-      <div style="font-size:8.5px;color:var(--txt2);margin-top:2px;">Last: ${new Date(d.lastSeen).toLocaleDateString()} · ${[...d.files].join(', ')}</div>
-    </div>`;
-  }).join('');
+  el.innerHTML=`
+    <table class="log" style="width:100%">
+      <thead><tr><th>Date / Time</th><th>File</th><th style="text-align:center">Steps</th><th style="text-align:center">Healed</th><th style="text-align:center">Failed</th><th style="text-align:center">Avg Conf</th><th style="text-align:center">Duration</th><th>Status</th></tr></thead>
+      <tbody>${runHistory.map(r=>`
+        <tr>
+          <td style="color:var(--txt2);font-size:9.5px">${fmtTime(r.ts)}</td>
+          <td style="color:var(--txt0)">${r.file}</td>
+          <td style="text-align:center">${r.steps}</td>
+          <td style="text-align:center;color:var(--amber)">${r.healed}</td>
+          <td style="text-align:center;color:${r.failed>0?'var(--red)':'var(--txt2)'}">${r.failed}</td>
+          <td style="text-align:center;color:var(--green)">${r.conf}</td>
+          <td style="text-align:center">${r.duration}</td>
+          <td><span class="spill ${r.status}"><span class="sdot"></span>${r.status.toUpperCase()}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
 }
 
-function clearHistory(){runHistory.length=0;Object.keys(flakyMap).forEach(k=>delete flakyMap[k]);renderHistory();}
+function clearHistory(){runHistory.length=0;renderHistory();}
 
 /* ─── REPORT ─────────────────────────────── */
 function renderReport(){
@@ -1156,103 +973,21 @@ function renderReport(){
   const passRate=(((total-r.failed)/total)*100).toFixed(1);
   const confNum=parseFloat(r.conf)||0;
   const allRuns=runHistory.length;
-  const avgPassRate=(runHistory.reduce((a,x)=>{const t=x.steps||1;return a+((t-x.failed)/t);},0)/allRuns*100).toFixed(1);
   const avgHealRate=(runHistory.reduce((a,x)=>a+(x.healed/(x.steps||1)),0)/allRuns*100).toFixed(1);
-  const healthScore=Math.round((parseFloat(avgPassRate)*0.6)+(100-parseFloat(avgHealRate)*0.1)*0.4);
-  const healthColor=healthScore>=80?'var(--green)':healthScore>=50?'var(--amber)':'var(--red)';
-
-  // Per-spec breakdown
-  const specMap={};
-  runHistory.forEach(run=>{
-    if(!specMap[run.file])specMap[run.file]={runs:0,steps:0,healed:0,failed:0};
-    specMap[run.file].runs++;
-    specMap[run.file].steps+=run.steps;
-    specMap[run.file].healed+=run.healed;
-    specMap[run.file].failed+=run.failed;
-  });
-
-  // Failure timeline
-  const failTimeline=runHistory.filter(x=>x.failed>0||x.healed>0).slice(0,8).reverse();
-
-  // Recommended fixes from flaky map
-  const recommendations=Object.entries(flakyMap).sort((a,b)=>b[1].count-a[1].count).slice(0,5);
 
   el.innerHTML=`
-    <!-- Executive Summary -->
-    <div class="stat-panel" style="padding:20px 24px;flex-direction:column;align-items:stretch;margin-bottom:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <div style="font-size:10px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;font-weight:600;">Executive Summary</div>
-        <div style="font-size:9px;font-family:var(--mono);color:var(--txt2)">${allRuns} total runs · ${fmtTime(r.ts)}</div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
-        <div style="text-align:center;">
-          <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:${healthColor};line-height:1;">${healthScore}</div>
-          <div style="font-size:8.5px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;">Health Score</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--txt0);line-height:1;">${allRuns}</div>
-          <div style="font-size:8.5px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;">Total Runs</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--green);line-height:1;">${avgPassRate}%</div>
-          <div style="font-size:8.5px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;">Avg Pass Rate</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--amber);line-height:1;">${avgHealRate}%</div>
-          <div style="font-size:8.5px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;">Avg Heal Rate</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--txt0);line-height:1;">${r.duration}</div>
-          <div style="font-size:8.5px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-top:5px;">Last Duration</div>
-        </div>
-      </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:10px;color:var(--txt2);font-family:var(--mono)">${fmtTime(r.ts)} · <span style="color:var(--txt0)">${r.file}</span></div>
+      ${runHistory.length>1?`<span style="font-size:9.5px;color:var(--txt2);font-family:var(--mono)">${allRuns} total runs recorded</span>`:''}
     </div>
-
-    <!-- Per-Spec Breakdown + Failure Timeline -->
-    <div style="display:flex;gap:16px;margin-bottom:16px;">
-      <div class="stat-panel" style="flex:1.5;padding:0;flex-direction:column;align-items:stretch;">
-        <div style="padding:12px 18px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;font-weight:600;">Per-Spec Breakdown</span>
-        </div>
-        <div style="padding:4px 0;">
-          <table class="log" style="width:100%">
-            <thead><tr><th>Spec File</th><th style="text-align:center">Runs</th><th style="text-align:center">Steps</th><th style="text-align:center">Healed</th><th style="text-align:center">Failed</th><th style="text-align:center">Pass Rate</th></tr></thead>
-            <tbody>${Object.entries(specMap).map(([file,d])=>{
-              const pr=(((d.steps-d.failed)/d.steps)*100).toFixed(0);
-              return `<tr>
-                <td style="color:var(--txt0)">${file}</td>
-                <td style="text-align:center">${d.runs}</td>
-                <td style="text-align:center">${d.steps}</td>
-                <td style="text-align:center;color:var(--amber)">${d.healed}</td>
-                <td style="text-align:center;color:${d.failed>0?'var(--red)':'var(--txt2)'}">${d.failed}</td>
-                <td style="text-align:center;color:var(--green)">${pr}%</td>
-              </tr>`;}).join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="stat-panel" style="flex:1;padding:0;flex-direction:column;align-items:stretch;">
-        <div style="padding:12px 18px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;font-weight:600;">Failure Timeline</span>
-        </div>
-        <div style="padding:12px 18px;overflow-y:auto;">
-          ${failTimeline.length?failTimeline.map(ft=>`
-            <div style="display:flex;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);">
-              <div style="width:3px;flex-shrink:0;border-radius:2px;background:${ft.failed>0?'var(--red)':'var(--amber)'}"></div>
-              <div style="flex:1;">
-                <div style="font-size:10px;color:var(--txt0);font-weight:600;">${ft.file}</div>
-                <div style="font-size:9px;color:var(--txt2);margin-top:2px;">${new Date(ft.ts).toLocaleString()} · ${ft.failed} failed · ${ft.healed} healed</div>
-              </div>
-            </div>
-          `).join(''):'<div style="font-size:10px;color:var(--txt2);font-style:italic;text-align:center;padding:16px;">No failures recorded</div>'}
-        </div>
-      </div>
+    <div class="report-metric-grid">
+      <div class="report-metric"><div class="report-metric-num" style="color:var(--txt0)">${r.steps}</div><div class="report-metric-label">Total Steps</div></div>
+      <div class="report-metric"><div class="report-metric-num" style="color:var(--amber)">${r.healed}</div><div class="report-metric-label">Auto-Healed</div></div>
+      <div class="report-metric"><div class="report-metric-num" style="color:${r.failed>0?'var(--red)':'var(--green)'}">${r.failed}</div><div class="report-metric-label">Unresolved</div></div>
+      <div class="report-metric"><div class="report-metric-num" style="color:var(--green)">${r.duration}</div><div class="report-metric-label">Duration</div></div>
     </div>
-
-    <!-- Performance Breakdown -->
-    <div class="stat-panel" style="padding:14px 18px;flex-direction:column;align-items:stretch;margin-bottom:16px;">
-      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--txt2);margin-bottom:12px">Performance Breakdown (Latest Run)</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);padding:14px;margin-bottom:12px">
+      <div style="font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--txt2);margin-bottom:10px">Performance Breakdown</div>
       <div class="report-bar-row">
         <div class="report-bar-label"><span>Pass Rate</span><span style="color:var(--green)">${passRate}%</span></div>
         <div class="report-bar-track"><div class="report-bar-fill" style="width:${passRate}%;background:var(--green)"></div></div>
@@ -1265,75 +1000,31 @@ function renderReport(){
         <div class="report-bar-label"><span>Avg Confidence</span><span style="color:var(--green)">${r.conf}</span></div>
         <div class="report-bar-track"><div class="report-bar-fill" style="width:${confNum}%;background:linear-gradient(90deg,var(--green3),var(--green))"></div></div>
       </div>
+      ${runHistory.length>1?`<div class="report-bar-row" style="margin-top:4px;padding-top:8px;border-top:1px solid var(--border)">
+        <div class="report-bar-label"><span style="color:var(--txt2)">Avg Heal Rate (all runs)</span><span style="color:var(--blue)">${avgHealRate}%</span></div>
+        <div class="report-bar-track"><div class="report-bar-fill" style="width:${avgHealRate}%;background:var(--blue)"></div></div>
+      </div>`:''}
     </div>
-
-    <!-- Recommended Fixes -->
-    <div class="stat-panel" style="padding:0;flex-direction:column;align-items:stretch;">
-      <div style="padding:12px 18px;border-bottom:1px solid var(--border);">
-        <span style="font-size:10px;text-transform:uppercase;color:var(--txt2);letter-spacing:.05em;font-weight:600;">Recommended Fixes</span>
+    <div class="report-summary-card">
+      <div style="font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--txt2);margin-bottom:8px">Summary</div>
+      <div style="font-size:10.5px;color:var(--txt1);line-height:1.8">
+        Outcome: <span class="spill ${r.status}" style="vertical-align:middle"><span class="sdot"></span>${r.status.toUpperCase()}</span><br>
+        SelfHeal auto-recovered <span style="color:var(--amber);font-weight:700">${r.healed}</span> broken selector(s) without manual intervention.
+        ${r.failed>0?`<br><span style="color:var(--red)">${r.failed} step(s) could not be healed</span> — inspect selectors manually.`:'<br><span style="color:var(--green)">All failures resolved automatically.</span>'}
       </div>
-      <div style="padding:12px 18px;">
-        ${recommendations.length?recommendations.map(([sel,d])=>`
-          <div style="padding:10px 0;border-bottom:1px solid var(--border);">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-              <span style="font-family:var(--mono);font-size:10px;color:var(--red);">${sel}</span>
-              <span style="font-family:var(--mono);font-size:9px;color:var(--amber);font-weight:700;">${d.count}x failures</span>
-            </div>
-            <div style="font-size:10px;color:var(--txt1);line-height:1.6;">
-              → Replace <code style="color:var(--red);background:var(--rdim);padding:1px 4px;border-radius:3px;font-size:9px;">${sel}</code> with a stable <code style="color:var(--green);background:var(--gdim);padding:1px 4px;border-radius:3px;font-size:9px;">data-testid</code> attribute to reduce fragility.
-            </div>
-          </div>
-        `).join(''):`
-          <div style="font-size:10px;color:var(--txt2);font-style:italic;text-align:center;padding:16px;">No recommendations yet — complete more runs to generate actionable suggestions.</div>
-        `}
-      </div>
-    </div>
-  `;
+    </div>`;
 }
 
 function exportReport(fmt){
   if(!runHistory.length){feed('Nothing to export','Complete a run first','fail');return;}
   const r=runHistory[0];
   let content,mime,ext;
-  if(fmt==='json'){content=JSON.stringify({latestRun:r,allRuns:runHistory,flakySelectors:flakyMap},null,2);mime='application/json';ext='json';}
-  else{
-    const headers='timestamp,file,steps,healed,failed,confidence,duration,status';
-    const rows=runHistory.map(x=>`"${fmtTime(x.ts)}","${x.file}",${x.steps},${x.healed},${x.failed},"${x.conf}","${x.duration}","${x.status}"`);
-    content=headers+'\n'+rows.join('\n');mime='text/csv';ext='csv';
-  }
+  if(fmt==='json'){content=JSON.stringify(r,null,2);mime='application/json';ext='json';}
+  else{const k=Object.keys(r);content=k.join(',')+'\n'+k.map(key=>`"${r[key]}"`).join(',');mime='text/csv';ext='csv';}
   const blob=new Blob([content],{type:mime});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`heal-report.${ext}`;a.click();
   feed(`Exported heal-report.${ext}`,null,'pass');
 }
-
-/* ─── CONFIG: API KEY MANAGEMENT ─────────── */
-const apiKeys=[{key:'(loaded from .env)',status:'active',label:'Primary (.env)'}];
-function renderApiKeys(){
-  const el=$('apiKeyList');
-  el.innerHTML=apiKeys.map((k,i)=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r4);">
-      <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${k.status==='active'?'var(--green)':k.status==='exhausted'?'var(--red)':'var(--txt2)'};"></span>
-      <span style="font-family:var(--mono);font-size:10px;color:var(--txt0);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${k.label||k.key.slice(0,12)+'...'}</span>
-      <span style="font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:${k.status==='active'?'var(--green)':k.status==='exhausted'?'var(--red)':'var(--txt2)'};font-weight:700;">${k.status}</span>
-      ${i>0?`<button class="btn-ghost" onclick="removeApiKey(${i})" style="font-size:12px;color:var(--red);padding:0 4px;" title="Remove">✕</button>`:''}
-    </div>
-  `).join('');
-}
-function addApiKey(){
-  const inp=$('cfgNewKey');
-  const key=inp.value.trim();
-  if(!key||!key.startsWith('AIza')){feed('Invalid key','Must start with AIza...','fail');return;}
-  apiKeys.push({key,status:'active',label:key.slice(0,12)+'...'+key.slice(-4)});
-  inp.value='';
-  renderApiKeys();
-  feed('API Key added',key.slice(0,12)+'... registered','pass');
-}
-function removeApiKey(i){
-  const removed=apiKeys.splice(i,1);
-  renderApiKeys();
-  feed('API Key removed',removed[0]?.label||'Key removed','info');
-}
-renderApiKeys();
 
 /* ─── TAB SWITCHING ──────────────────────── */
 function switchTab(tab, btn){
