@@ -1,7 +1,56 @@
 {
-  "testFile": "",
-  "timestamp": "",
-  "totalSteps": 0,
-  "healsApplied": 0,
-  "steps": []
+  "testFile": "checkout.spec.js",
+  "testFilePath": "C:\\Users\\rohit\\OneDrive\\Desktop\\SelfHeal\\tests\\checkout.spec.js",
+  "timestamp": "2026-03-29T02:54:32.514Z",
+  "summary": {
+    "totalSteps": 5,
+    "passed": 5,
+    "healed": 0,
+    "failed": 0,
+    "stabilityScore": 100,
+    "healRate": "0%",
+    "passRate": "100%"
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "selector": "http://localhost:3003/pages/checkout-page.html",
+      "status": "pass"
+    },
+    {
+      "action": "fill",
+      "selector": "#auth-user-email",
+      "status": "pass"
+    },
+    {
+      "action": "click",
+      "selector": "#auth-user-email",
+      "status": "pass"
+    },
+    {
+      "action": "click",
+      "selector": "text=\"Add to Cart\"",
+      "status": "pass"
+    },
+    {
+      "action": "click",
+      "selector": "#btn-place-order",
+      "status": "pass"
+    }
+  ],
+  "healDetails": [],
+  "topHealedSelectors": [
+    {
+      "selector": "#login-password",
+      "healCount": 1
+    },
+    {
+      "selector": "#t",
+      "healCount": 1
+    },
+    {
+      "selector": "#broken-btn",
+      "healCount": 1
+    }
+  ]
 }

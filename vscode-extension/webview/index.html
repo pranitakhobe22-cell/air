@@ -3,762 +3,503 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SelfHeal — AI Dev Assistant</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <title>SelfHeal AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --bg:#08090d;--surface:#0e1117;--surface2:#161b22;--surface3:#1c2333;--surface4:#242d3d;
+      --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.10);--border3:rgba(255,255,255,0.15);
+      --text:#e6edf3;--text-dim:#8b949e;--muted:#484f58;
+      --green:#3fb950;--green-dim:rgba(63,185,80,0.12);--green-glow:rgba(63,185,80,0.3);
+      --red:#f85149;--red-dim:rgba(248,81,73,0.12);
+      --amber:#d29922;--amber-dim:rgba(210,153,34,0.12);
+      --blue:#58a6ff;--blue-dim:rgba(88,166,255,0.12);
+      --purple:#bc8cff;--purple-dim:rgba(188,140,255,0.12);
+      --gradient:linear-gradient(135deg,#3fb950 0%,#58a6ff 50%,#bc8cff 100%);
+      --r:8px;--r-lg:12px;--r-xl:16px;
+      --sans:'Inter',-apple-system,sans-serif;--mono:'JetBrains Mono',monospace;
+      --shadow:0 4px 24px rgba(0,0,0,0.5);--shadow-lg:0 8px 40px rgba(0,0,0,0.7);
+    }
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;overflow:hidden;}
+    button{cursor:pointer;border:none;outline:none;font-family:var(--sans);}
+    input,select,textarea{outline:none;font-family:var(--mono);}
+    ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--surface4);border-radius:2px;}
+    .shell{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
 
-    :root {
-      --bg:           #070b14;
-      --surface:      #0d1321;
-      --surface2:     #131c2e;
-      --surface3:     #1a2540;
-      --border:       rgba(255,255,255,0.06);
-      --border-glow:  rgba(99,102,241,0.25);
-      --text:         #e8edf5;
-      --text-dim:     #8b96aa;
-      --muted:        #4a5668;
+    /* TOPBAR */
+    .topbar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;position:relative;}
+    .topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:var(--gradient);opacity:0.4;}
+    .brand{display:flex;align-items:center;gap:8px;flex:1;}
+    .brand-logo{width:28px;height:28px;border-radius:8px;background:var(--gradient);display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px rgba(63,185,80,0.3);font-size:14px;flex-shrink:0;}
+    .brand-name{font-size:13px;font-weight:800;letter-spacing:-0.02em;background:var(--gradient);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+    .brand-badge{font-size:8px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);background:var(--surface3);border:1px solid var(--border);padding:2px 6px;border-radius:4px;}
 
-      --accent:       #6366f1;
-      --accent2:      #a855f7;
-      --accent-glow:  rgba(99,102,241,0.12);
+    /* TABS */
+    .tab-bar{display:flex;gap:2px;padding:6px 10px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+    .tab-btn{padding:6px 14px;border-radius:var(--r);font-size:11px;font-weight:600;color:var(--text-dim);background:transparent;transition:all 0.15s;position:relative;display:flex;align-items:center;gap:5px;}
+    .tab-btn:hover{color:var(--text);background:var(--surface2);}
+    .tab-btn.active{color:var(--green);background:var(--green-dim);}
+    .tab-btn.active::after{content:'';position:absolute;bottom:-7px;left:20%;right:20%;height:2px;background:var(--green);border-radius:1px;}
+    .tab-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+    .tab-dot.red{background:var(--red);box-shadow:0 0 6px rgba(248,81,73,0.4);}
+    .tab-dot.blue{background:var(--blue);}
+    .err-badge{font-size:9px;background:var(--red-dim);color:var(--red);padding:0 5px;border-radius:8px;font-weight:700;margin-left:2px;display:none;}
+    .tab-panel{display:none;flex:1;flex-direction:column;min-height:0;overflow:hidden;}
+    .tab-panel.active{display:flex;}
 
-      --blue:         #38bdf8;
-      --blue-bg:      rgba(56,189,248,0.08);
-      --blue-border:  rgba(56,189,248,0.25);
+    /* ═══ SHARED STYLES ═══ */
+    .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:8px;}
+    .badge{display:inline-block;font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:0.04em;text-transform:uppercase;}
+    .badge.green{background:var(--green-dim);color:var(--green);}
+    .badge.red{background:var(--red-dim);color:var(--red);}
+    .badge.amber{background:var(--amber-dim);color:var(--amber);}
+    .badge.blue{background:var(--blue-dim);color:var(--blue);}
 
-      --green:        #34d399;
-      --green-bg:     rgba(52,211,153,0.08);
-      --green-border: rgba(52,211,153,0.25);
+    /* ═══ ERRORS TAB ═══ */
+    .errors-header{padding:12px 14px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .errors-list{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;}
+    .errors-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:10px;padding:40px;}
+    .errors-empty-icon{font-size:36px;opacity:0.3;}
+    .errors-empty-text{font-size:11px;color:var(--muted);text-align:center;line-height:1.7;}
+    .errors-empty-text code{color:var(--green);font-family:var(--mono);font-size:10px;}
 
-      --red:          #f87171;
-      --red-bg:       rgba(248,113,113,0.08);
-      --red-border:   rgba(248,113,113,0.25);
+    .e-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;cursor:pointer;transition:all 0.15s;animation:fadeIn .2s ease;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+    .e-card:hover{border-color:var(--border3);background:var(--surface3);}
+    .e-card.healed{border-left:3px solid var(--green);}
+    .e-card.failed{border-left:3px solid var(--red);}
+    .e-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;}
+    .e-status{font-size:14px;flex-shrink:0;margin-top:1px;}
+    .e-info{flex:1;min-width:0;}
+    .e-cmd{font-family:var(--mono);font-size:10px;color:var(--blue);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .e-msg{font-size:11px;color:var(--red);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+    .e-time{font-size:9px;color:var(--muted);font-family:var(--mono);flex-shrink:0;}
+    .e-summary{margin-top:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);font-size:10.5px;line-height:1.5;}
+    .e-summary .lbl{color:var(--green);font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;display:block;}
+    .e-summary .val{color:var(--text-dim);}
+    .e-summary .fix{font-family:var(--mono);color:var(--green);font-size:10px;}
+    .e-files{margin-top:6px;font-family:var(--mono);font-size:9.5px;color:var(--blue);padding:4px 8px;background:var(--blue-dim);border-radius:6px;}
 
-      --amber:        #fbbf24;
-      --amber-bg:     rgba(251,191,36,0.08);
-      --amber-border: rgba(251,191,36,0.25);
+    /* Detail Panel */
+    .detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);z-index:200;display:none;align-items:stretch;justify-content:flex-end;}
+    .detail-overlay.show{display:flex;}
+    .detail-panel{width:100%;max-width:420px;background:var(--surface);border-left:1px solid var(--border2);overflow-y:auto;animation:slideIn .2s ease;}
+    @keyframes slideIn{from{transform:translateX(20px);opacity:0;}to{transform:none;opacity:1;}}
+    .dp-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:1;}
+    .dp-title{font-size:13px;font-weight:800;}
+    .dp-close{width:28px;height:28px;border-radius:6px;background:var(--surface3);color:var(--text-dim);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+    .dp-close:hover{color:var(--red);background:var(--red-dim);}
+    .dp-body{padding:14px 16px;display:flex;flex-direction:column;gap:14px;}
+    .dp-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:6px;}
+    .dp-code{background:#0a0c10;border:1px solid var(--border2);border-radius:var(--r);padding:10px;font-family:var(--mono);font-size:10.5px;line-height:1.6;overflow-x:auto;white-space:pre-wrap;word-break:break-all;}
+    .dp-code.err{color:var(--red);}
+    .dp-code.fix{color:var(--green);}
+    .dp-code.cmd{color:var(--blue);}
+    .dp-explain{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;font-size:11.5px;line-height:1.7;color:var(--text-dim);}
+    .dp-file{display:flex;align-items:center;gap:6px;padding:4px 8px;background:var(--blue-dim);border:1px solid rgba(88,166,255,0.15);border-radius:6px;font-family:var(--mono);font-size:10px;color:var(--blue);cursor:pointer;margin-bottom:3px;}
+    .dp-file:hover{background:rgba(88,166,255,0.15);}
+    .dp-btn{width:100%;padding:10px;border-radius:var(--r);font-size:12px;font-weight:700;transition:0.15s;margin-top:4px;}
+    .dp-btn.green{background:var(--green);color:#000;}
+    .dp-btn.green:hover{box-shadow:0 0 16px var(--green-glow);}
+    .dp-btn.outline{background:transparent;color:var(--text-dim);border:1px solid var(--border2);}
+    .dp-btn.outline:hover{color:var(--text);border-color:var(--border3);}
 
-      --grey-bg:      rgba(255,255,255,0.04);
-      --grey-border:  rgba(255,255,255,0.08);
+    /* ═══ CONFIG TAB ═══ */
+    .config-scroll{flex:1;overflow-y:auto;padding:12px;}
 
-      --radius:       10px;
-      --radius-lg:    14px;
-      --font-sans:    'Inter', var(--vscode-font-family, -apple-system, sans-serif);
-      --font-mono:    'JetBrains Mono', var(--vscode-editor-font-family, monospace);
+    /* Command Grid */
+    .cmd-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;}
+    .cmd-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px;cursor:pointer;transition:all 0.15s;text-align:center;}
+    .cmd-card:hover{border-color:var(--green);background:var(--green-dim);}
+    .cmd-card.running{border-color:var(--amber);background:var(--amber-dim);pointer-events:none;}
+    .cmd-icon{font-size:18px;margin-bottom:4px;}
+    .cmd-name{font-size:10px;font-weight:700;color:var(--text);}
+    .cmd-desc{font-size:8.5px;color:var(--muted);margin-top:2px;line-height:1.3;}
 
-      --g-sky:    #38bdf8;
-      --g-indigo: #818cf8;
-      --g-purple: #c084fc;
-      --gemini-gradient: linear-gradient(135deg, var(--g-sky) 0%, var(--g-indigo) 50%, var(--g-purple) 100%);
-    }
+    /* Terminal area */
+    .term-box{background:#0a0c10;border:1px solid var(--border2);border-radius:var(--r);margin-bottom:12px;overflow:hidden;}
+    .term-header{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--surface2);border-bottom:1px solid var(--border);}
+    .term-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);}
+    .term-status{font-size:9px;font-family:var(--mono);color:var(--muted);}
+    .term-status.running{color:var(--amber);}
+    .term-status.done{color:var(--green);}
+    .term-status.error{color:var(--red);}
+    .term-output{max-height:200px;overflow-y:auto;padding:8px 10px;font-family:var(--mono);font-size:10px;line-height:1.6;}
+    .term-line{padding:1px 0;}
+    .term-line.stdout{color:var(--text-dim);}
+    .term-line.stderr{color:var(--red);}
+    .term-line.info{color:var(--blue);}
+    .term-line.success{color:var(--green);}
+    .term-line.progress{color:var(--amber);}
 
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-sans);
-      font-size: 13px;
-      line-height: 1.6;
-      overflow: hidden;
-    }
+    /* Custom command input */
+    .custom-cmd{display:flex;gap:6px;margin-bottom:14px;}
+    .custom-input{flex:1;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:11px;}
+    .custom-input:focus{border-color:var(--green);}
+    .custom-run{padding:7px 14px;border-radius:var(--r);font-size:11px;font-weight:700;background:var(--green);color:#000;transition:0.15s;}
+    .custom-run:hover{box-shadow:0 0 12px var(--green-glow);}
 
-    /* ── Shell ── */
-    .shell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    /* History */
+    .hist-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:4px;cursor:pointer;transition:0.15s;}
+    .hist-item:hover{border-color:var(--border3);background:var(--surface3);}
+    .hist-icon{font-size:12px;flex-shrink:0;}
+    .hist-info{flex:1;min-width:0;}
+    .hist-cmd{font-family:var(--mono);font-size:10px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .hist-meta{font-size:9px;color:var(--muted);margin-top:1px;}
+    .hist-badge{flex-shrink:0;}
+    .hist-empty{text-align:center;padding:20px;color:var(--muted);font-size:11px;}
 
-    /* ── Topbar ── */
-    .topbar {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 14px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .brand { display: flex; align-items: center; gap: 9px; flex: 1; }
-    .brand-logo {
-      width: 26px; height: 26px;
-      background: var(--gemini-gradient);
-      border-radius: 7px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 0 12px rgba(99,102,241,0.35);
-    }
-    .brand-logo svg { filter: drop-shadow(0 0 3px rgba(255,255,255,0.4)); }
-    .brand-name {
-      font-size: 0.82rem; font-weight: 700; letter-spacing: -0.01em;
-      background: var(--gemini-gradient);
-      -webkit-background-clip: text; background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .brand-badge {
-      font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em;
-      text-transform: uppercase; color: var(--muted);
-      background: var(--surface3); border: 1px solid var(--border);
-      padding: 2px 6px; border-radius: 4px;
-    }
-    .topbar-actions { display: flex; align-items: center; gap: 8px; }
-    .ws-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--muted); transition: all 0.3s;
-    }
-    .ws-dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
-    .ws-dot.reconnecting { background: var(--amber); animation: pulse-dot 1s ease-in-out infinite; }
-    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    /* Config fields */
+    .cfg-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;margin-bottom:8px;}
+    .cfg-label{font-size:10px;font-weight:600;color:var(--text-dim);margin-bottom:6px;}
+    .cfg-input{width:100%;padding:6px 10px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:11px;}
+    .cfg-input:focus{border-color:var(--green);box-shadow:0 0 0 2px rgba(63,185,80,0.1);}
+    .cfg-desc{font-size:9.5px;color:var(--muted);margin-top:4px;line-height:1.4;}
+    .cfg-save{padding:8px 20px;border-radius:var(--r);font-size:11px;font-weight:700;background:var(--green);color:#000;transition:0.15s;}
+    .cfg-save:hover{box-shadow:0 0 12px var(--green-glow);}
 
-    /* ── Tab Bar ── */
-    .tab-bar {
-      display: flex; padding: 0 14px;
-      background: var(--surface); border-bottom: 1px solid var(--border); gap: 2px;
-    }
-    .tab-btn {
-      padding: 10px 12px; font-size: 0.75rem; font-weight: 600;
-      color: var(--text-dim); background: none; border: none; cursor: pointer;
-      position: relative; transition: color 0.2s;
-      display: flex; align-items: center; gap: 6px; white-space: nowrap;
-    }
-    .tab-btn:hover { color: var(--text); }
-    .tab-btn.active { color: var(--text); }
-    .tab-btn.active::after {
-      content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
-      height: 2px; background: var(--gemini-gradient); border-radius: 2px 2px 0 0;
-    }
-    .tab-btn svg { flex-shrink: 0; }
-
-    /* ── Panels ── */
-    .tab-panel { display: none; flex: 1; min-height: 0; overflow: hidden; }
-    .tab-panel.active { display: flex; flex-direction: column; }
-
-    /* ══════════ CHAT TAB ══════════ */
-    .chat-messages {
-      flex: 1; overflow-y: auto; padding: 18px 14px;
-      display: flex; flex-direction: column; gap: 20px;
-      scroll-behavior: smooth;
-    }
-    .chat-messages::-webkit-scrollbar { width: 3px; }
-    .chat-messages::-webkit-scrollbar-track { background: transparent; }
-    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-    /* Welcome */
-    .chat-welcome {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; text-align: center; padding: 32px 16px;
-    }
-    .welcome-spark { margin-bottom: 18px; animation: float-spark 4s ease-in-out infinite; }
-    @keyframes float-spark { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-    .welcome-title {
-      font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 6px;
-      background: var(--gemini-gradient);
-      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .welcome-sub { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 28px; max-width: 220px; }
-    .welcome-commands { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 260px; }
-    .welcome-cmd {
-      display: flex; align-items: center; gap: 8px; padding: 9px 12px;
-      border-radius: var(--radius); background: var(--surface2); border: 1px solid var(--border);
-      color: var(--text-dim); font-size: 0.78rem; font-weight: 600; cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4,0,0.2,1); text-align: left;
-    }
-    .welcome-cmd:hover { background: var(--surface3); border-color: var(--accent); color: var(--text); transform: translateY(-1px); }
-    .welcome-cmd-icon { width: 16px; height: 16px; flex-shrink: 0; }
-
-    /* Messages */
-    .msg { display: flex; gap: 12px; animation: msgIn 0.35s cubic-bezier(0.16,1,0.3,1); }
-    @keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
-    .msg-avatar {
-      width: 26px; height: 26px; border-radius: 7px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; margin-top: 2px;
-    }
-    .msg.user .msg-avatar { background: var(--surface2); color: var(--text-dim); }
-    .msg.assistant .msg-avatar { background: var(--gemini-gradient); box-shadow: 0 0 10px rgba(99,102,241,0.3); }
-    .msg-body { flex: 1; min-width: 0; }
-    .msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-    .msg-role { font-size: 0.8rem; font-weight: 700; color: var(--text); }
-    .msg-cmd-badge {
-      font-size: 0.67rem; font-weight: 600; padding: 1px 7px; border-radius: 5px;
-      background: var(--accent-glow); border: 1px solid var(--border-glow);
-      color: var(--accent); font-family: var(--font-mono);
-    }
-    .msg-content { font-size: 0.88rem; line-height: 1.65; color: var(--text); word-wrap: break-word; }
-    .msg-content p { margin: 6px 0; }
-    .msg-content p:first-child { margin-top: 0; }
-    .msg-content p:last-child { margin-bottom: 0; }
-    .msg-content code {
-      font-family: var(--font-mono); font-size: 0.82em;
-      padding: 2px 5px; border-radius: 4px;
-      background: rgba(255,255,255,0.07); color: var(--blue);
-    }
-    .msg-content pre {
-      margin: 12px 0; border-radius: 9px; overflow: hidden;
-      border: 1px solid var(--border); background: #040810;
-    }
-    .msg-content pre code { display: block; padding: 14px; background: transparent; border: none; color: #c9d1e0; font-size: 0.82rem; line-height: 1.55; overflow-x: auto; }
-    .code-block-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 7px 12px; background: var(--surface2); border-bottom: 1px solid var(--border);
-      font-size: 0.67rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
-    }
-    .copy-btn {
-      font-size: 0.67rem; padding: 3px 8px; border-radius: 5px;
-      background: var(--surface3); border: 1px solid var(--border);
-      color: var(--text); cursor: pointer; transition: all 0.2s;
-    }
-    .copy-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
-
-    /* Streaming cursor */
-    .streaming-cursor::after {
-      content: ''; display: inline-block; width: 2px; height: 1.1em;
-      background: var(--accent); margin-left: 2px; vertical-align: middle;
-      animation: blink 1s step-end infinite;
-    }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-
-    /* Typing indicator */
-    .typing-indicator { display: flex; align-items: center; gap: 8px; margin-left: 38px; }
-    .gemini-spark { animation: spin-spark 3s linear infinite; }
-    @keyframes spin-spark { 100%{transform:rotate(360deg)} }
-    .gemini-text {
-      background: var(--gemini-gradient); -webkit-background-clip: text;
-      background-clip: text; -webkit-text-fill-color: transparent;
-      font-weight: 600; font-size: 0.82rem; background-size: 200% auto;
-      animation: text-shimmer 2.5s linear infinite;
-    }
-    @keyframes text-shimmer { 0%{background-position:0% center} 100%{background-position:200% center} }
-
-    /* Input bar */
-    .chat-input-bar { padding: 14px; background: var(--bg); flex-shrink: 0; }
-    .chat-input-wrap {
-      display: flex; align-items: flex-end; gap: 8px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 8px 8px 8px 14px;
-      transition: all 0.25s cubic-bezier(0.4,0,0.2,1); position: relative;
-    }
-    .chat-input-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.08); background: var(--surface2); }
-    #chat-input {
-      flex: 1; border: none; outline: none; background: transparent;
-      font-family: var(--font-sans); font-size: 0.88rem; color: var(--text);
-      padding: 6px 0; resize: none; min-height: 22px; max-height: 110px; line-height: 1.5;
-    }
-    #chat-input::placeholder { color: var(--muted); }
-    .send-btn {
-      width: 30px; height: 30px; border-radius: 8px;
-      background: var(--gemini-gradient); border: none; color: white;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s cubic-bezier(0.4,0,0.2,1); flex-shrink: 0;
-    }
-    .send-btn:hover { transform: scale(1.08); filter: brightness(1.1); }
-    .send-btn:active { transform: scale(0.92); }
-    .send-btn:disabled { background: var(--surface2); color: var(--muted); cursor: not-allowed; transform: none; filter: none; }
-
-    /* Command dropdown */
-    .cmd-dropdown {
-      display: none; position: absolute; bottom: calc(100% + 8px); left: 0; right: 0;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-      overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100;
-      animation: dropIn 0.25s cubic-bezier(0.16,1,0.3,1);
-    }
-    .cmd-dropdown.show { display: block; }
-    @keyframes dropIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
-    .cmd-option { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; transition: background 0.15s; }
-    .cmd-option:hover, .cmd-option.selected { background: var(--accent-glow); }
-    .cmd-option-icon { width: 16px; height: 16px; flex-shrink: 0; }
-    .cmd-option-name { font-family: var(--font-mono); font-size: 0.76rem; font-weight: 700; color: var(--accent); }
-    .cmd-option-desc { font-size: 0.68rem; color: var(--muted); flex: 1; text-align: right; }
-
-    /* ══════════ DASHBOARD TAB ══════════ */
-    .dashboard-scroll { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
-    .dashboard-scroll::-webkit-scrollbar { width: 3px; }
-    .dashboard-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); display: flex; flex-direction: column; flex-shrink: 0; }
-    .panel-head { padding: 9px 13px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-    .panel-title { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-    .panel-badge { font-size: 0.62rem; font-weight: 700; font-family: var(--font-mono); padding: 2px 7px; border-radius: 999px; background: var(--grey-bg); border: 1px solid var(--grey-border); color: var(--muted); }
-
-    .ctrl-bar { display: flex; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
-    .ctrl-btn {
-      border: 1px solid var(--border); background: var(--surface2); color: var(--text);
-      padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 600;
-      cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s;
-    }
-    .ctrl-btn:active { transform: scale(0.96); }
-    .ctrl-run { color: var(--green); border-color: var(--green-border); }
-    .ctrl-run:hover { background: var(--green-bg); }
-    .ctrl-stop { color: var(--red); border-color: var(--red-border); }
-    .ctrl-stop:hover { background: var(--red-bg); }
-
-    .step-list { padding: 8px; display: flex; flex-direction: column; gap: 5px; }
-    .step-empty { padding: 16px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.76rem; font-style: italic; }
-    .step-card {
-      display: flex; align-items: center; gap: 8px; padding: 8px 10px;
-      border-radius: 8px; border: 1px solid var(--grey-border); background: var(--grey-bg);
-      transition: background 0.3s, border-color 0.3s;
-    }
-    .step-card.state-running { border-color: var(--amber-border); background: var(--amber-bg); animation: stepPulse 1.2s ease-in-out infinite; }
-    .step-card.state-pass    { border-color: var(--green-border); background: var(--green-bg); }
-    .step-card.state-fail    { border-color: var(--red-border);   background: var(--red-bg); }
-    .step-card.state-healed  { border-color: var(--amber-border); background: var(--amber-bg); }
-    .step-card.state-healing { border-color: var(--blue-border);  background: var(--blue-bg); animation: stepPulse 1.2s ease-in-out infinite; }
-    @keyframes stepPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
-    .step-icon { width: 22px; height: 22px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; background: rgba(255,255,255,0.04); }
-    .step-info { flex: 1; min-width: 0; }
-    .step-index { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 1px; }
-    .step-name { font-size: 0.73rem; font-weight: 600; font-family: var(--font-mono); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .step-state-label { font-size: 0.57rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; flex-shrink: 0; }
-    .step-card.state-pending  .step-state-label { color: var(--muted); }
-    .step-card.state-running  .step-state-label { color: var(--amber); }
-    .step-card.state-pass     .step-state-label { color: var(--green); }
-    .step-card.state-fail     .step-state-label { color: var(--red); }
-    .step-card.state-healed   .step-state-label { color: var(--amber); }
-    .step-card.state-healing  .step-state-label { color: var(--blue); }
-    .step-healed-flash { display: none; font-size: 0.57rem; font-weight: 900; letter-spacing: 0.08em; color: var(--amber); text-transform: uppercase; }
-    .step-card.state-healed .step-healed-flash { display: block; }
-
-    .heal-panel { display: flex; flex-direction: column; min-height: 180px; }
-    .heal-idle { flex: 1; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--muted); }
-    .heal-idle-text { font-size: 0.76rem; font-weight: 600; text-align: center; }
-    .heal-content { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
-    .heal-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
-    .root-cause-block { background: var(--surface2); border: 1px solid var(--red-border); border-radius: 7px; padding: 9px 11px; }
-    .root-cause-text { font-size: 0.88rem; font-weight: 700; line-height: 1.35; color: var(--text); }
-    .selector-row { display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
-    .selector-box { flex: 1; padding: 7px 9px; border-radius: 6px; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; word-break: break-all; }
-    .selector-box.old { background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); text-decoration: line-through; }
-    .selector-box.new { background: var(--green-bg); border: 1px solid var(--green-border); color: var(--green); }
-    .selector-arrow { align-self: center; font-size: 0.9rem; color: var(--muted); transform: rotate(90deg); }
-    .confidence-block { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-    .conf-number { font-size: 2.2rem; font-weight: 900; line-height: 1; letter-spacing: -1px; }
-    .conf-number.high { color: var(--green); } .conf-number.low { color: var(--red); }
-    .conf-bar-track { height: 6px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; width: 100%; }
-    .conf-bar-fill { height: 100%; border-radius: 999px; background: var(--green); width: 0%; transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1), background 0.4s; }
-    .conf-bar-fill.low { background: var(--red); }
-    .conf-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-    .conf-label.high { color: var(--green); } .conf-label.low { color: var(--red); }
-    .healing-spinner { display: flex; align-items: center; gap: 8px; padding: 14px 12px; }
-    .spinner { width: 16px; height: 16px; border: 2px solid rgba(56,189,248,0.15); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
-    @keyframes spin { to{transform:rotate(360deg)} }
-    .spinner-text { font-size: 0.8rem; font-weight: 700; color: var(--blue); }
-    .heal-timer { font-family: var(--font-mono); font-size: 0.73rem; font-weight: 700; color: var(--blue); margin-left: auto; }
-
-    .summary-bar { background: var(--surface); border-top: 1px solid var(--border); padding: 10px 13px; flex-shrink: 0; }
-    .summ-stats { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-    .summ-stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
-    .summ-value { font-size: 1.1rem; font-weight: 800; line-height: 1; }
-    .summ-value.total  { color: var(--text); }
-    .summ-value.passed { color: var(--green); }
-    .summ-value.healed { color: var(--amber); }
-    .summ-value.failed { color: var(--red); }
-    .summ-value.interv { color: var(--blue); }
-    .summ-key { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-dim); margin-top: 3px; }
-    .run-status { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.72rem; font-weight: 600; color: var(--text-dim); border-top: 1px solid var(--border); padding-top: 8px; }
-    .run-status.running { color: var(--amber); }
-    .run-status.done { color: var(--green); }
-    .run-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-
-    /* Fragility */
-    .fragility-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px; }
-    .fragility-title { font-size: 0.8rem; font-weight: 700; color: var(--text); margin-bottom: 14px; display: flex; align-items: center; gap: 7px; }
-    .fragility-row { display: grid; grid-template-columns: 1fr 70px 60px; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--border); }
-    .fragility-row:first-of-type { border-top: none; }
-    .frag-bar-fill { height: 100%; border-radius: 3px; }
-    .risk-badge { font-size: 0.58rem; font-weight: 800; padding: 3px 7px; border-radius: 4px; text-transform: uppercase; text-align: center; }
-    .risk-high   { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid var(--red-border); }
-    .risk-medium { background: rgba(251,191,36,0.1); color: var(--amber); border: 1px solid var(--amber-border); }
-    .risk-low    { background: rgba(52,211,153,0.1); color: var(--green); border: 1px solid var(--green-border); }
-
-    /* Run overlay */
-    #run-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(7,11,20,0.96); backdrop-filter: blur(14px);
-      z-index: 9999; align-items: center; justify-content: center;
-      animation: fadeIn 0.4s cubic-bezier(0.16,1,0.3,1); padding: 24px;
-    }
-    #run-overlay.show { display: flex; }
-    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-    .overlay-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 28px 22px; text-align: center; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.7); }
-    .overlay-icon { font-size: 38px; margin-bottom: 14px; display: block; background: var(--gemini-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-    .overlay-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--text-dim); margin-bottom: 22px; }
-    .overlay-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; margin-bottom: 28px; }
-    .overlay-stat .val { font-size: 2rem; font-weight: 800; line-height: 1; display: block; }
-    .overlay-stat .lbl { font-size: 0.62rem; font-weight: 600; text-transform: uppercase; color: var(--text-dim); margin-top: 5px; display: block; }
-    .overlay-time { font-size: 0.9rem; font-weight: 700; color: var(--text-dim); border-top: 1px solid var(--border); padding-top: 18px; }
-    .overlay-time span { color: var(--text); }
-    .overlay-close { margin-top: 20px; font-size: 0.76rem; color: var(--text); font-weight: 600; cursor: pointer; padding: 9px 18px; background: var(--surface2); border-radius: 9px; display: inline-block; border: 1px solid var(--border); transition: all 0.2s; }
-    .overlay-close:hover { background: var(--surface3); transform: translateY(-1px); }
-
-    /* ══════════ TERMINAL TAB ══════════ */
-    .terminal-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-
-    /* Quick launch bar */
-    .term-quick-bar {
-      padding: 8px 10px; background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0;
-    }
-    .term-quick-btn {
-      display: flex; align-items: center; gap: 5px;
-      padding: 4px 10px; border-radius: 6px;
-      background: var(--surface2); border: 1px solid var(--border);
-      color: var(--text-dim); font-size: 0.7rem; font-weight: 600;
-      font-family: var(--font-mono); cursor: pointer; transition: all 0.2s;
-    }
-    .term-quick-btn:hover { color: var(--text); border-color: var(--accent); background: var(--accent-glow); }
-    .term-quick-btn.run-btn:hover { border-color: var(--green-border); background: var(--green-bg); color: var(--green); }
-    .term-quick-btn.scan-btn:hover { border-color: var(--blue-border); background: var(--blue-bg); color: var(--blue); }
-    .term-quick-btn.stop-btn:hover { border-color: var(--red-border); background: var(--red-bg); color: var(--red); }
-
-    /* Terminal output */
-    .term-output {
-      flex: 1; overflow-y: auto; padding: 12px 14px;
-      font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.7;
-      display: flex; flex-direction: column; gap: 2px; min-height: 0;
-    }
-    .term-output::-webkit-scrollbar { width: 3px; }
-    .term-output::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-    .term-empty {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      flex: 1; gap: 10px; color: var(--muted); padding: 30px 16px; text-align: center;
-    }
-    .term-empty-icon { opacity: 0.3; }
-    .term-empty-text { font-size: 0.78rem; font-family: var(--font-sans); }
-    .term-empty-hint { font-size: 0.7rem; color: var(--muted); opacity: 0.7; font-family: var(--font-sans); }
-
-    .term-line { display: flex; gap: 8px; align-items: baseline; }
-    .term-line-prefix { color: var(--muted); font-size: 0.7rem; flex-shrink: 0; user-select: none; }
-    .term-line-text { flex: 1; word-break: break-all; }
-    .term-line.stdout .term-line-text { color: #c9d1e0; }
-    .term-line.stderr .term-line-text { color: var(--red); }
-    .term-line.info   .term-line-text { color: var(--blue); }
-    .term-line.success .term-line-text { color: var(--green); }
-    .term-line.cmd    .term-line-text { color: var(--accent); font-weight: 700; }
-    .term-line.system .term-line-text { color: var(--muted); font-style: italic; }
-
-    /* Error diagnostic card */
-    .term-error-card {
-      margin: 6px 0; border-radius: 9px;
-      border: 1px solid var(--red-border); background: var(--red-bg);
-      overflow: hidden; animation: msgIn 0.3s ease-out;
-    }
-    .term-error-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 12px; border-bottom: 1px solid var(--red-border);
-    }
-    .term-error-label {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 0.7rem; font-weight: 700; color: var(--red); text-transform: uppercase; letter-spacing: 0.06em;
-    }
-    .term-error-body { padding: 9px 12px; }
-    .term-error-msg { font-size: 0.76rem; color: var(--text); line-height: 1.5; word-break: break-all; font-family: var(--font-mono); }
-    .term-error-footer { padding: 8px 12px; border-top: 1px solid var(--red-border); display: flex; justify-content: flex-end; }
-    .term-ask-ai-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border-radius: 6px; cursor: pointer;
-      background: var(--gemini-gradient); border: none; color: white;
-      font-size: 0.72rem; font-weight: 700; transition: all 0.2s; font-family: var(--font-sans);
-    }
-    .term-ask-ai-btn:hover { transform: scale(1.03); filter: brightness(1.1); }
-
-    /* Terminal input bar */
-    .term-input-bar { padding: 12px 14px; background: var(--bg); flex-shrink: 0; }
-    .term-input-wrap {
-      display: flex; align-items: center; gap: 8px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 10px; padding: 7px 10px 7px 12px;
-      transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
-    }
-    .term-input-wrap:focus-within { border-color: var(--green); box-shadow: 0 0 0 3px rgba(52,211,153,0.08); }
-    .term-prompt { color: var(--green); font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; flex-shrink: 0; user-select: none; }
-    #term-input {
-      flex: 1; border: none; outline: none; background: transparent;
-      font-family: var(--font-mono); font-size: 0.82rem; color: var(--text); padding: 0;
-    }
-    #term-input::placeholder { color: var(--muted); }
-    .term-run-btn {
-      width: 26px; height: 26px; border-radius: 7px;
-      background: var(--green-bg); border: 1px solid var(--green-border);
-      color: var(--green); cursor: pointer;
-      display: flex; align-items: center; justify-content: center; transition: all 0.2s;
-    }
-    .term-run-btn:hover { background: var(--green); color: #040810; }
-    .term-run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .term-kill-btn {
-      display: none; width: 26px; height: 26px; border-radius: 7px;
-      background: var(--red-bg); border: 1px solid var(--red-border);
-      color: var(--red); cursor: pointer;
-      align-items: center; justify-content: center; transition: all 0.2s;
-    }
-    .term-kill-btn.show { display: flex; }
-    .term-kill-btn:hover { background: var(--red); color: white; }
-
-    /* Running status in terminal */
-    .term-running-indicator {
-      display: none; align-items: center; gap: 6px;
-      padding: 5px 12px; background: var(--amber-bg); border-top: 1px solid var(--amber-border);
-      font-size: 0.7rem; font-weight: 600; color: var(--amber); flex-shrink: 0;
-    }
-    .term-running-indicator.show { display: flex; }
-    .term-running-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); animation: pulse-dot 0.8s ease-in-out infinite; }
+    /* Toast */
+    .toast-box{position:fixed;top:8px;right:8px;z-index:300;display:flex;flex-direction:column;gap:6px;pointer-events:none;}
+    .toast{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:10px 14px;max-width:300px;box-shadow:var(--shadow-lg);pointer-events:all;cursor:pointer;animation:toastIn .3s ease;display:flex;align-items:flex-start;gap:8px;}
+    @keyframes toastIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:none;}}
+    .toast.error{border-left:3px solid var(--red);}.toast.success{border-left:3px solid var(--green);}.toast.warning{border-left:3px solid var(--amber);}
+    .toast-icon{font-size:15px;flex-shrink:0;}
+    .toast-body{flex:1;}
+    .toast-title{font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px;}
+    .toast-msg{font-size:10px;color:var(--text-dim);line-height:1.4;}
+    .toast-act{margin-top:5px;padding:3px 8px;border-radius:4px;font-size:9px;font-weight:700;background:var(--green-dim);color:var(--green);border:1px solid var(--green);cursor:pointer;display:inline-block;}
+    .toast.out{animation:toastOut .3s ease forwards;}
+    @keyframes toastOut{to{opacity:0;transform:translateX(20px);}}
   </style>
 </head>
 <body>
-
-<!-- Hidden SVG defs for gradients -->
-<svg style="width:0;height:0;position:absolute;" aria-hidden="true" focusable="false">
-  <defs>
-    <linearGradient id="gemini-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%"   stop-color="#38bdf8"/>
-      <stop offset="50%"  stop-color="#818cf8"/>
-      <stop offset="100%" stop-color="#c084fc"/>
-    </linearGradient>
-  </defs>
-</svg>
-
 <div class="shell">
 
-  <!-- ── Topbar ── -->
   <div class="topbar">
     <div class="brand">
-      <div class="brand-logo">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="white">
-          <path d="M12 2l1.35 3.27L17 6.5l-3.27 1.35L12 11.25l-1.35-3.4L7 6.5l3.27-1.23L12 2z"/>
-          <path d="M19 15l.75 1.81L21.5 17.5l-1.81.75L19 20l-.75-1.75L16.5 17.5l1.75-.69L19 15z" opacity="0.7"/>
-        </svg>
-      </div>
-      <span class="brand-name">SelfHeal AI</span>
-      <span class="brand-badge">v3.1</span>
-    </div>
-    <div class="topbar-actions">
-      <div class="ws-dot" id="ws-dot" title="WebSocket connection status"></div>
+      <div class="brand-logo">&#9878;</div>
+      <span class="brand-name">SelfHeal</span>
+      <span class="brand-badge">AI AGENT</span>
     </div>
   </div>
 
-  <!-- ── Tab Bar ── -->
   <div class="tab-bar">
-    <button class="tab-btn active" data-tab="chat">
-      <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M2.5 2h11A1.5 1.5 0 0 1 15 3.5v7A1.5 1.5 0 0 1 13.5 12H9l-2.5 2.5V12H2.5A1.5 1.5 0 0 1 1 10.5v-7A1.5 1.5 0 0 1 2.5 2z"/></svg>
-      Chat
+    <button class="tab-btn active" data-tab="config" onclick="switchTab('config',this)">
+      <span class="tab-dot blue"></span> Commands
     </button>
-    <button class="tab-btn" data-tab="dashboard">
-      <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M1 3h14v2H1V3zm0 4h10v2H1V7zm0 4h7v2H1v-2z"/></svg>
-      Dashboard
-    </button>
-    <button class="tab-btn" data-tab="terminal">
-      <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M1.5 2h13a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5zm.5 1v10h12V3H2zm2.146 2.146l3 3-3 3-.292-.292L6.708 8.5 3.854 5.646l.292-.5zm3.354 5.354h4v1H7.5v-1z"/></svg>
-      Terminal
+    <button class="tab-btn" data-tab="errors" onclick="switchTab('errors',this)">
+      <span class="tab-dot red"></span> Errors <span class="err-badge" id="errBadge">0</span>
     </button>
   </div>
 
-  <!-- ════════ CHAT TAB ════════ -->
-  <div class="tab-panel active" id="tab-chat">
-    <div class="chat-messages" id="chat-messages">
-      <div class="chat-welcome" id="chat-welcome">
-        <div class="welcome-spark">
-          <svg class="gemini-spark" viewBox="0 0 48 48" width="48" height="48" xmlns="http://www.w3.org/2000/svg">
-            <path d="M24 4l2.7 6.54C29.6 17.13 32.87 20.4 39.46 23.3L46 24l-6.54 2.7c-6.59 2.9-9.86 6.17-12.76 12.76L24 46l-2.7-6.54C18.4 32.87 15.13 29.6 8.54 26.7L2 24l6.54-2.7C15.13 18.4 18.4 15.13 21.3 8.54L24 4z" fill="url(#gemini-gradient)"/>
-          </svg>
+  <!-- ═══ COMMANDS / CONFIG TAB ═══ -->
+  <div class="tab-panel active" id="panel-config">
+    <div class="config-scroll">
+
+      <!-- Quick Commands -->
+      <div class="section-title">Quick Commands</div>
+      <div class="cmd-grid" id="cmdGrid">
+        <div class="cmd-card" onclick="runCmd('npm run dev')"><div class="cmd-icon">&#9654;</div><div class="cmd-name">npm run dev</div><div class="cmd-desc">Start dev server</div></div>
+        <div class="cmd-card" onclick="runCmd('npm run build')"><div class="cmd-icon">&#128230;</div><div class="cmd-name">npm run build</div><div class="cmd-desc">Build project</div></div>
+        <div class="cmd-card" onclick="runCmd('npm test')"><div class="cmd-icon">&#9889;</div><div class="cmd-name">npm test</div><div class="cmd-desc">Run tests</div></div>
+        <div class="cmd-card" onclick="runCmd('npm start')"><div class="cmd-icon">&#128640;</div><div class="cmd-name">npm start</div><div class="cmd-desc">Start app</div></div>
+        <div class="cmd-card" onclick="runCmd('npm install')"><div class="cmd-icon">&#128229;</div><div class="cmd-name">npm install</div><div class="cmd-desc">Install deps</div></div>
+        <div class="cmd-card" onclick="runCmd('npm run lint')"><div class="cmd-icon">&#128269;</div><div class="cmd-name">npm run lint</div><div class="cmd-desc">Lint code</div></div>
+      </div>
+
+      <!-- Custom Command -->
+      <div class="section-title">Run Custom Command</div>
+      <div class="custom-cmd">
+        <input class="custom-input" id="customInput" placeholder="e.g. npm run build" onkeydown="if(event.key==='Enter')runCustom()"/>
+        <button class="custom-run" onclick="runCustom()">Run</button>
+      </div>
+
+      <!-- Terminal Output -->
+      <div class="term-box" id="termBox">
+        <div class="term-header">
+          <span class="term-title">Terminal</span>
+          <button id="stopBtn" onclick="stopCmd()" style="display:none;padding:3px 10px;border-radius:4px;font-size:9px;font-weight:700;background:var(--red-dim);color:var(--red);border:1px solid var(--red);cursor:pointer;">Stop</button>
+          <span class="term-status" id="termStatus">idle</span>
         </div>
-        <div class="welcome-title">SelfHeal AI</div>
-        <div class="welcome-sub">Your AI debugging partner — type a message or pick a command</div>
-        <div class="welcome-commands" id="welcome-commands"></div>
-      </div>
-    </div>
-
-    <div class="chat-input-bar">
-      <div class="chat-input-wrap">
-        <div class="cmd-dropdown" id="cmd-dropdown"></div>
-        <textarea id="chat-input" rows="1" placeholder="Ask anything or type / for commands…" spellcheck="false"></textarea>
-        <button class="send-btn" id="send-btn" title="Send message (Enter)">
-          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 12V4M4 8l4-4 4 4"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ════════ DASHBOARD TAB ════════ -->
-  <div class="tab-panel" id="tab-dashboard">
-    <div class="dashboard-scroll">
-
-      <!-- Fragility Panel -->
-      <div id="fragility-panel" class="fragility-panel" style="display:none;">
-        <div class="fragility-title">
-          <svg class="gemini-spark" viewBox="0 0 24 24" width="13" height="13" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2l1.68 4.06C15.37 10.13 17.87 12.63 21.94 14.32L26 16l-4.06 1.68C17.87 19.37 15.37 21.87 13.68 25.94L12 30l-1.68-4.06C8.63 21.87 6.13 19.37 2.06 17.68L-2 16l4.06-1.68C6.13 12.63 8.63 10.13 10.32 6.06L12 2z" fill="url(#gemini-gradient)"/>
-          </svg>
-          Pre-run Fragility Scan
-        </div>
-        <div id="fragility-list"></div>
-      </div>
-
-      <!-- Control bar -->
-      <div class="ctrl-bar" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);">
-        <button id="btn-run" class="ctrl-btn ctrl-run">
-          <svg viewBox="0 0 12 12" width="11" height="11" fill="currentColor"><path d="M2 1l9 5-9 5V1z"/></svg>
-          Run File
-        </button>
-        <button id="btn-stop" class="ctrl-btn ctrl-stop" style="display:none;">
-          <svg viewBox="0 0 12 12" width="11" height="11" fill="currentColor"><rect x="2" y="2" width="8" height="8" rx="1"/></svg>
-          Stop
-        </button>
-      </div>
-
-      <!-- Step List -->
-      <div class="panel">
-        <div class="panel-head">
-          <span class="panel-title">Test Steps</span>
-          <span class="panel-badge" id="step-badge">0 / 0</span>
-        </div>
-        <div class="step-list" id="step-list">
-          <div class="step-empty" id="step-empty">Waiting for run…</div>
+        <div class="term-output" id="termOutput">
+          <div class="term-line info">Ready. Click a command or type one above.</div>
         </div>
       </div>
 
-      <!-- Heal Reasoning -->
-      <div class="panel heal-panel">
-        <div class="panel-head">
-          <span class="panel-title">AI Heal Reasoning</span>
-          <span class="panel-badge" id="heal-badge">Idle</span>
+      <!-- Run History -->
+      <div class="section-title">Run History</div>
+      <div id="historyList">
+        <div class="hist-empty" id="histEmpty">No commands run yet.</div>
+      </div>
+
+      <!-- Settings -->
+      <div style="margin-top:16px;">
+        <div class="section-title">Settings</div>
+        <div class="cfg-card">
+          <div class="cfg-label">Gemini API Key</div>
+          <input class="cfg-input" id="cfgApiKey" type="password" placeholder="AIzaSy..."/>
+          <div class="cfg-desc">For AI error diagnosis. Also reads from workspace .env</div>
         </div>
-
-        <div class="heal-idle" id="heal-idle">
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
-            <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/>
-          </svg>
-          <div class="heal-idle-text">AI Healer standing by</div>
+        <div class="cfg-card">
+          <div class="cfg-label">Confidence Threshold</div>
+          <input class="cfg-input" id="cfgThreshold" type="number" min="50" max="99" value="80" style="width:80px;"/>
+          <div class="cfg-desc">Heals below this % need manual review</div>
         </div>
-
-        <div class="healing-spinner" id="heal-spinner" style="display:none;">
-          <svg class="gemini-spark" viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2l1.68 4.06C15.37 10.13 17.87 12.63 21.94 14.32L26 16l-4.06 1.68C17.87 19.37 15.37 21.87 13.68 25.94L12 30l-1.68-4.06C8.63 21.87 6.13 19.37 2.06 17.68L-2 16l4.06-1.68C6.13 12.63 8.63 10.13 10.32 6.06L12 2z" fill="url(#gemini-gradient)"/>
-          </svg>
-          <div class="spinner-text gemini-text">Invoking AI Healer…</div>
-          <div class="heal-timer" id="heal-timer">0.0s</div>
-        </div>
-
-        <div class="heal-content" id="heal-content" style="display:none;">
-          <div>
-            <div class="heal-label">Root Cause</div>
-            <div class="root-cause-block"><div class="root-cause-text" id="heal-root-cause">—</div></div>
-          </div>
-          <div>
-            <div class="heal-label">Selector Patch</div>
-            <div class="selector-row">
-              <div class="selector-box old" id="heal-old-sel">—</div>
-              <div class="selector-arrow">→</div>
-              <div class="selector-box new" id="heal-new-sel">—</div>
-            </div>
-          </div>
-          <div>
-            <div class="heal-label">Confidence</div>
-            <div class="confidence-block">
-              <div class="conf-number" id="conf-number">—</div>
-              <div>
-                <div class="conf-bar-track"><div class="conf-bar-fill" id="conf-bar"></div></div>
-                <div class="conf-label" id="conf-label">—</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Dashboard Summary -->
-    <div class="summary-bar">
-      <div class="summ-stats">
-        <div class="summ-stat"><div class="summ-value total"  id="stat-total">0</div><div class="summ-key">Total</div></div>
-        <div class="summ-stat"><div class="summ-value passed" id="stat-passed">0</div><div class="summ-key">Passed</div></div>
-        <div class="summ-stat"><div class="summ-value healed" id="stat-healed">0</div><div class="summ-key">Healed</div></div>
-        <div class="summ-stat"><div class="summ-value failed" id="stat-failed">0</div><div class="summ-key">Failed</div></div>
-        <div class="summ-stat"><div class="summ-value interv" id="stat-interv">0</div><div class="summ-key">Fixes</div></div>
-      </div>
-      <div class="run-status" id="run-status">
-        <div class="run-dot"></div>
-        <span id="run-status-text">Idle</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ════════ TERMINAL TAB ════════ -->
-  <div class="tab-panel" id="tab-terminal">
-    <div class="terminal-wrap">
-
-      <!-- Quick launch -->
-      <div class="term-quick-bar">
-        <button class="term-quick-btn run-btn" data-cmd="run" title="Run active test file">
-          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><path d="M2 1l9 5-9 5V1z"/></svg>
-          selfheal run
-        </button>
-        <button class="term-quick-btn scan-btn" data-cmd="scan" title="Fragility scan active file">
-          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><path d="M5 1a4 4 0 1 0 2.88 6.88l3.12 3.12 1-1-3.12-3.12A4 4 0 0 0 5 1zm0 1a3 3 0 1 1 0 6A3 3 0 0 1 5 2z"/></svg>
-          selfheal scan
-        </button>
-        <button class="term-quick-btn" data-cmd="panel" title="Open interactive panel">
-          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><path d="M1 1h10v2H1V1zm0 4h7v2H1V5zm0 4h5v2H1V9z"/></svg>
-          selfheal panel
-        </button>
-        <button class="term-quick-btn stop-btn" id="term-quick-stop" style="display:none;" title="Kill running process">
-          <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><rect x="2" y="2" width="8" height="8" rx="1"/></svg>
-          Stop
-        </button>
-      </div>
-
-      <!-- Running indicator -->
-      <div class="term-running-indicator" id="term-running-indicator">
-        <div class="term-running-dot"></div>
-        <span id="term-running-cmd">Running…</span>
-      </div>
-
-      <!-- Output area -->
-      <div class="term-output" id="term-output">
-        <div class="term-empty" id="term-empty">
-          <svg class="term-empty-icon" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M6 7l3 3-3 3"/>
-          </svg>
-          <div class="term-empty-text">No output yet</div>
-          <div class="term-empty-hint">Click a quick-launch button or type a command below</div>
-        </div>
-      </div>
-
-      <!-- Terminal input -->
-      <div class="term-input-bar">
-        <div class="term-input-wrap">
-          <span class="term-prompt">$</span>
-          <input id="term-input" type="text" placeholder="selfheal run tests/example.spec.js" spellcheck="false" autocomplete="off"/>
-          <button class="term-run-btn" id="term-run-btn" title="Run command (Enter)">
-            <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><path d="M2 1l9 5-9 5V1z"/></svg>
-          </button>
-          <button class="term-kill-btn" id="term-kill-btn" title="Kill process (Ctrl+C)">
-            <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          </button>
+        <div style="margin-top:8px;">
+          <button class="cfg-save" onclick="saveConfig()">Save Settings</button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- ═══ ERRORS TAB ═══ -->
+  <div class="tab-panel" id="panel-errors">
+    <div class="errors-header">
+      <span class="section-title" style="margin:0">Error Dashboard</span>
+      <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--red-dim);color:var(--red);font-family:var(--mono);" id="errCount">0</span>
+    </div>
+    <div class="errors-list" id="errList">
+      <div class="errors-empty" id="errEmpty">
+        <div class="errors-empty-icon">&#10003;</div>
+        <div class="errors-empty-text">
+          No errors captured yet.<br><br>
+          Run commands from the <strong>Commands</strong> tab<br>
+          or use <code>selfheal &lt;command&gt;</code> in terminal.<br><br>
+          Errors auto-appear here with AI diagnosis.
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Run Done Overlay -->
-<div id="run-overlay">
-  <div class="overlay-card">
-    <span class="overlay-icon" id="overlay-icon">✦</span>
-    <div class="overlay-title">Run Complete</div>
-    <div class="overlay-stats">
-      <div class="overlay-stat"><span class="val" id="ov-total">0</span><span class="lbl">Steps Run</span></div>
-      <div class="overlay-stat"><span class="val" id="ov-healed">0</span><span class="lbl">Auto-Healed</span></div>
-      <div class="overlay-stat"><span class="val" id="ov-interv">0</span><span class="lbl">Human Fixes</span></div>
+<!-- Toasts -->
+<div class="toast-box" id="toastBox"></div>
+
+<!-- Detail Panel -->
+<div class="detail-overlay" id="detailOverlay" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-panel">
+    <div class="dp-header">
+      <span class="dp-title" id="dpTitle">Error Details</span>
+      <button class="dp-close" onclick="closeDetail()">&#10005;</button>
     </div>
-    <div class="overlay-time">Total time: <span id="ov-time">—</span></div>
-    <div class="overlay-close" onclick="document.getElementById('run-overlay').classList.remove('show')">Dismiss</div>
+    <div class="dp-body" id="dpBody"></div>
   </div>
 </div>
 
 <script src="chat.js"></script>
 <script src="ui.js"></script>
-<script src="terminal.js"></script>
 <script src="ws-client.js"></script>
+<script src="terminal.js"></script>
+
+<script>
+/* ─── TABS ─── */
+function switchTab(t,b){
+  document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
+  (b||document.querySelector(`.tab-btn[data-tab="${t}"]`))?.classList.add('active');
+  document.getElementById('panel-'+t)?.classList.add('active');
+}
+
+/* ─── TOAST ─── */
+let _tid=0;
+function toast(type,title,msg,actLabel,actFn){
+  const id='t'+(++_tid),el=document.createElement('div');
+  el.className='toast '+type;el.id=id;
+  el.innerHTML=`<div class="toast-icon">${{error:'&#9888;',success:'&#10003;',warning:'&#9888;'}[type]||''}</div><div class="toast-body"><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div>${actLabel?`<span class="toast-act" id="${id}a">${actLabel}</span>`:''}</div>`;
+  document.getElementById('toastBox').appendChild(el);
+  if(actFn){document.getElementById(id+'a').onclick=e=>{e.stopPropagation();actFn();dismissToast(id);};}
+  el.onclick=()=>dismissToast(id);
+  setTimeout(()=>dismissToast(id),8000);
+}
+function dismissToast(id){const el=document.getElementById(id);if(!el)return;el.classList.add('out');setTimeout(()=>el.remove(),300);}
+
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ─── TERMINAL ─── */
+let termRunning=false;
+const history=[];
+
+function addLine(text,type){
+  const el=document.getElementById('termOutput');
+  const line=document.createElement('div');
+  line.className='term-line '+(type||'stdout');
+  line.textContent=text;
+  el.appendChild(line);
+  el.scrollTop=el.scrollHeight;
+}
+
+function setTermStatus(s,cls){
+  const el=document.getElementById('termStatus');
+  el.textContent=s;el.className='term-status '+(cls||'');
+}
+
+function runCmd(cmd){
+  if(termRunning){toast('warning','Busy','A command is already running. Stop it first.');return;}
+  termRunning=true;
+  document.getElementById('termOutput').innerHTML='';
+  addLine('$ '+cmd,'info');
+  addLine('Running...','progress');
+  setTermStatus('running...','running');
+  document.getElementById('stopBtn').style.display='inline-block';
+
+  document.querySelectorAll('.cmd-card').forEach(c=>{
+    if(c.textContent.includes(cmd.split(' ').pop())) c.classList.add('running');
+  });
+
+  if(typeof vscode!=='undefined'){
+    vscode.postMessage({type:'runTerminalCommand',command:cmd});
+  }
+}
+
+function stopCmd(){
+  if(typeof vscode!=='undefined'){
+    vscode.postMessage({type:'killTerminalCommand'});
+  }
+  addLine('Stopping...','stderr');
+}
+
+function runCustom(){
+  const input=document.getElementById('customInput');
+  const cmd=input.value.trim();
+  if(!cmd)return;
+  input.value='';
+  runCmd(cmd);
+}
+
+/* ─── HISTORY ─── */
+function addHistory(entry){
+  history.unshift(entry);
+  renderHistory();
+}
+
+function renderHistory(){
+  const list=document.getElementById('historyList');
+  document.getElementById('histEmpty').style.display=history.length?'none':'block';
+  list.querySelectorAll('.hist-item').forEach(x=>x.remove());
+  history.forEach((h,i)=>{
+    const el=document.createElement('div');
+    el.className='hist-item';
+    const isOk=h.exitCode===0;
+    el.innerHTML=`
+      <div class="hist-icon">${isOk?'&#10003;':'&#10060;'}</div>
+      <div class="hist-info">
+        <div class="hist-cmd">$ ${esc(h.command)}</div>
+        <div class="hist-meta">${h.time} &middot; exit ${h.exitCode??'?'} &middot; ${h.duration||'--'}</div>
+      </div>
+      <span class="badge ${isOk?'green':'red'} hist-badge">${isOk?'PASS':'FAIL'}</span>`;
+    if(!isOk && h.errorIndex!=null){
+      el.onclick=()=>{switchTab('errors');setTimeout(()=>openDetail(h.errorIndex),100);};
+    } else if(!isOk){
+      el.onclick=()=>switchTab('errors');
+    }
+    list.appendChild(el);
+  });
+}
+
+/* ─── ERRORS ─── */
+const errors=[];
+
+function addError(err){
+  errors.unshift(err);
+  renderErrors();
+  toast(err.fix?'warning':'error',err.fix?'Error Diagnosed':'Command Failed',
+    esc(err.errorMsg||'').substring(0,80),'View Details',()=>{switchTab('errors');openDetail(0);});
+}
+
+function renderErrors(){
+  const list=document.getElementById('errList');
+  document.getElementById('errEmpty').style.display=errors.length?'none':'flex';
+  document.getElementById('errCount').textContent=errors.length;
+  const b=document.getElementById('errBadge');b.textContent=errors.length;b.style.display=errors.length?'inline':'none';
+  list.querySelectorAll('.e-card').forEach(c=>c.remove());
+  errors.forEach((err,i)=>{
+    const hasFix=err.fix&&err.fix.trim();
+    const card=document.createElement('div');
+    card.className='e-card '+(hasFix?'healed':'failed');
+    card.onclick=()=>openDetail(i);
+    card.innerHTML=`
+      <div class="e-top">
+        <div class="e-status">${hasFix?'&#9889;':'&#10060;'}</div>
+        <div class="e-info">
+          <div class="e-cmd">$ ${esc(err.command||'')}</div>
+          <div class="e-msg">${esc(err.errorMsg||'')}</div>
+        </div>
+        <div class="e-time">${err.time||''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+        <span class="badge ${hasFix?'green':'red'}">${hasFix?'FIX AVAILABLE':'UNRESOLVED'}</span>
+        ${err.exitCode!=null?`<span style="font-size:9px;color:var(--muted);font-family:var(--mono)">exit ${err.exitCode}</span>`:''}
+      </div>
+      ${err.explanation?`<div class="e-summary"><span class="lbl">Diagnosis</span><span class="val">${esc(err.explanation)}</span></div>`:''}
+      ${hasFix?`<div class="e-summary"><span class="lbl">Suggested Fix</span><span class="fix">${esc(err.fix)}</span></div>`:''}
+      ${err.files&&err.files.length?`<div class="e-files">${err.files.map(f=>'&#128196; '+esc(f)).join(' &middot; ')}</div>`:''}`;
+    list.appendChild(card);
+  });
+}
+
+function openDetail(i){
+  const err=errors[i];if(!err)return;
+  const hasFix=err.fix&&err.fix.trim();
+  document.getElementById('dpTitle').textContent=hasFix?'Error — Fix Available':'Error Details';
+  let h='';
+  h+=`<div><span class="badge ${hasFix?'green':'red'}">${hasFix?'FIX AVAILABLE':'UNRESOLVED'}</span></div>`;
+  h+=`<div><div class="dp-label">Command</div><div class="dp-code cmd">$ ${esc(err.command||'')}</div></div>`;
+  h+=`<div><div class="dp-label">Error Output</div><div class="dp-code err">${esc(err.stderr||err.errorMsg||'No details')}</div></div>`;
+  if(err.explanation) h+=`<div><div class="dp-label">AI Diagnosis</div><div class="dp-explain">${esc(err.explanation)}</div></div>`;
+  if(hasFix) h+=`<div><div class="dp-label">Suggested Fix</div><div class="dp-code fix">${esc(err.fix)}</div></div>`;
+  if(err.files&&err.files.length){
+    h+=`<div><div class="dp-label">Affected Files</div>`;
+    err.files.forEach(f=>{h+=`<div class="dp-file" onclick="openFile('${esc(f)}')"><span>&#128196;</span>${esc(f)}</div>`;});
+    h+=`</div>`;
+  }
+  if(hasFix) h+=`<button class="dp-btn green" onclick="copyFix(${i})">Copy Fix Command</button>`;
+  h+=`<button class="dp-btn outline" onclick="rerunCmd(${i})">Re-run Command</button>`;
+  if(!err.explanation) h+=`<button class="dp-btn outline" onclick="askAi(${i})">Ask AI for Diagnosis</button>`;
+  document.getElementById('dpBody').innerHTML=h;
+  document.getElementById('detailOverlay').classList.add('show');
+}
+
+function closeDetail(){document.getElementById('detailOverlay').classList.remove('show');}
+function copyFix(i){const e=errors[i];if(!e||!e.fix)return;navigator.clipboard?.writeText(e.fix);toast('success','Copied','Fix command copied to clipboard.');closeDetail();}
+function rerunCmd(i){const e=errors[i];if(!e)return;closeDetail();switchTab('config');runCmd(e.command);}
+function openFile(p){if(typeof vscode!=='undefined')vscode.postMessage({type:'openFile',path:p});}
+function askAi(i){const e=errors[i];if(!e)return;if(typeof vscode!=='undefined')vscode.postMessage({type:'diagnoseError',error:e});closeDetail();toast('success','Analyzing...','AI is diagnosing the error.');}
+
+/* ─── CONFIG ─── */
+function saveConfig(){
+  const key=document.getElementById('cfgApiKey').value.trim();
+  const th=document.getElementById('cfgThreshold').value;
+  if(typeof vscode!=='undefined')vscode.postMessage({type:'saveConfig',apiKey:key,threshold:parseInt(th)});
+  toast('success','Saved','Settings updated.');
+}
+
+/* ─── MESSAGE HANDLER ─── */
+let _cmdStartTime=null;
+window.addEventListener('message',e=>{
+  const msg=e.data;
+  switch(msg.type){
+    case 'switchTab':switchTab(msg.tab);break;
+    case 'terminalOutput':addLine(msg.text||msg.line||'',msg.stream||'stdout');break;
+    case 'terminalDone':{
+      termRunning=false;
+      document.getElementById('stopBtn').style.display='none';
+      document.querySelectorAll('.cmd-card.running').forEach(c=>c.classList.remove('running'));
+      const code=msg.code??0;
+      const dur=_cmdStartTime?((Date.now()-_cmdStartTime)/1000).toFixed(1)+'s':'--';
+      if(code===0){addLine('Done.','success');setTermStatus('exit 0','done');}
+      else if(code===130){addLine('Stopped.','info');setTermStatus('stopped','');}
+      else{addLine('Failed (exit '+code+')','stderr');setTermStatus('exit '+code,'error');}
+      addHistory({command:msg._command||'unknown',exitCode:code,time:new Date().toLocaleTimeString('en',{hour12:false}),duration:dur,errorIndex:code!==0&&code!==130?0:null});
+      _cmdStartTime=null;
+      break;
+    }
+    case 'terminalError':addLine('ERROR: '+msg.message,'stderr');termRunning=false;setTermStatus('error','error');document.getElementById('stopBtn').style.display='none';document.querySelectorAll('.cmd-card.running').forEach(c=>c.classList.remove('running'));break;
+    case 'capturedError':addError(msg.error);break;
+    case 'cmdStarted':_cmdStartTime=Date.now();break;
+  }
+});
+renderHistory();renderErrors();
+</script>
 </body>
 </html>

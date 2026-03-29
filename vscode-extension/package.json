@@ -48,14 +48,14 @@
         "icon": "$(debug-stop)"
       },
       {
-        "command": "selfheal.openChat",
-        "title": "SelfHeal: Open Chat",
+        "command": "selfheal.openPanel",
+        "title": "SelfHeal: Open Panel",
         "icon": "$(comment-discussion)"
       },
       {
-        "command": "selfheal.debugCurrentFile",
-        "title": "SelfHeal: Debug Current File",
-        "icon": "$(bug)"
+        "command": "selfheal.help",
+        "title": "SelfHeal: Help",
+        "icon": "$(question)"
       }
     ],
     "keybindings": [
@@ -66,13 +66,12 @@
         "when": "editorTextFocus"
       },
       {
-        "command": "selfheal.debugCurrentFile",
-        "key": "ctrl+shift+d",
-        "mac": "cmd+shift+d",
-        "when": "editorTextFocus"
+        "command": "selfheal.help",
+        "key": "ctrl+shift+/",
+        "mac": "cmd+shift+/"
       },
       {
-        "command": "selfheal.openChat",
+        "command": "selfheal.openPanel",
         "key": "ctrl+shift+a",
         "mac": "cmd+shift+a"
       }
@@ -103,7 +102,6 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./"
   },

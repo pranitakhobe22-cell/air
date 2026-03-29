@@ -89,6 +89,26 @@ body {
   color: var(--accent-cyan);
 }
 
+/* Sign In / Dashboard Button */
+.signin-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff !important;
+  padding: 0.55rem 1.4rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: inline-block;
+  font-size: 0.9rem;
+}
+.signin-btn:hover {
+  background: rgba(0, 242, 254, 0.1);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan) !important;
+  box-shadow: 0 0 16px rgba(0, 242, 254, 0.2);
+}
+
 /* Buttons */
 .primary-btn {
   background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
