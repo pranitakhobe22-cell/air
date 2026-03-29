@@ -17,7 +17,6 @@
  *
  * Run with:  npm run dev
  * ============================================================
->>>>>>> origin/phase-4
  */
 
 import { healClick, healFill, healNavigate } from '../src/sdk/index.js';
@@ -47,19 +46,19 @@ export default async function checkoutTest(page, { serverUrl }) {
 
     // ── Step 4: Click login (BROKEN: was #login-btn in V1) ──────────
     console.log('\n  ▸ Step 4/6 — Click login button');
-    await healClick(page, '#login-btn', {
+    await healClick(page, '#auth-user-email', {
         intent: 'Submit the login form to authenticate the user',
     });
 
     // ── Step 5: Add to cart (BROKEN: was #add-cart in V1) ────────────
     console.log('\n  ▸ Step 5/6 — Add item to cart');
-    await healClick(page, '#add-cart', {
+    await healClick(page, 'text="Add to Cart"', {
         intent: 'Add the SelfHeal Pro License product to the shopping cart',
     });
 
     // ── Step 6: Place order (BROKEN: was #place-order in V1) ─────────
     console.log('\n  ▸ Step 6/6 — Place order');
-    await healClick(page, '#place-order', {
+    await healClick(page, '#btn-place-order', {
         intent: 'Complete the purchase by clicking the place order button',
     });
 

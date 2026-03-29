@@ -2,9 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { ChildProcess, spawn } from 'child_process';
-import { StateManager } from './stateManager';
-import { handleChatMessage } from './extension';
-import { COMMANDS } from './commandParser';
+import { generateOnce } from './aiService';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'selfheal.agentView';
@@ -12,8 +10,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     private _termProcess: ChildProcess | null = null;
 
     constructor(
-        private readonly _extensionUri: vscode.Uri,
-        private readonly _state: StateManager
+        private readonly _extensionUri: vscode.Uri
     ) {}
 
     public resolveWebviewView(
@@ -32,198 +29,159 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.onDidReceiveMessage(async (data) => {
             switch (data.type) {
-                case 'runTest': {
-                    vscode.commands.executeCommand('selfheal.runCurrentTest');
+                case 'saveConfig': {
+                    if (data.apiKey) {
+                        await vscode.workspace.getConfiguration('selfheal').update('geminiApiKey', data.apiKey, true);
+                    }
+                    vscode.window.showInformationMessage('SelfHeal: Config saved.');
                     break;
                 }
-                case 'stopTest': {
-                    vscode.commands.executeCommand('selfheal.stopRun');
-                    break;
-                }
-                case 'chatMessage': {
-                    if (data.text && typeof data.text === 'string') {
-                        handleChatMessage(data.text.trim());
+                case 'openFile': {
+                    if (data.path) {
+                        const wsRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
+                        const fullPath = path.isAbsolute(data.path) ? data.path : path.join(wsRoot, data.path);
+                        if (fs.existsSync(fullPath)) {
+                            const doc = await vscode.workspace.openTextDocument(fullPath);
+                            await vscode.window.showTextDocument(doc);
+                        }
                     }
                     break;
                 }
-                case 'getCommands': {
-                    this.postMessage({ type: 'commandList', commands: COMMANDS });
-                    break;
-                }
-                case 'requestHistory': {
-                    const messages = this._state.getAllMessages();
-                    this.postMessage({ type: 'chatHistory', messages });
+                case 'diagnoseError': {
+                    await this._diagnoseError(data.error);
                     break;
                 }
                 case 'runTerminalCommand': {
-                    this._runTerminalCmd(data.command);
+                    this._runCommand(data.command);
                     break;
                 }
                 case 'killTerminalCommand': {
-                    this._killTerminalCmd();
-                    break;
-                }
-                case 'onInfo': {
-                    if (!data.value) { return; }
-                    vscode.window.showInformationMessage(data.value);
-                    break;
-                }
-                case 'onError': {
-                    if (!data.value) { return; }
-                    vscode.window.showErrorMessage(data.value);
+                    this._killCommand();
                     break;
                 }
             }
         });
     }
 
-    /* ── Terminal Process ── */
-    private _runTerminalCmd(command: string) {
+    private async _diagnoseError(error: any) {
+        try {
+            const diagnosis = await generateOnce('debug',
+                `Command \`${error.command || 'unknown'}\` failed (exit ${error.exitCode}).\n\nError:\n\`\`\`\n${(error.stderr || error.errorMsg || '').slice(0, 2500)}\n\`\`\`\n\nExplain root cause, affected files, and exact fix command.\nReply ONLY as JSON: {"explanation":"...","fix":"exact command","files":["path"]}`
+            );
+            const jsonMatch = diagnosis.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                const parsed = JSON.parse(jsonMatch[0]);
+                error.explanation = parsed.explanation || diagnosis;
+                error.fix = parsed.fix || '';
+                error.files = parsed.files || [];
+            } else {
+                error.explanation = diagnosis;
+            }
+            this.postMessage({ type: 'capturedError', error });
+        } catch (err: any) {
+            vscode.window.showErrorMessage('SelfHeal: AI diagnosis failed — ' + err.message);
+        }
+    }
+
+    private _runCommand(command: string) {
         if (this._termProcess) {
-            this.postMessage({ type: 'terminalError', message: 'A process is already running. Kill it first.' });
+            this.postMessage({ type: 'terminalOutput', text: 'A process is already running. Stop it first.', stream: 'stderr' });
             return;
         }
+
         const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
-        const args = command.split(/\s+/);
-        const cmd = args.shift() || 'npx';
+
+        // Parse the command
+        const parts = command.split(/\s+/);
+        const cmd = parts[0] || 'npm';
+        const args = parts.slice(1);
+
+        let stderrBuffer = '';
+
+        this.postMessage({ type: 'cmdStarted', command });
 
         this._termProcess = spawn(cmd, args, {
-            cwd: workspaceRoot,
+            cwd: workspaceRoot || process.cwd(),
             shell: true,
+            env: { ...process.env },
         });
 
         this._termProcess.stdout?.on('data', (data: Buffer) => {
-            const lines = data.toString().split('\n');
-            for (const line of lines) {
-                if (line) this.postMessage({ type: 'terminalOutput', text: line, stream: 'stdout' });
+            for (const line of data.toString().split('\n')) {
+                if (line.trim()) {
+                    this.postMessage({ type: 'terminalOutput', text: line.trimEnd(), stream: 'stdout' });
+                }
             }
         });
 
         this._termProcess.stderr?.on('data', (data: Buffer) => {
-            const lines = data.toString().split('\n');
-            for (const line of lines) {
-                if (line) this.postMessage({ type: 'terminalOutput', text: line, stream: 'stderr' });
+            const text = data.toString();
+            stderrBuffer += text;
+            for (const line of text.split('\n')) {
+                if (line.trim()) {
+                    this.postMessage({ type: 'terminalOutput', text: line.trimEnd(), stream: 'stderr' });
+                }
             }
         });
 
-        this._termProcess.on('close', (code: number | null) => {
-            this.postMessage({ type: 'terminalDone', code: code ?? 1 });
+        this._termProcess.on('close', async (code: number | null) => {
             this._termProcess = null;
+            this.postMessage({ type: 'terminalDone', code: code ?? 1, _command: command });
+
+            // On failure — diagnose with AI and send as error card
+            if (code !== 0 && stderrBuffer.trim()) {
+                const errorMsg = stderrBuffer.trim().split('\n').slice(-5).join('\n');
+                const time = new Date().toLocaleTimeString('en', { hour12: false });
+
+                let explanation = '';
+                let fix = '';
+                let files: string[] = [];
+
+                try {
+                    const result = await generateOnce('fix',
+                        `Command \`${command}\` failed (exit ${code}).\n\nError:\n\`\`\`\n${stderrBuffer.slice(0, 2000)}\n\`\`\`\n\nReply ONLY as JSON: {"explanation":"2-3 sentences","fix":"exact command","files":["relative/path"]}`
+                    );
+                    const jsonMatch = result.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        const parsed = JSON.parse(jsonMatch[0]);
+                        explanation = parsed.explanation || '';
+                        fix = parsed.fix || '';
+                        files = parsed.files || [];
+                    }
+                } catch {}
+
+                this.postMessage({
+                    type: 'capturedError',
+                    error: { command, errorMsg, stderr: stderrBuffer.slice(0, 3000), exitCode: code, time, explanation, fix, files },
+                });
+            }
         });
 
         this._termProcess.on('error', (err: Error) => {
-            this.postMessage({ type: 'terminalError', message: err.message });
+            this.postMessage({ type: 'terminalOutput', text: 'Failed to start: ' + err.message, stream: 'stderr' });
+            this.postMessage({ type: 'terminalDone', code: 1, _command: command });
             this._termProcess = null;
         });
     }
 
-    private _killTerminalCmd() {
-        if (this._termProcess) {
-            this._termProcess.kill('SIGINT');
-            this._termProcess = null;
-        }
-    }
-
-    private async _runTerminalCommand(cmdInput: string, useActiveFile: boolean) {
-        // Kill any existing terminal process
-        this._killTerminalCommand();
-
-        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
-
-        // Resolve command — handle quick-launch shorthand (run/scan/panel)
-        let fullCmd = cmdInput.trim();
-
-        if (useActiveFile && (fullCmd === 'run' || fullCmd === 'scan' || fullCmd === 'panel')) {
-            const editor = vscode.window.activeTextEditor;
-            const filePath = editor?.document?.fileName;
-            if (filePath && workspaceRoot) {
-                const rel = path.relative(workspaceRoot, filePath);
-                fullCmd = `selfheal ${fullCmd} ${rel}`;
-            } else {
-                fullCmd = `selfheal ${fullCmd}`;
-            }
-        }
-
-        // Split into args — handle `npx selfheal ...` and bare `selfheal ...`
-        const parts = fullCmd.split(/\s+/);
-        let cmd: string;
-        let args: string[];
-
-        if (parts[0] === 'selfheal') {
-            cmd = 'npx';
-            args = ['selfheal', ...parts.slice(1)];
-        } else if (parts[0] === 'npx') {
-            cmd = 'npx';
-            args = parts.slice(1);
-        } else {
-            cmd = parts[0];
-            args = parts.slice(1);
-        }
-
-        this.postMessage({
-            type: 'terminalOutput',
-            line: `> ${fullCmd}`,
-            stream: 'info'
-        });
-
-        try {
-            this._termProcess = spawn(cmd, args, {
-                cwd: workspaceRoot || process.cwd(),
-                shell: process.platform === 'win32',
-                env: { ...process.env },
-            });
-
-            this._termProcess.stdout?.on('data', (data: Buffer) => {
-                const lines = data.toString().split('\n');
-                lines.forEach(line => {
-                    if (line.trim()) {
-                        this.postMessage({ type: 'terminalOutput', line: line.trimEnd(), stream: 'stdout' });
-                    }
-                });
-            });
-
-            this._termProcess.stderr?.on('data', (data: Buffer) => {
-                const lines = data.toString().split('\n');
-                lines.forEach(line => {
-                    if (line.trim()) {
-                        this.postMessage({ type: 'terminalOutput', line: line.trimEnd(), stream: 'stderr' });
-                        // Also watch for WS port from CLI
-                        const portMatch = line.match(/\[VSCODE_WS_PORT=(\d+)\]/);
-                        if (portMatch) {
-                            this.sendPortToWebview(parseInt(portMatch[1], 10));
-                        }
-                    }
-                });
-            });
-
-            this._termProcess.on('close', (code: number | null) => {
-                this._termProcess = null;
-                this.postMessage({ type: 'terminalDone', code });
-            });
-
-            this._termProcess.on('error', (err: Error) => {
-                this._termProcess = null;
-                this.postMessage({ type: 'terminalError', message: `Failed to start: ${err.message}` });
-            });
-
-        } catch (err: any) {
-            this.postMessage({ type: 'terminalError', message: `Spawn error: ${err.message}` });
-        }
-    }
-
-    private _killTerminalCommand() {
+    private _killCommand() {
         if (this._termProcess) {
             try {
-                this._termProcess.kill('SIGINT');
-            } catch (_) {}
+                // On Windows, need to kill the process tree
+                if (process.platform === 'win32') {
+                    spawn('taskkill', ['/pid', String(this._termProcess.pid), '/f', '/t'], { shell: true });
+                } else {
+                    this._termProcess.kill('SIGINT');
+                }
+            } catch {}
             this._termProcess = null;
+            this.postMessage({ type: 'terminalOutput', text: 'Process killed by user.', stream: 'info' });
+            this.postMessage({ type: 'terminalDone', code: 130, _command: '' });
         }
     }
 
     public postMessage(message: any) {
-        if (this._view) {
-            this._view.webview.postMessage(message);
-        }
+        this._view?.webview.postMessage(message);
     }
 
     public sendPortToWebview(port: number) {
@@ -237,20 +195,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         const htmlPath = path.join(this._extensionUri.fsPath, 'webview', 'index.html');
         let html = fs.readFileSync(htmlPath, 'utf-8');
 
-        const uiJsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'webview', 'ui.js'));
-        const wsClientJsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'webview', 'ws-client.js'));
-        const chatJsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'webview', 'chat.js'));
-        const termJsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'webview', 'terminal.js'));
+        ['ui.js', 'ws-client.js', 'chat.js', 'terminal.js'].forEach(file => {
+            const uri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'webview', file));
+            html = html.replace(`<script src="${file}"></script>`, `<script src="${uri}"></script>`);
+        });
 
-        // Replace the script tags with the webview-safe URIs
-        html = html.replace('<script src="ui.js"></script>', `<script src="${uiJsUri}"></script>`);
-        html = html.replace('<script src="ws-client.js"></script>', `<script src="${wsClientJsUri}"></script>`);
-        html = html.replace('<script src="chat.js"></script>', `<script src="${chatJsUri}"></script>`);
-        html = html.replace('<script src="terminal.js"></script>', `<script src="${termJsUri}"></script>`);
-
-        // Inject VS Code API acquisition
         html = html.replace('</head>', `<script>const vscode = acquireVsCodeApi();</script>\n</head>`);
-
         return html;
     }
 }

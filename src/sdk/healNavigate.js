@@ -7,7 +7,7 @@
  */
 
 import { watchFailure } from '../watcher/failureWatcher.js';
-import { findCachedHeal, saveHeal } from '../storage/healHistory.js';
+import { findCachedHeal } from '../storage/healHistory.js';
 import { getRunnerContext, emitEvent, getStepHistory } from '../runner/playwrightRunner.js';
 import { patchTestFile } from '../patcher/patchWriter.js';
 import config from '../../selfheal.config.js';
@@ -15,7 +15,7 @@ import config from '../../selfheal.config.js';
 export async function healNavigate(page, url, { intent = null } = {}) {
     const { io, testFile } = getRunnerContext();
     const threshold = config.healer?.confidenceThreshold ?? 0.8;
-    const safeMode  = config.safeMode ?? false;
+    // const safeMode  = config.safeMode ?? false;
 
     emitEvent(io, 'step:start', { action: 'goto', selector: url, intent, testFile });
 
@@ -89,33 +89,15 @@ export async function healNavigate(page, url, { intent = null } = {}) {
 
             if (testFile) patchTestFile(testFile, url, healResult.newSelector);
 
-            saveHeal({
-                original_selector: url,
-                healed_selector:   healResult.newSelector,
-                intent,
-                test_file:    testFile,
-                root_cause:   healResult.rootCause,
-                confidence:   healResult.confidence,
-            });
-
         } else {
-            // ── 5. Safe mode ─────────────────────────────────────────
-            console.log(`  ⚠️  [healNavigate] Low confidence (${(healResult.confidence * 100).toFixed(0)}% < ${threshold * 100}%)`);
-            console.log(`     Suggestion: "${url}" → "${healResult.newSelector}"`);
-            console.log(`     Root cause: ${healResult.rootCause}`);
-
             emitEvent(io, 'heal:confirm', {
-                action:            'goto',
-                brokenSelector:    url,
+                action: 'goto',
+                brokenSelector: url,
                 suggestedSelector: healResult.newSelector,
-                confidence:        healResult.confidence,
-                rootCause:         healResult.rootCause,
+                confidence: healResult.confidence,
+                rootCause: healResult.rootCause,
                 intent,
             });
-
-            if (safeMode) {
-                console.log(`  🔒 [healNavigate] Safe mode ON — blocking until human confirms.`);
-            }
 
             throw new Error(
                 `[healNavigate] Confidence too low (${healResult.confidence}) for "${url}". ` +
