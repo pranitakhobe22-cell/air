@@ -37,4 +37,15 @@ dist-ssr
 data/*.db
 data/*.db-shm
 data/*.db-wal
+node_modules/
+.env
+data/heals.db*
+heal-report.json
+app_log.txt
 
+# SelfHeal Temp & Build Artifacts
+.selfheal/
+release/
+*.tgz
+*.vsix
+vscode-extension/out/
