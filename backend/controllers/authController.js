@@ -67,7 +67,7 @@ const register = async (req, res) => {
         if (e instanceof z.ZodError) return res.status(400).json({ success: false, error: 'Validation failed', issues: e.errors });
         if (e.code === 404) return res.status(503).json({ success: false, error: 'Database containers not yet set up. Please create the users and profiles containers in Azure portal.' });
         console.error('Auth Register Error:', e);
-        res.status(500).json({ success: false, error: 'Internal server error during registration' });
+        res.status(500).json({ success: false, error: 'Internal server error during registration', debug: { message: e.message, code: e.code, statusCode: e.statusCode, name: e.name } });
     }
 };
 
