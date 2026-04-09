@@ -54,8 +54,8 @@ const getContainer = async (containerName = 'livelogs') => {
  */
 const initCosmos = async () => {
     const client = _getClient();
-    // Recreate DB with SHARED throughput natively if it ever gets deleted
-    const { database: db } = await client.databases.createIfNotExists({ id: DATABASE_ID, throughput: 400 });
+    // Create DB without throughput spec (works with both Serverless and Provisioned accounts)
+    const { database: db } = await client.databases.createIfNotExists({ id: DATABASE_ID });
 
     const containerSpecs = [
         { id: 'livelogs', partitionKey: { paths: ['/sensorId'] } },
