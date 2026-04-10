@@ -42,17 +42,36 @@ const WAQI_TOKEN = process.env.WAQI_TOKEN || 'demo';
 const _cache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
 
+/**
+ * Try to get a live AQI from our own Cosmos DB sensors.
+ * Returns the latest AQI from any active ESP32 node, or null if unavailable.
+ */
+async function getOwnSensorAqi() {
+  try {
+    const { isConfigured, getContainer } = require('../../config/cosmosdb');
+    if (!isConfigured()) return null;
+    const container = await getContainer();
+    const { resources } = await container.items
+      .query({ query: 'SELECT TOP 1 c.aqi FROM c ORDER BY c.timestamp DESC' }, { enableCrossPartitionQuery: true })
+      .fetchAll();
+    if (resources.length > 0 && typeof resources[0].aqi === 'number') return resources[0].aqi;
+  } catch { /* ignore */ }
+  return null;
+}
+
 async function fetchAqiAt(lat, lon) {
   try {
     const { data } = await axios.get(`https://api.waqi.info/feed/geo:${lat};${lon}/`, {
       params: { token: WAQI_TOKEN }, timeout: 10000,
     });
     if (data.status === 'ok' && data.data) {
-      const aqi = typeof data.data.aqi === 'number' ? data.data.aqi : parseInt(data.data.aqi, 10) || 50;
-      return { lat: data.data.city?.geo?.[0] ?? lat, lng: data.data.city?.geo?.[1] ?? lon, aqi };
+      const aqi = typeof data.data.aqi === 'number' ? data.data.aqi : parseInt(data.data.aqi, 10) || 0;
+      if (aqi > 0) return { lat: data.data.city?.geo?.[0] ?? lat, lng: data.data.city?.geo?.[1] ?? lon, aqi };
     }
   } catch { /* fallback */ }
-  return { lat, lng: lon, aqi: 50 };
+  // Fallback: use our own sensor AQI, or 50 as last resort
+  const ownAqi = await getOwnSensorAqi();
+  return { lat, lng: lon, aqi: ownAqi || 50 };
 }
 
 async function getAnchors(cLat, cLng) {

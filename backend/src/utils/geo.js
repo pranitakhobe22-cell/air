@@ -28,7 +28,7 @@ function idw(targetLat, targetLng, anchors, power = 2, maxDistance = 200) {
     num += w * a.aqi;
     den += w;
   }
-  return { aqi: den === 0 ? 0 : Math.round(num / den) };
+  return { aqi: den === 0 ? 50 : Math.round(num / den) };
 }
 
 module.exports = { haversineKm, idw };
